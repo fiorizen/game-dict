@@ -2,10 +2,18 @@
 	"name": "game-dict",
 	"version": "0.0.1",
 	"description": "Management tools of game words IME dictionary",
-	"main": "index.js",
+	"type": "module",
+	"main": "dist/main/main.js",
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc && npm run copy-assets",
+		"copy-assets": "cp -r src/renderer/index.html src/renderer/styles dist/renderer/ && mkdir -p dist/renderer/scripts && cp src/renderer/scripts/main.js dist/renderer/scripts/",
 		"dev": "tsc --watch",
+		"electron": "electron .",
+		"electron:dev": "npm run build && electron .",
+		"dist": "npm run build && electron-builder",
+		"dist:mac": "npm run build && electron-builder --mac",
+		"dist:win": "npm run build && electron-builder --win",
+		"dist:linux": "npm run build && electron-builder --linux",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"test": "vitest run",
@@ -23,16 +31,42 @@
 	"engines": {
 		"node": ">=22.16.0"
 	},
+	"dependencies": {
+		"better-sqlite3": "^11.10.0",
+		"csv-parse": "^5.6.0",
+		"csv-stringify": "^6.5.2"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "2.0.2",
 		"@types/better-sqlite3": "^7.6.13",
 		"@vitest/ui": "^3.2.4",
+		"electron": "^36.5.0",
+		"electron-builder": "^26.0.12",
 		"prettier": "3.5.3",
 		"typescript": "^5.8.3",
 		"vite": "^6.3.5",
 		"vitest": "^3.2.4"
 	},
-	"dependencies": {
-		"better-sqlite3": "^11.10.0"
+	"build": {
+		"appId": "com.gamedict.app",
+		"productName": "IME辞書管理ツール",
+		"directories": {
+			"output": "release"
+		},
+		"files": [
+			"dist/**/*",
+			"src/renderer/**/*",
+			"package.json"
+		],
+		"mac": {
+			"category": "public.app-category.utilities",
+			"target": "dmg"
+		},
+		"win": {
+			"target": "nsis"
+		},
+		"linux": {
+			"target": "AppImage"
+		}
 	}
 }
