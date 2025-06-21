@@ -140,6 +140,10 @@ test-data/
 test-results/
 playwright-report/
 
+# CSV export directories and files
+csv-exports/
+*.csv
+
 # SQLite database files (during development)
 *.db
 *.db-journal
