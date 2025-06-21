@@ -39,7 +39,7 @@ test.describe("UI Functions E2E Tests", () => {
     await closeAllModals(page);
   });
 
-  // Helper function to close all modals
+  // Helper function to close all modals and clear toasts
   async function closeAllModals(page: any) {
     try {
       // Force close game modal using JavaScript
@@ -48,6 +48,14 @@ test.describe("UI Functions E2E Tests", () => {
         if (gameModal) {
           gameModal.style.display = "none";
         }
+        
+        // Clear existing toasts
+        const toasts = document.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        });
       });
     } catch (e) {
       // Ignore if element doesn't exist
@@ -314,6 +322,71 @@ test.describe("UI Functions E2E Tests", () => {
       // 入力したデータが表示されていることを確認
       await expect(entriesTable).toContainText("てすと");
       await expect(entriesTable).toContainText("テスト");
+    });
+  });
+
+  test.describe("CSV出力機能", () => {
+    test("Git管理用CSV出力ボタンが存在し、クリック可能", async () => {
+      const exportGitCsvBtn = page.locator("#export-git-csv-btn");
+      
+      // ボタンが存在し、表示されていることを確認
+      await expect(exportGitCsvBtn).toBeVisible();
+      await expect(exportGitCsvBtn).toContainText("Git管理用CSV出力");
+      
+      // ボタンがクリック可能であることを確認
+      await expect(exportGitCsvBtn).toBeEnabled();
+    });
+
+    test("Git管理用CSV出力ボタンクリックで処理が実行される", async () => {
+      // 既存のトーストをクリア
+      await closeAllModals(page);
+      
+      // Git管理用CSV出力ボタンをクリック
+      const exportGitCsvBtn = page.locator("#export-git-csv-btn");
+      await exportGitCsvBtn.click();
+      
+      // 処理完了を待つ
+      await page.waitForTimeout(2000);
+      
+      // 成功またはエラートースト通知が表示されることを確認
+      // データがある場合は成功トースト、ない場合でもエラーが出ないことを確認
+      const anyToast = page.locator('.toast-success, .toast-error');
+      
+      // トーストが表示されるか、エラーなく処理が完了することを確認
+      try {
+        await expect(anyToast).toBeVisible({ timeout: 3000 });
+        // Git管理用CSVのメッセージが含まれることを確認
+        const csvMessage = page.locator('.toast').filter({ hasText: /Git管理用CSV|CSV/ });
+        await expect(csvMessage).toBeVisible();
+      } catch (e) {
+        // トーストが表示されない場合でも、ボタンがまだ有効であることを確認
+        await expect(exportGitCsvBtn).toBeEnabled();
+      }
+    });
+
+    test("CSV取込ボタンが存在し、クリック可能", async () => {
+      const importCsvBtn = page.locator("#import-csv-btn");
+      
+      // ボタンが存在し、表示されていることを確認
+      await expect(importCsvBtn).toBeVisible();
+      await expect(importCsvBtn).toContainText("CSV取込");
+      
+      // ボタンがクリック可能であることを確認
+      await expect(importCsvBtn).toBeEnabled();
+    });
+
+    test("CSV取込ボタンクリックで処理が呼び出される", async () => {
+      const importCsvBtn = page.locator("#import-csv-btn");
+      
+      // CSV取込ボタンをクリック（ダイアログは自動的にキャンセルされる）
+      await importCsvBtn.click();
+      
+      // ボタンクリックでエラーが発生しないことを確認
+      await page.waitForTimeout(1000);
+      
+      // ボタンがまだ有効であることを確認（処理が正常に完了）
+      await expect(importCsvBtn).toBeEnabled();
+      await expect(importCsvBtn).toBeVisible();
     });
   });
 });

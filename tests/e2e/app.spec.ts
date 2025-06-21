@@ -70,9 +70,13 @@ test.describe('Game Dictionary App', () => {
   test('CSV管理セクションが表示される', async () => {
     // インポート・エクスポートボタンが存在するか確認
     const importBtn = page.locator('#import-csv-btn');
-    const exportBtn = page.locator('#export-csv-btn');
+    const exportGitCsvBtn = page.locator('#export-git-csv-btn');
     
     await expect(importBtn).toBeVisible();
-    await expect(exportBtn).toBeVisible();
+    await expect(exportGitCsvBtn).toBeVisible();
+    
+    // ボタンのテキストも確認
+    await expect(importBtn).toContainText('CSV取込');
+    await expect(exportGitCsvBtn).toContainText('Git管理用CSV出力');
   });
 });
