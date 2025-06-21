@@ -140,9 +140,8 @@ test-data/
 test-results/
 playwright-report/
 
-# CSV export directories and files
-csv-exports/
-*.csv
+# CSV export files (keep csv-exports/ directory structure in Git)
+# Note: csv-exports/ directory is for Git-managed CSV files and should be tracked
 
 # SQLite database files (during development)
 *.db
