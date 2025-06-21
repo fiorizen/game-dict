@@ -123,38 +123,201 @@ IME辞書登録用CSVも出力可能。
 - [x] **SQLiteの実装（スキーマ・マイグレーション・CRUD）**
   - [x] DatabaseConnectionクラス（シングルトン）
   - [x] GameModel, CategoryModel, EntryModel 実装
-  - [x] 包括的テストスイート（11テスト、100% Pass）
+  - [x] 包括的テストスイート（12テスト、100% Pass）
   - [x] 自動テストデータクリーンアップ
+  - [x] Vitestへの移行（独自テストランナーから業界標準へ）
 
-- [ ] **Electronアプリ基本構造設計** (次のタスク)
-  - [ ] メインプロセス・レンダラープロセス設計
-  - [ ] IPC通信設計
-  - [ ] ウィンドウ管理とUI基盤
+- [x] **Electronアプリ基本構造設計**
+  - [x] メインプロセス・レンダラープロセス設計
+  - [x] IPC通信設計とAPI実装
+  - [x] ウィンドウ管理とUI基盤
+  - [x] Electron依存関係とビルド設定
 
-- [ ] **CSV入出力機能の実装方針** (中優先度)
-  - [ ] Git管理用CSVのインポート・エクスポート
-  - [ ] IME辞書用CSV出力（Google日本語入力対応）
+- [x] **CSV入出力機能の実装**
+  - [x] Git管理用CSVのインポート・エクスポート
+  - [x] IME辞書用CSV出力（Google・MS-IME・ATOK対応）
+  - [x] csv-parse/csv-stringify ライブラリ統合
+  - [x] IPC通信とUI統合
 
-- [ ] **UI/UX設計とコンポーネント構成** (中優先度)
-  - [ ] 一覧表示UI
-  - [ ] 編集フォームUI
-  - [ ] 検索・フィルター機能
+- [x] **Electronアプリ起動と動作確認**
+  - [x] Electron v36.5.0 への更新
+  - [x] better-sqlite3 互換性問題解決
+  - [x] アセットビルド・コピー対応
+  - [x] IPC通信動作確認
 
-- [ ] **実装優先順位と開発フェーズの決定** (高優先度)
-  - [ ] 最終的な開発ロードマップ策定
+- [x] **初回起動時エラーハンドリング修正**
+  - [x] 空データ時のエラーアラート削除
+  - [x] 適切な空状態表示
+  - [x] ユーザビリティ向上
+
+- [ ] **UI/UX最終調整** (中優先度)
+  - [x] 基本UI動作確認
+  - [ ] 細かいUI/UX調整
+  - [ ] レスポンシブ対応確認
+
+- [ ] **アプリパッケージング・配布準備** (低優先度)
+  - [ ] electron-builder 設定最適化
+  - [ ] アプリアイコン・メタデータ設定
 
 ### プロジェクト統計
 
-- **完了率**: 4/8 タスク (50%)
-- **コードテスト**: 11/11 Pass (100%)
-- **技術基盤**: SQLite基盤完成
-- **次フェーズ**: Electron統合
+- **完了率**: 8/13 タスク (62%)
+- **コードテスト**: 12/12 Pass (Electron環境動作確認済み)
+- **アプリ状態**: **起動確認済み・UI機能テスト未実施**
+- **技術基盤**: SQLite + Vitest + Electron v36 + CSV入出力 実装完了
+- **残りタスク**: UI機能動作テスト・デバッグ・最終調整
 
 ### 最新の技術決定事項
 
 - **データベース**: better-sqlite3 (同期API、高速)
-- **テストフレームワーク**: 独自テストランナー + tsx
+- **テストフレームワーク**: Vitest + Vite (業界標準、高速・高機能)
+- **UIフレームワーク**: Electron v36.5.0 + TypeScript
+- **CSV処理**: csv-parse/csv-stringify (業界標準ライブラリ)
 - **型定義**: 完全なTypeScript型安全性
 - **スキーマ**: games(id,name) / categories(id,name,ime_names) / entries(id,game_id,category_id,reading,word,description)
+- **品質管理**: Biome (Lint・Format) + Prettier (Markdown等)
+- **IPC通信**: contextBridge + ipcRenderer/ipcMain (セキュア設計)
+- **パッケージング**: electron-builder (クロスプラットフォーム対応)
+
+---
+
+## 開発・実行ガイド
+
+### 初回セットアップ
+
+```bash
+# 依存関係のインストール
+npm install
+
+# TypeScriptビルド
+npm run build
+```
+
+### 開発コマンド
+
+```bash
+# アプリケーション実行
+npm run electron:dev
+
+# 開発時のウォッチビルド
+npm run dev
+
+# テスト実行
+npm test
+
+# データベーステストのみ
+npm run test:db
+
+# コード品質チェック
+npm run lint
+npm run lint:fix
+```
+
+### プロジェクト構造
+
+```
+src/
+├── main/              # Electronメインプロセス
+│   ├── main.ts        # アプリケーション起動・ウィンドウ管理
+│   └── ipc-handlers.ts # IPC通信ハンドラー（SQLite操作API）
+├── preload/           # セキュアなAPI公開
+│   └── preload.ts     # contextBridge経由でレンダラーにAPI提供
+├── renderer/          # フロントエンド UI
+│   ├── index.html     # メインUI
+│   ├── styles/        # CSS スタイル
+│   └── scripts/       # フロントエンドロジック
+├── database/          # SQLite関連
+│   ├── connection.ts  # データベース接続管理
+│   ├── models/        # CRUD操作モデル
+│   └── index.ts       # エクスポート
+├── shared/            # 共通型定義
+│   ├── types.ts       # TypeScript型定義
+│   └── electron-api.d.ts # Electron API型定義
+└── __tests__/         # テストコード
+    └── database.test.ts # SQLite機能テスト
+```
+
+### データベース
+
+- **場所**: `~/Library/Application Support/game-dict/game-dict.db` (本番)
+- **テスト**: `./test-data/game-dict.db` (テスト時)
+- **スキーマ**: games, categories, entries の3テーブル
+- **デフォルトカテゴリ**: 人名、地名、技名・スキル、アイテム、モンスター、組織・団体
+
+### 機能概要
+
+- **ゲーム管理**: 複数ゲームの辞書を独立管理
+- **単語管理**: 読み・単語・カテゴリ・説明のCRUD操作
+- **検索機能**: 読みまたは単語での部分一致検索
+- **カテゴリフィルター**: IME形式別カテゴリ対応
+- **レスポンシブUI**: デスクトップ・モバイル対応
+
+### トラブルシューティング
+
+#### ビルドエラー
+```bash
+# TypeScriptコンパイルエラーの場合
+npm run build
+
+# 依存関係の問題
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### データベースエラー
+```bash
+# テストデータクリーンアップ
+npm run test:clean
+
+# テスト再実行
+npm run test:db
+```
+
+#### Electronが起動しない
+- `dist/` フォルダが生成されているか確認
+- `npm run build` でビルド完了後に実行
+
+#### better-sqlite3エラー (NODE_MODULE_VERSION不一致)
+```bash
+# Electronの Node.js バージョン向けにリビルド
+npx @electron/rebuild
+
+# テスト実行前のリビルド（Node.js用）
+npm rebuild better-sqlite3
+
+# 注意: ElectronとNode.jsで異なるビルドが必要
+# Electronアプリ用: npx @electron/rebuild
+# Vitestテスト用: npm rebuild better-sqlite3
+```
+
+#### 開発状況
+
+**✅ 完了済み**
+- SQLite データベース層 (完全なCRUD + テスト)
+- Electron アプリ基本構造 (メイン・レンダラー・プリロード)
+- IPC通信API (型安全な通信)
+- レスポンシブUI (HTML/CSS/JavaScript)
+- TypeScript 型定義 (完全な型安全性)
+- ビルド・テスト環境
+
+**✅ 完成機能**
+- SQLite データベース（完全なCRUD + テスト）
+- Electron アプリケーション（v36.5.0、起動・動作確認済み）
+- CSV入出力（Git管理用・IME辞書用）
+- レスポンシブUI（ゲーム管理・単語編集・検索）
+- IPC通信（型安全なAPI）
+- エラーハンドリング（初回起動対応）
+
+**🎯 現在の状態**
+- **Electronアプリ**: 起動確認済み
+- **SQLiteデータベース**: 実装完了・テスト済み
+- **UI実装**: HTML/CSS/JS実装済み・動作テスト未実施
+- **CSV機能**: 実装済み・統合テスト未実施
+
+**📋 次のタスク**
+- UI機能動作テスト（ゲーム追加・単語管理・検索等）
+- CSV入出力機能テスト
+- エラーハンドリング確認
+- 最終調整・パッケージング
 
 ---
