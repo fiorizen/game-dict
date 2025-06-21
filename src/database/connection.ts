@@ -39,6 +39,17 @@ export class DatabaseConnection {
 	}
 
 	private getDatabasePath(): string {
+		// テスト環境の判定（環境変数優先）
+		const isTestEnv = process.env.NODE_ENV === 'test' || 
+						  process.env.VITEST === 'true';
+
+		if (isTestEnv) {
+			// テスト環境では専用のパスを使用
+			const testDbPath = path.join(process.cwd(), "test-data", "game-dict-test.db");
+			console.log('Using test database:', testDbPath);
+			return testDbPath;
+		}
+
 		// For testing environment, check if app is available
 		if (
 			typeof global !== "undefined" &&
@@ -48,7 +59,9 @@ export class DatabaseConnection {
 				app: { getPath: (path: string) => string };
 			};
 			const userDataPath = globalWithApp.app.getPath("userData");
-			return path.join(userDataPath, "game-dict.db");
+			const prodDbPath = path.join(userDataPath, "game-dict.db");
+			console.log('Using production database:', prodDbPath);
+			return prodDbPath;
 		}
 
 		// In Electron environment
@@ -56,15 +69,21 @@ export class DatabaseConnection {
 			try {
 				const { app } = require("electron");
 				const userDataPath = app.getPath("userData");
-				return path.join(userDataPath, "game-dict.db");
+				const prodDbPath = path.join(userDataPath, "game-dict.db");
+				console.log('Using production database:', prodDbPath);
+				return prodDbPath;
 			} catch {
 				// Fallback for non-Electron environment
-				return path.join(process.cwd(), "test-data", "game-dict.db");
+				const fallbackDbPath = path.join(process.cwd(), "test-data", "game-dict.db");
+				console.log('Using fallback database:', fallbackDbPath);
+				return fallbackDbPath;
 			}
 		}
 
 		// Default fallback
-		return path.join(process.cwd(), "test-data", "game-dict.db");
+		const defaultDbPath = path.join(process.cwd(), "test-data", "game-dict.db");
+		console.log('Using default database:', defaultDbPath);
+		return defaultDbPath;
 	}
 
 	private initializeTables(): void {
@@ -129,12 +148,9 @@ export class DatabaseConnection {
 			`);
 
 			const defaultCategories = [
+				["名詞", "一般", "一般", "一般"],
+				["品詞なし", "一般", "一般", "一般"],
 				["人名", "人名", "人名", "人名"],
-				["地名", "地名", "地名", "地名"],
-				["技名・スキル", "一般", "短縮よみ", "固有名詞"],
-				["アイテム", "一般", "一般", "一般"],
-				["モンスター", "一般", "一般", "固有名詞"],
-				["組織・団体", "一般", "一般", "固有名詞"],
 			];
 
 			for (const category of defaultCategories) {

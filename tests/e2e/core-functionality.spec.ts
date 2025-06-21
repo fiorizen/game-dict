@@ -74,12 +74,14 @@ test.describe('Core Functionality Tests', () => {
       return await (window as any).electronAPI.categories.getAll();
     });
 
-    // デフォルトカテゴリが存在することを確認
-    expect(categories.length).toBeGreaterThan(0);
+    // デフォルトカテゴリ数の確認
+    expect(categories.length).toBe(3);
     
-    // 人名カテゴリが存在することを確認
-    const hasPersonCategory = categories.some((cat: any) => cat.name === '人名');
-    expect(hasPersonCategory).toBe(true);
+    // 新しいカテゴリが存在することを確認
+    const categoryNames = categories.map((cat: any) => cat.name);
+    expect(categoryNames).toContain('名詞');
+    expect(categoryNames).toContain('品詞なし');
+    expect(categoryNames).toContain('人名');
   });
 
   test('エントリAPI基本操作が動作する', async () => {

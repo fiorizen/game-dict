@@ -119,12 +119,24 @@ function populateCategorySelects() {
 	// Entry form category
 	const entryCategory = document.getElementById("entry-category");
 	entryCategory.innerHTML = '<option value="">カテゴリを選択...</option>';
+	let nounCategoryId = null;
+	
 	allCategories.forEach((category) => {
 		const option = document.createElement("option");
 		option.value = category.id;
 		option.textContent = category.name;
 		entryCategory.appendChild(option);
+		
+		// 「名詞」カテゴリのIDを記録
+		if (category.name === "名詞") {
+			nounCategoryId = category.id;
+		}
 	});
+	
+	// デフォルトで「名詞」を選択
+	if (nounCategoryId) {
+		entryCategory.value = nounCategoryId.toString();
+	}
 }
 
 // Event handlers
@@ -187,7 +199,11 @@ function openEntryModal(entry = null) {
 		title.textContent = "単語追加";
 		readingInput.value = "";
 		wordInput.value = "";
-		categoryInput.value = "";
+		
+		// 新規追加時は「名詞」をデフォルト選択
+		const nounCategory = allCategories.find(cat => cat.name === "名詞");
+		categoryInput.value = nounCategory ? nounCategory.id.toString() : "";
+		
 		descriptionInput.value = "";
 		delete entryForm.dataset.entryId;
 	}

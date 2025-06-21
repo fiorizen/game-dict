@@ -48,8 +48,19 @@ describe("SQLite Database Tests", () => {
 	it("should have default categories", () => {
 		const categories = db.categories.getAll();
 
-		expect(categories.length).toBeGreaterThanOrEqual(6);
+		expect(categories.length).toBe(3);
 
+		// 名詞カテゴリ
+		const nounCategory = categories.find((c) => c.name === "名詞");
+		expect(nounCategory).toBeDefined();
+		expect(nounCategory?.google_ime_name).toBe("一般");
+
+		// 品詞なしカテゴリ
+		const noPartsCategory = categories.find((c) => c.name === "品詞なし");
+		expect(noPartsCategory).toBeDefined();
+		expect(noPartsCategory?.google_ime_name).toBe("一般");
+
+		// 人名カテゴリ
 		const personCategory = categories.find((c) => c.name === "人名");
 		expect(personCategory).toBeDefined();
 		expect(personCategory?.google_ime_name).toBe("人名");
