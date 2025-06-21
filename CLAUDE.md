@@ -102,3 +102,59 @@ IME辞書登録用CSVも出力可能。
 - 会話で決定した内容は随時仕様書やコード内コメント、CLAUDE.mdに反映する（コンテキストに依存しすぎない）
 
 ---
+
+## プロジェクト進捗管理
+
+### タスク一覧とステータス
+
+- [x] **プロジェクト構造と現状の確認**
+  - [x] プロジェクト初期状態の調査完了
+  - [x] package.json、biome.json等の設定確認
+
+- [x] **開発環境・品質管理ツールの設定方針決定**
+  - [x] TypeScript + better-sqlite3 + Vitest の技術選定
+  - [x] Biome + Prettier の品質管理環境構築
+
+- [x] **SQLiteスキーマ設計**
+  - [x] games, categories, entries テーブル設計
+  - [x] IME形式別カテゴリ対応設計
+  - [x] 外部キー制約とインデックス設計
+
+- [x] **SQLiteの実装（スキーマ・マイグレーション・CRUD）**
+  - [x] DatabaseConnectionクラス（シングルトン）
+  - [x] GameModel, CategoryModel, EntryModel 実装
+  - [x] 包括的テストスイート（11テスト、100% Pass）
+  - [x] 自動テストデータクリーンアップ
+
+- [ ] **Electronアプリ基本構造設計** (次のタスク)
+  - [ ] メインプロセス・レンダラープロセス設計
+  - [ ] IPC通信設計
+  - [ ] ウィンドウ管理とUI基盤
+
+- [ ] **CSV入出力機能の実装方針** (中優先度)
+  - [ ] Git管理用CSVのインポート・エクスポート
+  - [ ] IME辞書用CSV出力（Google日本語入力対応）
+
+- [ ] **UI/UX設計とコンポーネント構成** (中優先度)
+  - [ ] 一覧表示UI
+  - [ ] 編集フォームUI
+  - [ ] 検索・フィルター機能
+
+- [ ] **実装優先順位と開発フェーズの決定** (高優先度)
+  - [ ] 最終的な開発ロードマップ策定
+
+### プロジェクト統計
+
+- **完了率**: 4/8 タスク (50%)
+- **コードテスト**: 11/11 Pass (100%)
+- **技術基盤**: SQLite基盤完成
+- **次フェーズ**: Electron統合
+
+### 最新の技術決定事項
+
+- **データベース**: better-sqlite3 (同期API、高速)
+- **テストフレームワーク**: 独自テストランナー + tsx
+- **型定義**: 完全なTypeScript型安全性
+- **スキーマ**: games(id,name) / categories(id,name,ime_names) / entries(id,game_id,category_id,reading,word,description)
+
+---

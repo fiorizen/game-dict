@@ -27,15 +27,25 @@ export class DatabaseConnection {
 		return DatabaseConnection.instance;
 	}
 
+	public static resetInstance(): void {
+		if (DatabaseConnection.instance) {
+			try {
+				DatabaseConnection.instance.close();
+			} catch {
+				// Ignore errors during close
+			}
+		}
+		DatabaseConnection.instance = undefined as any;
+	}
+
 	private getDatabasePath(): string {
 		// For testing environment, check if app is available
 		if (
 			typeof global !== "undefined" &&
 			(global as { app?: { getPath: (path: string) => string } }).app
 		) {
-			const userDataPath = (
-				global as { app: { getPath: (path: string) => string } }
-			).app.getPath("userData");
+			const globalWithApp = global as unknown as { app: { getPath: (path: string) => string } };
+			const userDataPath = globalWithApp.app.getPath("userData");
 			return path.join(userDataPath, "game-dict.db");
 		}
 

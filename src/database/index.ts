@@ -26,6 +26,17 @@ export class Database {
 		return Database.instance;
 	}
 
+	public static resetInstance(): void {
+		if (Database.instance) {
+			try {
+				Database.instance.close();
+			} catch {
+				// Ignore errors during close
+			}
+		}
+		Database.instance = undefined as any;
+	}
+
 	public close(): void {
 		this.connection.close();
 	}
