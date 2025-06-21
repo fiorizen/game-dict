@@ -8,5 +8,11 @@
   },
   "keywords": [],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "volta": {
+    "node": "22.16.0"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  }
 }
