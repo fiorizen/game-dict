@@ -37,6 +37,10 @@ export class Database {
 		Database.instance = undefined as any;
 	}
 
+	public getDbPath(): string {
+		return this.connection.getDbPath();
+	}
+
 	public close(): void {
 		this.connection.close();
 	}

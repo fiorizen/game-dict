@@ -18,7 +18,17 @@ export class CSVHandlers {
 	async exportToGitCsv(outputDir?: string): Promise<string[]> {
 		const games = this.db.games.getAll();
 		const categories = this.db.categories.getAll();
-		const exportDir = outputDir || path.join(process.cwd(), 'csv-exports');
+		
+		// Use test directory if in test environment (check database path), otherwise use csv-exports
+		const dbPath = this.db.getDbPath();
+		const isTestEnvironment = dbPath.includes('test-data') || dbPath.includes('test') || 
+			process.env.NODE_ENV === 'test';
+		
+		const defaultDir = isTestEnvironment
+			? path.join(process.cwd(), 'test-data', 'csv-test')
+			: path.join(process.cwd(), 'csv-exports');
+		
+		const exportDir = outputDir || defaultDir;
 		
 		// Ensure export directory exists
 		if (!fs.existsSync(exportDir)) {

@@ -5,17 +5,18 @@ import Database from "better-sqlite3";
 export class DatabaseConnection {
 	private static instance: DatabaseConnection;
 	private db: Database.Database;
+	private dbPath: string;
 
 	private constructor() {
-		const dbPath = this.getDatabasePath();
+		this.dbPath = this.getDatabasePath();
 
 		// Ensure directory exists
-		const dbDir = path.dirname(dbPath);
+		const dbDir = path.dirname(this.dbPath);
 		if (!fs.existsSync(dbDir)) {
 			fs.mkdirSync(dbDir, { recursive: true });
 		}
 
-		this.db = new Database(dbPath);
+		this.db = new Database(this.dbPath);
 		this.db.pragma("foreign_keys = ON");
 		this.initializeTables();
 	}
@@ -161,6 +162,10 @@ export class DatabaseConnection {
 
 	public getDatabase(): Database.Database {
 		return this.db;
+	}
+
+	public getDbPath(): string {
+		return this.dbPath;
 	}
 
 	public close(): void {
