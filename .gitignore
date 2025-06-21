@@ -137,6 +137,8 @@ dist
 
 # Test data directories
 test-data/
+test-results/
+playwright-report/
 
 # SQLite database files (during development)
 *.db
