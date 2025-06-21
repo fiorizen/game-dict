@@ -5,7 +5,6 @@ let allCategories = [];
 
 // DOM elements
 const gameSelect = document.getElementById("game-select");
-const categorySelect = document.getElementById("category-select");
 const currentGameTitle = document.getElementById("current-game-title");
 const addGameBtn = document.getElementById("add-game-btn");
 const addEntryBtn = document.getElementById("add-entry-btn");
@@ -37,8 +36,6 @@ function setupEventListeners() {
 	document.getElementById("export-csv-btn").addEventListener("click", onExportCsv);
 	document.getElementById("import-csv-btn").addEventListener("click", onImportCsv);
 
-	// Category filter
-	categorySelect.addEventListener("change", onCategoryFilter);
 
 	// Modal handling
 	setupModalHandlers();
@@ -119,15 +116,6 @@ function populateGameSelect(games) {
 }
 
 function populateCategorySelects() {
-	// Category filter
-	categorySelect.innerHTML = '<option value="">全てのカテゴリ</option>';
-	allCategories.forEach((category) => {
-		const option = document.createElement("option");
-		option.value = category.id;
-		option.textContent = category.name;
-		categorySelect.appendChild(option);
-	});
-
 	// Entry form category
 	const entryCategory = document.getElementById("entry-category");
 	entryCategory.innerHTML = '<option value="">カテゴリを選択...</option>';
@@ -161,17 +149,6 @@ async function onGameChange() {
 }
 
 
-function onCategoryFilter() {
-	const categoryId = parseInt(categorySelect.value);
-	if (categoryId) {
-		const filtered = currentEntries.filter(
-			(entry) => entry.category_id === categoryId,
-		);
-		renderEntries(filtered);
-	} else {
-		renderEntries(currentEntries);
-	}
-}
 
 // Modal functions
 function openGameModal(game = null) {
