@@ -1,18 +1,22 @@
 {
-  "name": "game-dict",
-  "version": "0.0.1",
-  "description": "Management tools of game words IME dictionary",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "volta": {
-    "node": "22.16.0"
-  },
-  "engines": {
-    "node": ">=22.16.0"
-  }
+	"name": "game-dict",
+	"version": "0.0.1",
+	"description": "Management tools of game words IME dictionary",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "MIT",
+	"volta": {
+		"node": "22.16.0"
+	},
+	"engines": {
+		"node": ">=22.16.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.0.2",
+		"prettier": "3.5.3"
+	}
 }
