@@ -4,7 +4,15 @@
 	"description": "Management tools of game words IME dictionary",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"test": "npm run test:db:runner",
+		"test:db": "npm run test:clean && tsx test-db.ts",
+		"test:db:detailed": "npm run test:clean && tsx test-db-detailed.ts",
+		"test:db:runner": "npm run test:clean && tsx test-runner.ts",
+		"test:clean": "rm -rf test-data"
 	},
 	"keywords": [],
 	"author": "",
@@ -17,6 +25,12 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.0.2",
-		"prettier": "3.5.3"
+		"@types/better-sqlite3": "^7.6.13",
+		"prettier": "3.5.3",
+		"tsx": "^4.20.3",
+		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"better-sqlite3": "^11.10.0"
 	}
 }
