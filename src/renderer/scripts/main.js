@@ -6,7 +6,6 @@ let allCategories = [];
 // DOM elements
 const gameSelect = document.getElementById("game-select");
 const categorySelect = document.getElementById("category-select");
-const searchInput = document.getElementById("search-input");
 const currentGameTitle = document.getElementById("current-game-title");
 const addGameBtn = document.getElementById("add-game-btn");
 const addEntryBtn = document.getElementById("add-entry-btn");
@@ -38,8 +37,7 @@ function setupEventListeners() {
 	document.getElementById("export-csv-btn").addEventListener("click", onExportCsv);
 	document.getElementById("import-csv-btn").addEventListener("click", onImportCsv);
 
-	// Search and filter
-	searchInput.addEventListener("input", onSearchInput);
+	// Category filter
 	categorySelect.addEventListener("change", onCategoryFilter);
 
 	// Modal handling
@@ -162,26 +160,6 @@ async function onGameChange() {
 	}
 }
 
-async function onSearchInput() {
-	if (!currentGame) return;
-
-	const query = searchInput.value.trim();
-	if (query) {
-		try {
-			const results = await window.electronAPI.entries.search(query);
-			const gameResults = (results || []).filter(
-				(entry) => entry.game_id === currentGame,
-			);
-			renderEntries(gameResults);
-		} catch (error) {
-			console.error("Search failed:", error);
-			// Don't show error for empty search results - just show empty state
-			renderEntries([]);
-		}
-	} else {
-		await loadEntries(currentGame);
-	}
-}
 
 function onCategoryFilter() {
 	const categoryId = parseInt(categorySelect.value);
@@ -255,14 +233,28 @@ async function onGameSubmit(e) {
 
 	try {
 		const gameId = gameForm.dataset.gameId;
+		let newGameId;
+		
 		if (gameId) {
 			await window.electronAPI.games.update(parseInt(gameId), { name });
+			newGameId = parseInt(gameId);
 		} else {
-			await window.electronAPI.games.create({ name });
+			const result = await window.electronAPI.games.create({ name });
+			newGameId = result.id;
 		}
 
+		// Close modal first to ensure proper UI state
 		closeModals();
+		
+		// Reload games list
 		await loadGames();
+		
+		// Auto-select the newly created/updated game
+		if (newGameId) {
+			gameSelect.value = newGameId.toString();
+			await onGameChange();
+		}
+		
 		showSuccess(gameId ? "ゲームを更新しました" : "ゲームを追加しました");
 	} catch (error) {
 		console.error("Failed to save game:", error);
@@ -451,11 +443,55 @@ function escapeHtml(text) {
 }
 
 function showSuccess(message) {
-	// TODO: Implement proper toast notifications
-	alert(message);
+	// 簡潔なサクセストースト表示（3秒で自動消去）
+	const toast = document.createElement('div');
+	toast.className = 'toast toast-success';
+	toast.textContent = message;
+	toast.style.cssText = `
+		position: fixed;
+		top: 20px;
+		right: 20px;
+		background: #4CAF50;
+		color: white;
+		padding: 12px 20px;
+		border-radius: 4px;
+		z-index: 10000;
+		font-size: 14px;
+		box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+	`;
+	document.body.appendChild(toast);
+	
+	// 3秒後に自動削除
+	setTimeout(() => {
+		if (toast.parentNode) {
+			toast.parentNode.removeChild(toast);
+		}
+	}, 3000);
 }
 
 function showError(message) {
-	// TODO: Implement proper error notifications
-	alert(message);
+	// エラートースト表示（5秒で自動消去）
+	const toast = document.createElement('div');
+	toast.className = 'toast toast-error';
+	toast.textContent = message;
+	toast.style.cssText = `
+		position: fixed;
+		top: 20px;
+		right: 20px;
+		background: #f44336;
+		color: white;
+		padding: 12px 20px;
+		border-radius: 4px;
+		z-index: 10000;
+		font-size: 14px;
+		box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+	`;
+	document.body.appendChild(toast);
+	
+	// 5秒後に自動削除
+	setTimeout(() => {
+		if (toast.parentNode) {
+			toast.parentNode.removeChild(toast);
+		}
+	}, 5000);
 }

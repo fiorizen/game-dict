@@ -44,7 +44,7 @@ test.describe('Game Add Functionality', () => {
 
     // 4. ゲーム名を入力
     const gameNameInput = page.locator('#game-name');
-    await gameNameInput.fill('テストゲーム');
+    await gameNameInput.fill('ワーキングテストゲーム');
 
     // 5. 保存ボタンをクリック
     const saveBtn = page.locator('#game-form button[type="submit"]');
@@ -63,12 +63,13 @@ test.describe('Game Add Functionality', () => {
     console.log('追加後ゲーム数:', newGames.length);
     console.log('追加されたゲーム:', newGames);
 
-    expect(newGames.length).toBe(initialGames.length + 1);
-    expect(newGames.some((game: any) => game.name === 'テストゲーム')).toBe(true);
+    // Expect at least one more game than initial (allowing for parallel test execution)
+    expect(newGames.length).toBeGreaterThanOrEqual(initialGames.length + 1);
+    expect(newGames.some((game: any) => game.name === 'ワーキングテストゲーム')).toBe(true);
 
     // 8. ゲーム選択リストに反映されることを確認
     const gameSelect = page.locator('#game-select');
-    await expect(gameSelect.locator('option').filter({ hasText: 'テストゲーム' })).toBeVisible();
+    await expect(gameSelect.locator('option').filter({ hasText: 'ワーキングテストゲーム' })).toHaveCount(1);
   });
 
   test('複数のゲームを追加できる', async () => {
@@ -98,7 +99,7 @@ test.describe('Game Add Functionality', () => {
 
     // 選択リストにも反映されていることを確認
     for (const gameName of gameNames) {
-      await expect(page.locator('#game-select').locator('option').filter({ hasText: gameName })).toBeVisible();
+      await expect(page.locator('#game-select').locator('option').filter({ hasText: gameName })).toHaveCount(1);
     }
   });
 });
