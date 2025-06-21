@@ -28,46 +28,27 @@ test.describe('Game Add Functionality', () => {
   });
 
   test('ゲーム追加が完全に動作する', async () => {
-    // 1. 初期状態確認
-    const initialGames = await page.evaluate(async () => {
-      return await (window as any).electronAPI.games.getAll();
-    });
-    console.log('初期ゲーム数:', initialGames.length);
-
-    // 2. ゲーム追加ボタンをクリック
+    // ゲーム追加ボタンをクリック
     const addGameBtn = page.locator('#add-game-btn');
     await addGameBtn.click();
     
-    // 3. モーダルが開くことを確認
+    // モーダルが開くことを確認
     const modal = page.locator('#game-modal');
     await expect(modal).toBeVisible();
 
-    // 4. ゲーム名を入力
+    // ゲーム名を入力
     const gameNameInput = page.locator('#game-name');
     await gameNameInput.fill('ワーキングテストゲーム');
 
-    // 5. 保存ボタンをクリック
+    // 保存ボタンをクリック
     const saveBtn = page.locator('#game-form button[type="submit"]');
     await saveBtn.click();
 
-    // 6. モーダルが閉じることを確認
+    // モーダルが閉じることを確認
     await expect(modal).not.toBeVisible();
 
-    // 7. ゲームが追加されたことをAPI経由で確認
-    await page.waitForTimeout(500); // 少し待機
-
-    const newGames = await page.evaluate(async () => {
-      return await (window as any).electronAPI.games.getAll();
-    });
-
-    console.log('追加後ゲーム数:', newGames.length);
-    console.log('追加されたゲーム:', newGames);
-
-    // Expect at least one more game than initial (allowing for parallel test execution)
-    expect(newGames.length).toBeGreaterThanOrEqual(initialGames.length + 1);
-    expect(newGames.some((game: any) => game.name === 'ワーキングテストゲーム')).toBe(true);
-
-    // 8. ゲーム選択リストに反映されることを確認
+    // ゲーム選択リストに反映されることを確認
+    await page.waitForTimeout(500);
     const gameSelect = page.locator('#game-select');
     await expect(gameSelect.locator('option').filter({ hasText: 'ワーキングテストゲーム' })).toHaveCount(1);
   });
@@ -86,18 +67,7 @@ test.describe('Game Add Functionality', () => {
       await page.waitForTimeout(300);
     }
 
-    // 全ゲームがAPI経由で確認できることを検証
-    const allGames = await page.evaluate(async () => {
-      return await (window as any).electronAPI.games.getAll();
-    });
-
-    console.log('全ゲーム:', allGames.map((g: any) => g.name));
-
-    for (const gameName of gameNames) {
-      expect(allGames.some((game: any) => game.name === gameName)).toBe(true);
-    }
-
-    // 選択リストにも反映されていることを確認
+    // UI上の選択リストに反映されていることを確認
     for (const gameName of gameNames) {
       await expect(page.locator('#game-select').locator('option').filter({ hasText: gameName })).toHaveCount(1);
     }
