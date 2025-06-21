@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IME辞書管理ツール</title>
+    <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+    <div id="app">
+        <header class="app-header">
+            <h1>IME辞書管理ツール</h1>
+            <div class="header-actions">
+                <button id="export-csv-btn" class="btn btn-primary">CSV出力</button>
+                <button id="import-csv-btn" class="btn btn-secondary">CSV取込</button>
+            </div>
+        </header>
+        
+        <main class="app-main">
+            <div class="sidebar">
+                <div class="game-selector">
+                    <h3>ゲーム選択</h3>
+                    <select id="game-select">
+                        <option value="">ゲームを選択...</option>
+                    </select>
+                    <button id="add-game-btn" class="btn btn-small">+ゲーム追加</button>
+                </div>
+                
+                <div class="category-filter">
+                    <h3>カテゴリ</h3>
+                    <select id="category-select">
+                        <option value="">全てのカテゴリ</option>
+                    </select>
+                </div>
+                
+                <div class="search-box">
+                    <h3>検索</h3>
+                    <input type="text" id="search-input" placeholder="読みや単語で検索...">
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="content-header">
+                    <h2 id="current-game-title">ゲームを選択してください</h2>
+                    <button id="add-entry-btn" class="btn btn-primary" disabled>+単語追加</button>
+                </div>
+                
+                <div class="entries-container">
+                    <div id="entries-list" class="entries-list">
+                        <div class="no-entries">
+                            <p>ゲームを選択して単語を管理してください</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Modal for adding/editing game -->
+        <div id="game-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="game-modal-title">ゲーム追加</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="game-form">
+                        <div class="form-group">
+                            <label for="game-name">ゲーム名</label>
+                            <input type="text" id="game-name" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancel-game-btn">キャンセル</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal for adding/editing entry -->
+        <div id="entry-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="entry-modal-title">単語追加</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="entry-form">
+                        <div class="form-group">
+                            <label for="entry-reading">読み</label>
+                            <input type="text" id="entry-reading" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="entry-word">単語</label>
+                            <input type="text" id="entry-word" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="entry-category">カテゴリ</label>
+                            <select id="entry-category" required>
+                                <option value="">カテゴリを選択...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="entry-description">説明（オプション）</label>
+                            <textarea id="entry-description" rows="3"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancel-entry-btn">キャンセル</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="./scripts/main.js"></script>
+</body>
+</html>
