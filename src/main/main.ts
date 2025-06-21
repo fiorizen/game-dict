@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import { app, BrowserWindow } from "electron";
 import { IPCHandlers } from "./ipc-handlers.js";
 
@@ -36,6 +37,10 @@ class GameDictApp {
 	}
 
 	private createMainWindow(): void {
+		const preloadPath = path.join(__dirname, "../preload/preload.js");
+		console.log("Preload path:", preloadPath);
+		console.log("Preload exists:", existsSync(preloadPath));
+		
 		this.mainWindow = new BrowserWindow({
 			width: 1200,
 			height: 800,
@@ -44,7 +49,7 @@ class GameDictApp {
 			webPreferences: {
 				nodeIntegration: false,
 				contextIsolation: true,
-				preload: path.join(__dirname, "../preload/preload.js"),
+				preload: preloadPath,
 			},
 			title: "IME辞書管理ツール",
 			show: false,

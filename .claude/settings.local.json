@@ -20,7 +20,9 @@
       "Bash(npm rebuild:*)",
       "Bash(npx:*)",
       "Bash(electron --version)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }
