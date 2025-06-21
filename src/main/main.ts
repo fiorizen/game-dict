@@ -38,8 +38,6 @@ class GameDictApp {
 
 	private createMainWindow(): void {
 		const preloadPath = path.join(__dirname, "../preload/preload.js");
-		console.log("Preload path:", preloadPath);
-		console.log("Preload exists:", existsSync(preloadPath));
 		
 		this.mainWindow = new BrowserWindow({
 			width: 1200,

@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
-console.log("=== Preload script starting ===");
 // API definition for renderer process
 const api = {
     // Game operations
@@ -44,7 +43,5 @@ const api = {
     },
 };
 // Expose API to renderer process
-console.log("=== Exposing electronAPI to main world ===");
 electron_1.contextBridge.exposeInMainWorld("electronAPI", api);
-console.log("=== electronAPI exposed successfully ===");
 //# sourceMappingURL=preload.js.map

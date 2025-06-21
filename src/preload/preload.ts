@@ -8,8 +8,6 @@ import type {
 	UpdateGameData,
 } from "../shared/types.js";
 
-console.log("=== Preload script starting ===");
-
 // API definition for renderer process
 const api = {
 	// Game operations
@@ -69,9 +67,7 @@ const api = {
 };
 
 // Expose API to renderer process
-console.log("=== Exposing electronAPI to main world ===");
 contextBridge.exposeInMainWorld("electronAPI", api);
-console.log("=== electronAPI exposed successfully ===");
 
 // Type definition for renderer process
 export type ElectronAPI = typeof api;
