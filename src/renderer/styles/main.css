@@ -157,6 +157,103 @@ textarea:focus {
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Inline editing table */
+.entries-table-container {
+	background: white;
+	border-radius: 6px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	overflow-x: auto;
+}
+
+.entries-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9rem;
+}
+
+.entries-table th {
+	background: #f8f9fa;
+	padding: 0.75rem 0.5rem;
+	text-align: left;
+	font-weight: 600;
+	border-bottom: 2px solid #e0e0e0;
+	color: #555;
+}
+
+.entries-table td {
+	padding: 0.5rem;
+	border-bottom: 1px solid #f0f0f0;
+	vertical-align: top;
+}
+
+.entries-table tr:hover {
+	background: #f8f9fa;
+}
+
+.entries-table tr.editing {
+	background: #fff3cd;
+}
+
+.entries-table tr.new-entry {
+	background: #e8f5e8;
+}
+
+.entries-table tr.auto-saved {
+	background: #d4edda;
+	animation: saveSuccess 2s ease-out;
+}
+
+@keyframes saveSuccess {
+	0% { background: #d1ecf1; }
+	100% { background: #d4edda; }
+}
+
+.entry-input {
+	width: 100%;
+	border: 1px solid #ddd;
+	padding: 0.25rem;
+	font-size: 0.9rem;
+	border-radius: 3px;
+}
+
+.entry-input:focus {
+	outline: none;
+	border-color: #3498db;
+	box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.entry-input.error {
+	border-color: #e74c3c;
+	background: #fdf2f2;
+}
+
+.entry-select {
+	width: 100%;
+	border: 1px solid #ddd;
+	padding: 0.25rem;
+	font-size: 0.9rem;
+	border-radius: 3px;
+	background: white;
+}
+
+.entry-actions-inline {
+	display: flex;
+	gap: 0.25rem;
+	justify-content: center;
+}
+
+.entry-actions-inline .btn {
+	padding: 0.2rem 0.4rem;
+	font-size: 0.75rem;
+	min-width: auto;
+}
+
+.entry-actions-inline .btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	background-color: #6c757d;
+}
+
 .no-entries {
 	padding: 3rem;
 	text-align: center;

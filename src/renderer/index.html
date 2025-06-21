@@ -36,8 +36,25 @@
                 </div>
                 
                 <div class="entries-container">
-                    <div id="entries-list" class="entries-list">
-                        <div class="no-entries">
+                    <!-- Always show inline editing table -->
+                    <div id="entries-table-container" class="entries-table-container">
+                        <table id="entries-table" class="entries-table">
+                            <thead>
+                                <tr>
+                                    <th>読み</th>
+                                    <th>単語</th>
+                                    <th>カテゴリ</th>
+                                    <th>説明</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entries-table-body">
+                                <!-- Entries will be populated here -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- No entries message -->
+                        <div id="no-entries-message" class="no-entries" style="display: none;">
                             <p>ゲームを選択して単語を管理してください</p>
                         </div>
                     </div>
@@ -67,41 +84,6 @@
             </div>
         </div>
         
-        <!-- Modal for adding/editing entry -->
-        <div id="entry-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 id="entry-modal-title">単語追加</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="entry-form">
-                        <div class="form-group">
-                            <label for="entry-reading">読み</label>
-                            <input type="text" id="entry-reading" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="entry-word">単語</label>
-                            <input type="text" id="entry-word" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="entry-category">カテゴリ</label>
-                            <select id="entry-category" required>
-                                <option value="">カテゴリを選択...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="entry-description">説明（オプション）</label>
-                            <textarea id="entry-description" rows="3"></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancel-entry-btn">キャンセル</button>
-                            <button type="submit" class="btn btn-primary">保存</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
     </div>
     
     <script src="./scripts/main.js"></script>

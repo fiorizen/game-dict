@@ -20,10 +20,14 @@
 		"test:watch": "vitest",
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest run --coverage",
-		"test:clean": "rm -rf test-data",
-		"test:e2e": "npm run build && playwright test",
-		"test:e2e:headed": "npm run build && playwright test --headed",
-		"test:e2e:ui": "npm run build && playwright test --ui"
+		"test:clean": "rm -rf test-data && rm -rf playwright-report && rm -rf test-results",
+		"test:clean:db": "rm -f test-data/game-dict-test.db",
+		"test:e2e": "npm run test:clean:db && npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --project=electron",
+		"test:e2e:ui": "npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --ui",
+		"test:e2e:debug": "npm run test:clean:db && npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --project=electron --headed --debug",
+		"rebuild:electron": "npx @electron/rebuild",
+		"rebuild:node": "npm rebuild better-sqlite3",
+		"postinstall": "npm run rebuild:electron"
 	},
 	"keywords": [],
 	"author": "",
@@ -41,6 +45,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.0.2",
+		"@electron/rebuild": "^4.0.1",
 		"@playwright/test": "^1.53.1",
 		"@types/better-sqlite3": "^7.6.13",
 		"@vitest/ui": "^3.2.4",

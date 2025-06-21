@@ -8,13 +8,13 @@ const gameSelect = document.getElementById("game-select");
 const currentGameTitle = document.getElementById("current-game-title");
 const addGameBtn = document.getElementById("add-game-btn");
 const addEntryBtn = document.getElementById("add-entry-btn");
-const entriesList = document.getElementById("entries-list");
+const entriesTableContainer = document.getElementById("entries-table-container");
+const entriesTableBody = document.getElementById("entries-table-body");
+const noEntriesMessage = document.getElementById("no-entries-message");
 
 // Modal elements
 const gameModal = document.getElementById("game-modal");
-const entryModal = document.getElementById("entry-modal");
 const gameForm = document.getElementById("game-form");
-const entryForm = document.getElementById("entry-form");
 
 // Initialize app
 document.addEventListener("DOMContentLoaded", async () => {
@@ -29,8 +29,8 @@ function setupEventListeners() {
 	gameSelect.addEventListener("change", onGameChange);
 	addGameBtn.addEventListener("click", () => openGameModal());
 
-	// Entry management
-	addEntryBtn.addEventListener("click", () => openEntryModal());
+	// Entry management - add entry is always inline now
+	addEntryBtn.addEventListener("click", addNewEntryRow);
 
 	// CSV operations
 	document.getElementById("export-csv-btn").addEventListener("click", onExportCsv);
@@ -42,7 +42,6 @@ function setupEventListeners() {
 
 	// Form submission
 	gameForm.addEventListener("submit", onGameSubmit);
-	entryForm.addEventListener("submit", onEntrySubmit);
 }
 
 function setupModalHandlers() {
@@ -62,9 +61,6 @@ function setupModalHandlers() {
 	// Cancel buttons
 	document
 		.getElementById("cancel-game-btn")
-		.addEventListener("click", closeModals);
-	document
-		.getElementById("cancel-entry-btn")
 		.addEventListener("click", closeModals);
 }
 
@@ -95,12 +91,12 @@ async function loadCategories() {
 async function loadEntries(gameId) {
 	try {
 		currentEntries = await window.electronAPI.entries.getByGameId(gameId);
-		renderEntries(currentEntries || []);
+		renderEntriesTable(currentEntries || []);
 	} catch (error) {
 		console.error("Failed to load entries:", error);
 		// Don't show error for empty data - just show empty state
 		currentEntries = [];
-		renderEntries([]);
+		renderEntriesTable([]);
 	}
 }
 
@@ -116,27 +112,7 @@ function populateGameSelect(games) {
 }
 
 function populateCategorySelects() {
-	// Entry form category
-	const entryCategory = document.getElementById("entry-category");
-	entryCategory.innerHTML = '<option value="">カテゴリを選択...</option>';
-	let nounCategoryId = null;
-	
-	allCategories.forEach((category) => {
-		const option = document.createElement("option");
-		option.value = category.id;
-		option.textContent = category.name;
-		entryCategory.appendChild(option);
-		
-		// 「名詞」カテゴリのIDを記録
-		if (category.name === "名詞") {
-			nounCategoryId = category.id;
-		}
-	});
-	
-	// デフォルトで「名詞」を選択
-	if (nounCategoryId) {
-		entryCategory.value = nounCategoryId.toString();
-	}
+	// No longer needed for modal, but keep function for potential future use
 }
 
 // Event handlers
@@ -155,8 +131,7 @@ async function onGameChange() {
 		currentGame = null;
 		currentGameTitle.textContent = "ゲームを選択してください";
 		addEntryBtn.disabled = true;
-		entriesList.innerHTML =
-			'<div class="no-entries"><p>ゲームを選択して単語を管理してください</p></div>';
+		renderEntriesTable([]);
 	}
 }
 
@@ -181,40 +156,9 @@ function openGameModal(game = null) {
 	nameInput.focus();
 }
 
-function openEntryModal(entry = null) {
-	const title = document.getElementById("entry-modal-title");
-	const readingInput = document.getElementById("entry-reading");
-	const wordInput = document.getElementById("entry-word");
-	const categoryInput = document.getElementById("entry-category");
-	const descriptionInput = document.getElementById("entry-description");
-
-	if (entry) {
-		title.textContent = "単語編集";
-		readingInput.value = entry.reading;
-		wordInput.value = entry.word;
-		categoryInput.value = entry.category_id;
-		descriptionInput.value = entry.description || "";
-		entryForm.dataset.entryId = entry.id;
-	} else {
-		title.textContent = "単語追加";
-		readingInput.value = "";
-		wordInput.value = "";
-		
-		// 新規追加時は「名詞」をデフォルト選択
-		const nounCategory = allCategories.find(cat => cat.name === "名詞");
-		categoryInput.value = nounCategory ? nounCategory.id.toString() : "";
-		
-		descriptionInput.value = "";
-		delete entryForm.dataset.entryId;
-	}
-
-	entryModal.style.display = "flex";
-	readingInput.focus();
-}
 
 function closeModals() {
 	gameModal.style.display = "none";
-	entryModal.style.display = "none";
 }
 
 // Form submission handlers
@@ -255,87 +199,417 @@ async function onGameSubmit(e) {
 	}
 }
 
-async function onEntrySubmit(e) {
-	e.preventDefault();
 
-	const reading = document.getElementById("entry-reading").value.trim();
-	const word = document.getElementById("entry-word").value.trim();
-	const categoryId = parseInt(document.getElementById("entry-category").value);
-	const description =
-		document.getElementById("entry-description").value.trim() || null;
+// Add new entry row function
+function addNewEntryRow() {
+	// Check if there's already a new entry row
+	const existingNewRow = entriesTableBody.querySelector('tr[data-is-new="true"]');
+	if (existingNewRow) {
+		// Focus on the existing new row's reading input
+		const readingInput = existingNewRow.querySelector('input[name="reading"]');
+		if (readingInput) readingInput.focus();
+		return;
+	}
+	
+	// Add new entry row at the bottom
+	const newRow = createNewEntryRow();
+	entriesTableBody.appendChild(newRow);
+}
 
-	if (!reading || !word || !categoryId || !currentGame) return;
+function renderEntriesTable(entries) {
+	if (!entriesTableBody) return;
+	
+	entriesTableBody.innerHTML = "";
+	
+	// Show/hide no entries message
+	if (!currentGame) {
+		noEntriesMessage.style.display = "block";
+		entriesTableContainer.querySelector("table").style.display = "none";
+		return;
+	} else {
+		noEntriesMessage.style.display = "none";
+		entriesTableContainer.querySelector("table").style.display = "table";
+	}
+	
+	// Render existing entries
+	entries.forEach(entry => {
+		const row = createEntryRow(entry);
+		entriesTableBody.appendChild(row);
+	});
+	
+	// Always add new entry row at the bottom when game is selected
+	const newRow = createNewEntryRow();
+	entriesTableBody.appendChild(newRow);
+}
 
+function createEntryRow(entry) {
+	const row = document.createElement("tr");
+	row.dataset.entryId = entry.id;
+	
+	const category = allCategories.find(c => c.id === entry.category_id);
+	const categoryName = category ? category.name : "Unknown";
+	
+	row.innerHTML = `
+		<td><span class="entry-value">${escapeHtml(entry.reading)}</span></td>
+		<td><span class="entry-value">${escapeHtml(entry.word)}</span></td>
+		<td><span class="entry-value">${escapeHtml(categoryName)}</span></td>
+		<td><span class="entry-value">${escapeHtml(entry.description || "")}</span></td>
+		<td class="entry-actions-inline">
+			<button class="btn btn-secondary" onclick="editEntryInline(${entry.id})">編集</button>
+			<button class="btn btn-secondary" onclick="deleteEntry(${entry.id})">削除</button>
+		</td>
+	`;
+	
+	return row;
+}
+
+function createNewEntryRow() {
+	const row = document.createElement("tr");
+	row.className = "new-entry";
+	row.dataset.isNew = "true";
+	
+	const categoryOptions = allCategories.map(cat => 
+		`<option value="${cat.id}" ${cat.name === "名詞" ? "selected" : ""}>${escapeHtml(cat.name)}</option>`
+	).join("");
+	
+	row.innerHTML = `
+		<td><input type="text" class="entry-input" name="reading" placeholder="よみ" required></td>
+		<td><input type="text" class="entry-input" name="word" placeholder="単語" required></td>
+		<td>
+			<select class="entry-select" name="category" required>
+				<option value="">選択...</option>
+				${categoryOptions}
+			</select>
+		</td>
+		<td><input type="text" class="entry-input" name="description" placeholder="説明（任意）"></td>
+		<td class="entry-actions-inline">
+			<button class="btn btn-primary" onclick="saveNewEntry(this)">保存</button>
+			<button class="btn btn-secondary" onclick="clearNewEntry(this)">クリア</button>
+		</td>
+	`;
+	
+	// Add auto-save on focusout for the entire row
+	addAutoSaveListeners(row);
+	
+	// Focus on reading input
+	setTimeout(() => {
+		const readingInput = row.querySelector('input[name="reading"]');
+		if (readingInput) readingInput.focus();
+	}, 100);
+	
+	return row;
+}
+
+function addAutoSaveListeners(row) {
+	const inputs = row.querySelectorAll('input, select');
+	let saveTimeout;
+	
+	inputs.forEach(input => {
+		input.addEventListener('blur', () => {
+			// Clear any existing timeout
+			if (saveTimeout) {
+				clearTimeout(saveTimeout);
+			}
+			
+			// Set a short delay to allow other focusout events to complete
+			// Use shorter delay for description field (last field)
+			const isDescriptionField = input.name === 'description';
+			const delay = isDescriptionField ? 300 : 200;
+			
+			saveTimeout = setTimeout(() => {
+				attemptAutoSave(row);
+			}, delay);
+		});
+		
+		// Cancel auto-save if user focuses back into input fields (but not buttons)
+		input.addEventListener('focus', () => {
+			if (saveTimeout) {
+				clearTimeout(saveTimeout);
+				saveTimeout = null;
+			}
+		});
+		
+		// Special handling for description field - trigger save on Enter key
+		if (input.name === 'description') {
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					// Clear timeout and immediately save
+					if (saveTimeout) {
+						clearTimeout(saveTimeout);
+					}
+					attemptAutoSave(row);
+				}
+			});
+		}
+	});
+	
+	// Add focusout listener to the entire row to catch any remaining cases
+	row.addEventListener('focusout', (e) => {
+		// Only handle if the new focus target is completely outside the row
+		setTimeout(() => {
+			const activeElement = document.activeElement;
+			const isStillInRow = row.contains(activeElement);
+			
+			if (!isStillInRow) {
+				// Clear any existing timeout and save immediately
+				if (saveTimeout) {
+					clearTimeout(saveTimeout);
+				}
+				attemptAutoSave(row);
+			}
+		}, 100);
+	});
+}
+
+async function attemptAutoSave(row) {
+	// Only auto-save if this is a new entry row
+	if (!row.dataset.isNew) return;
+	
+	// Check if already saving to prevent duplicate saves
+	if (row.dataset.saving === 'true') {
+		return;
+	}
+	
+	// Check if focus has moved outside of this row
+	const activeElement = document.activeElement;
+	const isStillInRow = row.contains(activeElement);
+	
+	// Don't auto-save if focus is still in row, unless it's on action buttons
+	if (isStillInRow) {
+		// Allow auto-save if focus moved to action buttons (save/clear)
+		const isOnActionButton = activeElement && activeElement.closest('.entry-actions-inline');
+		if (!isOnActionButton) {
+			// User is still editing this row, don't auto-save
+			return;
+		}
+	}
+	
+	const formData = getRowFormData(row);
+	
+	// Only auto-save if there's actual content to save
+	if (!formData.reading && !formData.word) {
+		return; // Nothing to save
+	}
+	
+	// Validate the data before saving
+	if (!validateEntryDataSilent(formData)) {
+		return; // Invalid data, don't auto-save
+	}
+	
+	// Mark as saving and disable save button
+	row.dataset.saving = 'true';
+	const saveButton = row.querySelector('button[onclick*="saveNewEntry"]');
+	if (saveButton) {
+		saveButton.disabled = true;
+		saveButton.textContent = '保存中...';
+	}
+	
 	try {
-		const entryId = entryForm.dataset.entryId;
 		const data = {
 			game_id: currentGame,
-			category_id: categoryId,
-			reading,
-			word,
-			description,
+			category_id: parseInt(formData.category),
+			reading: formData.reading,
+			word: formData.word,
+			description: formData.description || null,
 		};
-
-		if (entryId) {
-			await window.electronAPI.entries.update(parseInt(entryId), data);
-		} else {
-			await window.electronAPI.entries.create(data);
-		}
-
-		closeModals();
+		
+		await window.electronAPI.entries.create(data);
+		
+		// Mark the row as saved
+		row.classList.remove('new-entry');
+		row.classList.add('auto-saved');
+		
+		// Reload entries
 		await loadEntries(currentGame);
-		showSuccess(entryId ? "単語を更新しました" : "単語を追加しました");
+		
+		// Re-render table with new entry row for continued input
+		renderEntriesTable(currentEntries || []);
+		
+		showSuccess("単語を自動保存しました");
+	} catch (error) {
+		console.error("Auto-save failed:", error);
+		// Re-enable save button on error
+		row.dataset.saving = 'false';
+		if (saveButton) {
+			saveButton.disabled = false;
+			saveButton.textContent = '保存';
+		}
+		// Don't show error for auto-save failures to avoid interrupting user flow
+	}
+}
+
+// Entry management functions
+
+// Inline editing action functions
+async function saveNewEntry(button) {
+	const row = button.closest("tr");
+	
+	// Check if already saving to prevent duplicate saves
+	if (row.dataset.saving === 'true') {
+		return;
+	}
+	
+	const formData = getRowFormData(row);
+	
+	if (!validateEntryData(formData, row)) {
+		return;
+	}
+	
+	// Mark as saving and disable save button
+	row.dataset.saving = 'true';
+	button.disabled = true;
+	button.textContent = '保存中...';
+	
+	try {
+		const data = {
+			game_id: currentGame,
+			category_id: parseInt(formData.category),
+			reading: formData.reading,
+			word: formData.word,
+			description: formData.description || null,
+		};
+		
+		await window.electronAPI.entries.create(data);
+		
+		// Reload entries
+		await loadEntries(currentGame);
+		
+		// Re-render table with new entry row for continued input
+		renderEntriesTable(currentEntries || []);
+		
+		showSuccess("単語を追加しました");
 	} catch (error) {
 		console.error("Failed to save entry:", error);
+		// Re-enable save button on error
+		row.dataset.saving = 'false';
+		button.disabled = false;
+		button.textContent = '保存';
 		showError("単語の保存に失敗しました");
 	}
 }
 
-// Rendering functions
-function renderEntries(entries) {
-	if (!entries || entries.length === 0) {
-		entriesList.innerHTML =
-			'<div class="no-entries"><p>該当する単語がありません</p></div>';
+async function editEntryInline(entryId) {
+	const entry = currentEntries.find(e => e.id === entryId);
+	if (!entry) return;
+	
+	const row = document.querySelector(`tr[data-entry-id="${entryId}"]`);
+	if (!row) return;
+	
+	const category = allCategories.find(c => c.id === entry.category_id);
+	const categoryOptions = allCategories.map(cat => 
+		`<option value="${cat.id}" ${cat.id === entry.category_id ? "selected" : ""}>${escapeHtml(cat.name)}</option>`
+	).join("");
+	
+	row.className = "editing";
+	row.innerHTML = `
+		<td><input type="text" class="entry-input" name="reading" value="${escapeHtml(entry.reading)}" required></td>
+		<td><input type="text" class="entry-input" name="word" value="${escapeHtml(entry.word)}" required></td>
+		<td>
+			<select class="entry-select" name="category" required>
+				<option value="">選択...</option>
+				${categoryOptions}
+			</select>
+		</td>
+		<td><input type="text" class="entry-input" name="description" value="${escapeHtml(entry.description || "")}"></td>
+		<td class="entry-actions-inline">
+			<button class="btn btn-primary" onclick="saveEditedEntry(this, ${entryId})">保存</button>
+			<button class="btn btn-secondary" onclick="cancelEditEntry(this, ${entryId})">キャンセル</button>
+		</td>
+	`;
+}
+
+async function saveEditedEntry(button, entryId) {
+	const row = button.closest("tr");
+	const formData = getRowFormData(row);
+	
+	if (!validateEntryData(formData, row)) {
 		return;
 	}
-
-	const html = entries
-		.map((entry) => {
-			const category = allCategories.find((c) => c.id === entry.category_id);
-			const categoryName = category ? category.name : "Unknown";
-
-			return `
-            <div class="entry-item">
-                <div class="entry-content">
-                    <div class="entry-word">${escapeHtml(entry.word)}</div>
-                    <div class="entry-reading">${escapeHtml(entry.reading)}</div>
-                    <div class="entry-meta">
-                        <span>カテゴリ: ${escapeHtml(categoryName)}</span>
-                    </div>
-                    ${entry.description ? `<div class="entry-description">${escapeHtml(entry.description)}</div>` : ""}
-                </div>
-                <div class="entry-actions">
-                    <button class="btn btn-secondary" onclick="editEntry(${entry.id})">編集</button>
-                    <button class="btn btn-secondary" onclick="deleteEntry(${entry.id})">削除</button>
-                </div>
-            </div>
-        `;
-		})
-		.join("");
-
-	entriesList.innerHTML = html;
-}
-
-// Entry actions
-async function editEntry(entryId) {
+	
 	try {
-		const entry = await window.electronAPI.entries.getById(entryId);
-		openEntryModal(entry);
+		const data = {
+			game_id: currentGame,
+			category_id: parseInt(formData.category),
+			reading: formData.reading,
+			word: formData.word,
+			description: formData.description || null,
+		};
+		
+		await window.electronAPI.entries.update(entryId, data);
+		
+		// Reload entries
+		await loadEntries(currentGame);
+		
+		// Re-render table
+		renderEntriesTable(currentEntries || []);
+		
+		showSuccess("単語を更新しました");
 	} catch (error) {
-		console.error("Failed to load entry:", error);
-		showError("単語の読み込みに失敗しました");
+		console.error("Failed to update entry:", error);
+		showError("単語の更新に失敗しました");
 	}
 }
+
+function cancelEditEntry(button, entryId) {
+	// Re-render table to cancel editing
+	renderEntriesTable(currentEntries || []);
+}
+
+function clearNewEntry(button) {
+	const row = button.closest("tr");
+	row.querySelectorAll("input").forEach(input => input.value = "");
+	row.querySelector("select").selectedIndex = 1; // Select "名詞"
+	
+	const readingInput = row.querySelector('input[name="reading"]');
+	if (readingInput) readingInput.focus();
+}
+
+function getRowFormData(row) {
+	return {
+		reading: row.querySelector('input[name="reading"]').value.trim(),
+		word: row.querySelector('input[name="word"]').value.trim(),
+		category: row.querySelector('select[name="category"]').value,
+		description: row.querySelector('input[name="description"]').value.trim(),
+	};
+}
+
+function validateEntryData(data, row) {
+	let isValid = true;
+	
+	// Clear previous errors
+	row.querySelectorAll(".entry-input, .entry-select").forEach(input => {
+		input.classList.remove("error");
+	});
+	
+	// Validate required fields
+	if (!data.reading) {
+		row.querySelector('input[name="reading"]').classList.add("error");
+		isValid = false;
+	}
+	
+	if (!data.word) {
+		row.querySelector('input[name="word"]').classList.add("error");
+		isValid = false;
+	}
+	
+	if (!data.category) {
+		row.querySelector('select[name="category"]').classList.add("error");
+		isValid = false;
+	}
+	
+	if (!isValid) {
+		showError("必須項目を入力してください");
+	}
+	
+	return isValid;
+}
+
+function validateEntryDataSilent(data) {
+	// Silent validation for auto-save (no UI feedback)
+	return !!(data.reading && data.word && data.category);
+}
+
 
 async function deleteEntry(entryId) {
 	if (!confirm("この単語を削除しますか？")) return;

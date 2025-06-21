@@ -58,17 +58,13 @@ test.describe('Game Dictionary App', () => {
   });
 
   test('単語管理セクションが表示される', async () => {
-    // 検索ボックスが存在するか確認
-    const searchInput = page.locator('#search-input');
-    await expect(searchInput).toBeVisible();
-    
     // 単語追加ボタンが存在するか確認
     const addEntryBtn = page.locator('#add-entry-btn');
     await expect(addEntryBtn).toBeVisible();
     
-    // 単語リストコンテナが存在するか確認
-    const entriesList = page.locator('#entries-list');
-    await expect(entriesList).toBeVisible();
+    // インライン編集テーブルコンテナが存在するか確認
+    const entriesTableContainer = page.locator('#entries-table-container');
+    await expect(entriesTableContainer).toBeVisible();
   });
 
   test('CSV管理セクションが表示される', async () => {

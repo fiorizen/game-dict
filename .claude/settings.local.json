@@ -22,7 +22,25 @@
       "Bash(electron --version)",
       "Bash(node:*)",
       "Bash(ls:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron-headless --grep \"単語追加機能\")",
+      "Bash(NODE_ENV=test npx playwright test --project=electron-headless --grep \"単語追加機能.*単語追加ボタンクリックでモーダルが開く\")",
+      "Bash(NODE_ENV=test npx playwright test --project=electron-headless --grep \"単語追加機能\" --workers=1)",
+      "Bash(grep:*)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"ゲーム追加が完全に動作する\")",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"Game Add Functionality\")",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"Game Add Functionality\" --workers=1)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"ゲーム名を入力して保存できる\" --workers=1)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"単語情報を入力して保存できる\" --workers=1)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"単語追加機能\" --workers=1)",
+      "Bash(rg:*)",
+      "Bash(chmod:*)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"ゲーム追加ボタンクリックでモーダルが開く\" --workers=1)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"アプリが起動してelectronAPIが利用可能\" --workers=1 --timeout=90000)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron --grep \"アプリが起動してelectronAPIが利用可能\" --workers=1)",
+      "Bash(npm ci:*)",
+      "Bash(npm test:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
