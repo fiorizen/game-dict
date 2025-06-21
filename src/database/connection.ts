@@ -44,7 +44,9 @@ export class DatabaseConnection {
 			typeof global !== "undefined" &&
 			(global as { app?: { getPath: (path: string) => string } }).app
 		) {
-			const globalWithApp = global as unknown as { app: { getPath: (path: string) => string } };
+			const globalWithApp = global as unknown as {
+				app: { getPath: (path: string) => string };
+			};
 			const userDataPath = globalWithApp.app.getPath("userData");
 			return path.join(userDataPath, "game-dict.db");
 		}

@@ -9,6 +9,10 @@ export interface NewGame {
 	name: string;
 }
 
+// Type aliases for consistency with IPC handlers
+export type CreateGameData = NewGame;
+export type UpdateGameData = Partial<NewGame>;
+
 export interface Category {
 	id: number;
 	name: string;
@@ -25,6 +29,10 @@ export interface NewCategory {
 	ms_ime_name?: string;
 	atok_name?: string;
 }
+
+// Type aliases for consistency with IPC handlers
+export type CreateCategoryData = NewCategory;
+export type UpdateCategoryData = Partial<NewCategory>;
 
 export interface Entry {
 	id: number;
@@ -44,6 +52,10 @@ export interface NewEntry {
 	word: string;
 	description?: string;
 }
+
+// Type aliases for consistency with IPC handlers
+export type CreateEntryData = NewEntry;
+export type UpdateEntryData = Partial<Omit<NewEntry, "game_id">>;
 
 export interface EntryWithDetails extends Entry {
 	game_name: string;
