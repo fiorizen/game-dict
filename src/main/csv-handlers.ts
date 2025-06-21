@@ -13,33 +13,56 @@ export class CSVHandlers {
 	}
 
 	/**
-	 * Export all game data to Git-managed CSV format
+	 * Export all game data to Git-managed CSV format (one file per game)
 	 */
-	async exportToGitCsv(outputPath: string): Promise<void> {
+	async exportToGitCsv(outputDir?: string): Promise<string[]> {
 		const games = this.db.games.getAll();
 		const categories = this.db.categories.getAll();
-		const entries = this.db.entries.getAll();
+		const exportDir = outputDir || path.join(process.cwd(), 'csv-exports');
+		
+		// Ensure export directory exists
+		if (!fs.existsSync(exportDir)) {
+			fs.mkdirSync(exportDir, { recursive: true });
+		}
 
-		// Export structure: game_name, category_name, reading, word, description
-		const csvData = entries.map((entry) => {
-			const game = games.find((g) => g.id === entry.game_id);
-			const category = categories.find((c) => c.id === entry.category_id);
+		const exportedFiles: string[] = [];
 
-			return {
-				game_name: game?.name || "",
-				category_name: category?.name || "",
-				reading: entry.reading,
-				word: entry.word,
-				description: entry.description || "",
-			};
-		});
+		for (const game of games) {
+			const entries = this.db.entries.getByGameId(game.id);
+			
+			// Skip empty games
+			if (entries.length === 0) {
+				continue;
+			}
 
-		const csvString = stringify(csvData, {
-			header: true,
-			columns: ["game_name", "category_name", "reading", "word", "description"],
-		});
+			// Export structure: category_name, reading, word, description
+			const csvData = entries.map((entry) => {
+				const category = categories.find((c) => c.id === entry.category_id);
 
-		fs.writeFileSync(outputPath, csvString, "utf-8");
+				return {
+					category_name: category?.name || "",
+					reading: entry.reading,
+					word: entry.word,
+					description: entry.description || "",
+				};
+			});
+
+			const csvString = stringify(csvData, {
+				header: true,
+				columns: ["category_name", "reading", "word", "description"],
+			});
+
+			// Add game name as comment at the top
+			const csvWithComment = `# Game: ${game.name} (ID: ${game.id})\n${csvString}`;
+
+			// Fixed filename: game-{ID}.csv
+			const filePath = path.join(exportDir, `game-${game.id}.csv`);
+			
+			fs.writeFileSync(filePath, csvWithComment, "utf-8");
+			exportedFiles.push(filePath);
+		}
+
+		return exportedFiles;
 	}
 
 	/**
@@ -90,11 +113,22 @@ export class CSVHandlers {
 	 */
 	async importFromCsv(filePath: string): Promise<void> {
 		const csvContent = fs.readFileSync(filePath, "utf-8");
+		
+		// Extract game name from comment line if present
+		let gameNameFromComment = "";
+		const lines = csvContent.split('\n');
+		if (lines[0].startsWith('#')) {
+			const commentMatch = lines[0].match(/# Game: (.+) \(ID: \d+\)/);
+			if (commentMatch) {
+				gameNameFromComment = commentMatch[1];
+			}
+		}
+		
 		const records = parse(csvContent, {
 			columns: true,
 			skip_empty_lines: true,
+			comment: '#', // Skip comment lines
 		}) as Array<{
-			game_name: string;
 			category_name: string;
 			reading: string;
 			word: string;
@@ -104,20 +138,29 @@ export class CSVHandlers {
 		const gameCache = new Map<string, Game>();
 		const categoryCache = new Map<string, Category>();
 
-		for (const record of records) {
-			// Ensure game exists
-			let game = gameCache.get(record.game_name);
-			if (!game) {
-				const existingGames = this.db.games
-					.getAll()
-					.filter((g) => g.name === record.game_name);
-				if (existingGames.length > 0) {
-					game = existingGames[0];
-				} else {
-					game = this.db.games.create({ name: record.game_name });
-				}
-				gameCache.set(record.game_name, game);
+		// Determine game name: use comment or derive from filename
+		let gameName = gameNameFromComment;
+		if (!gameName) {
+			const filename = path.basename(filePath, '.csv');
+			// If filename is game-{ID}.csv, we need to ask user or use filename as is
+			gameName = filename.startsWith('game-') ? filename : filename;
+		}
+
+		// Ensure game exists
+		let game = gameCache.get(gameName);
+		if (!game) {
+			const existingGames = this.db.games
+				.getAll()
+				.filter((g) => g.name === gameName);
+			if (existingGames.length > 0) {
+				game = existingGames[0];
+			} else {
+				game = this.db.games.create({ name: gameName });
 			}
+			gameCache.set(gameName, game);
+		}
+
+		for (const record of records) {
 
 			// Ensure category exists
 			let category = categoryCache.get(record.category_name);

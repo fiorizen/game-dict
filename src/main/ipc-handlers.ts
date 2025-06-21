@@ -73,11 +73,10 @@ export class IPCHandlers {
 		);
 
 		// CSV handlers
-		ipcMain.handle("csv:exportToGitCsv", async (_, outputPath?: string) => {
+		ipcMain.handle("csv:exportToGitCsv", async (_, outputDir?: string) => {
 			try {
-				const path = outputPath || this.csvHandlers.getSuggestedPaths().gitCsv;
-				await this.csvHandlers.exportToGitCsv(path);
-				return { success: true, path };
+				const exportedFiles = await this.csvHandlers.exportToGitCsv(outputDir);
+				return { success: true, files: exportedFiles };
 			} catch (error) {
 				throw new Error(`CSV export failed: ${error instanceof Error ? error.message : String(error)}`);
 			}

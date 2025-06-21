@@ -33,7 +33,7 @@ function setupEventListeners() {
 	addEntryBtn.addEventListener("click", addNewEntryRow);
 
 	// CSV operations
-	document.getElementById("export-csv-btn").addEventListener("click", onExportCsv);
+	document.getElementById("export-git-csv-btn").addEventListener("click", onExportGitCsv);
 	document.getElementById("import-csv-btn").addEventListener("click", onImportCsv);
 
 
@@ -625,50 +625,20 @@ async function deleteEntry(entryId) {
 }
 
 // CSV operation handlers
-async function onExportCsv() {
-	if (!currentGame) {
-		showError("ゲームを選択してください");
-		return;
-	}
-
+async function onExportGitCsv() {
 	try {
-		const gameId = currentGame;
-		const suggestedPaths = await window.electronAPI.csv.getSuggestedPaths(gameId);
-
-		// Show export options
-		const exportType = prompt(`エクスポート形式を選択してください:
-1. Git管理用CSV (全データ)
-2. Google日本語入力用
-3. MS-IME用
-4. ATOK用
-
-番号を入力してください (1-4):`);
-
-		let result;
-		switch (exportType) {
-			case "1":
-				result = await window.electronAPI.csv.exportToGitCsv();
-				break;
-			case "2":
-				result = await window.electronAPI.csv.exportToImeCsv(gameId, "google");
-				break;
-			case "3":
-				result = await window.electronAPI.csv.exportToImeCsv(gameId, "ms");
-				break;
-			case "4":
-				result = await window.electronAPI.csv.exportToImeCsv(gameId, "atok");
-				break;
-			default:
-				showError("無効な選択です");
-				return;
-		}
-
-		if (result.success) {
-			showSuccess(`CSVファイルを出力しました: ${result.path}`);
+		const result = await window.electronAPI.csv.exportToGitCsv();
+		
+		if (result.success && result.files) {
+			const fileCount = result.files.length;
+			const exportDir = result.files.length > 0 ? 
+				result.files[0].substring(0, result.files[0].lastIndexOf('/')) : '';
+			
+			showSuccess(`Git管理用CSVを${fileCount}個のファイルで出力しました: ${exportDir}`);
 		}
 	} catch (error) {
-		console.error("CSV export failed:", error);
-		showError(`CSV出力に失敗しました: ${error.message}`);
+		console.error("Git CSV export failed:", error);
+		showError(`Git管理用CSV出力に失敗しました: ${error.message}`);
 	}
 }
 
