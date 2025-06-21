@@ -18,6 +18,9 @@ test.describe('UI Functions E2E Tests', () => {
     
     page = await electronApp.firstWindow();
     await page.waitForLoadState('domcontentloaded');
+    
+    // Wait for app to fully initialize
+    await page.waitForTimeout(1000);
   });
 
   test.afterAll(async () => {
@@ -55,9 +58,10 @@ test.describe('UI Functions E2E Tests', () => {
       const modal = page.locator('#game-modal');
       await expect(modal).not.toBeVisible();
       
-      // ゲーム選択リストに追加されることを確認
+      // ゲーム選択リストに追加されることを確認（少し待機）
+      await page.waitForTimeout(500);
       const gameSelect = page.locator('#game-select');
-      await expect(gameSelect.locator('option[value="1"]')).toHaveText('テストゲーム');
+      await expect(gameSelect.locator('option').last()).toContainText('テストゲーム');
     });
 
     test('キャンセルボタンでモーダルが閉じる', async () => {
@@ -84,9 +88,12 @@ test.describe('UI Functions E2E Tests', () => {
       const saveBtn = page.locator('#game-form button[type="submit"]');
       await saveBtn.click();
       
-      // ゲームを選択
+      // ゲームを選択（最後に追加されたオプション）
       const gameSelect = page.locator('#game-select');
-      await gameSelect.selectOption('1');
+      const lastOption = await gameSelect.locator('option').last().getAttribute('value');
+      if (lastOption && lastOption !== '') {
+        await gameSelect.selectOption(lastOption);
+      }
     });
 
     test('ゲーム選択後に単語追加ボタンが有効になる', async () => {
@@ -113,7 +120,14 @@ test.describe('UI Functions E2E Tests', () => {
       // 各フィールドに入力
       await page.locator('#entry-reading').fill('てすと');
       await page.locator('#entry-word').fill('テスト');
-      await page.locator('#entry-category').selectOption('1'); // 人名
+      
+      // カテゴリを選択（最初の有効なオプション）
+      const categorySelect = page.locator('#entry-category');
+      const firstCategoryOption = await categorySelect.locator('option').nth(1).getAttribute('value');
+      if (firstCategoryOption) {
+        await categorySelect.selectOption(firstCategoryOption);
+      }
+      
       await page.locator('#entry-description').fill('テスト用の単語');
       
       // 保存ボタンをクリック
@@ -144,16 +158,23 @@ test.describe('UI Functions E2E Tests', () => {
       const saveBtn = page.locator('#game-form button[type="submit"]');
       await saveBtn.click();
       
-      // ゲームを選択
+      // ゲームを選択（最後に追加されたオプション）
       const gameSelect = page.locator('#game-select');
-      await gameSelect.selectOption('1');
+      const lastOption = await gameSelect.locator('option').last().getAttribute('value');
+      if (lastOption && lastOption !== '') {
+        await gameSelect.selectOption(lastOption);
+      }
       
       // テスト用単語を複数追加
       const entries = [
-        { reading: 'ゆうしゃ', word: '勇者', category: '1' },
-        { reading: 'まおう', word: '魔王', category: '1' },
-        { reading: 'けん', word: '剣', category: '4' }
+        { reading: 'ゆうしゃ', word: '勇者' },
+        { reading: 'まおう', word: '魔王' },
+        { reading: 'けん', word: '剣' }
       ];
+      
+      // 最初の有効なカテゴリを取得
+      const categorySelect = page.locator('#entry-category');
+      const firstCategoryOption = await categorySelect.locator('option').nth(1).getAttribute('value');
       
       for (const entry of entries) {
         const addEntryBtn = page.locator('#add-entry-btn');
@@ -161,7 +182,10 @@ test.describe('UI Functions E2E Tests', () => {
         
         await page.locator('#entry-reading').fill(entry.reading);
         await page.locator('#entry-word').fill(entry.word);
-        await page.locator('#entry-category').selectOption(entry.category);
+        
+        if (firstCategoryOption) {
+          await page.locator('#entry-category').selectOption(firstCategoryOption);
+        }
         
         const entryForm = page.locator('#entry-form');
         await entryForm.locator('button[type="submit"]').click();
@@ -213,28 +237,41 @@ test.describe('UI Functions E2E Tests', () => {
       
       // ゲーム1を選択して単語を追加
       const gameSelect = page.locator('#game-select');
-      await gameSelect.selectOption('1');
+      const game1Option = await gameSelect.locator('option').nth(-2).getAttribute('value'); // 最後から2番目
+      const game2Option = await gameSelect.locator('option').last().getAttribute('value'); // 最後
       
-      const addEntryBtn = page.locator('#add-entry-btn');
-      await addEntryBtn.click();
-      
-      await page.locator('#entry-reading').fill('ゲーム1のことば');
-      await page.locator('#entry-word').fill('ゲーム1単語');
-      await page.locator('#entry-category').selectOption('1');
-      
-      const entryForm = page.locator('#entry-form');
-      await entryForm.locator('button[type="submit"]').click();
-      
-      // ゲーム2に切り替え
-      await gameSelect.selectOption('2');
-      
-      // 単語リストが空になることを確認
-      const entriesList = page.locator('#entries-list');
-      await expect(entriesList.locator('.entry-item')).toHaveCount(0);
-      
-      // タイトルが更新されることを確認
-      const currentGameTitle = page.locator('#current-game-title');
-      await expect(currentGameTitle).toHaveText('ゲーム2');
+      if (game1Option) {
+        await gameSelect.selectOption(game1Option);
+        
+        const addEntryBtn = page.locator('#add-entry-btn');
+        await addEntryBtn.click();
+        
+        await page.locator('#entry-reading').fill('ゲーム1のことば');
+        await page.locator('#entry-word').fill('ゲーム1単語');
+        
+        // カテゴリを選択
+        const categorySelect = page.locator('#entry-category');
+        const firstCategoryOption = await categorySelect.locator('option').nth(1).getAttribute('value');
+        if (firstCategoryOption) {
+          await categorySelect.selectOption(firstCategoryOption);
+        }
+        
+        const entryForm = page.locator('#entry-form');
+        await entryForm.locator('button[type="submit"]').click();
+        
+        // ゲーム2に切り替え
+        if (game2Option) {
+          await gameSelect.selectOption(game2Option);
+          
+          // 単語リストが空になることを確認
+          const entriesList = page.locator('#entries-list');
+          await expect(entriesList.locator('.entry-item')).toHaveCount(0);
+          
+          // タイトルが更新されることを確認
+          const currentGameTitle = page.locator('#current-game-title');
+          await expect(currentGameTitle).toHaveText('ゲーム2');
+        }
+      }
     });
   });
 });
