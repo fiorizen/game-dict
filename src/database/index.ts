@@ -41,6 +41,10 @@ export class Database {
 		return this.connection.getDbPath();
 	}
 
+	public getDatabase(): import("better-sqlite3").Database {
+		return this.connection.getDatabase();
+	}
+
 	public close(): void {
 		this.connection.close();
 	}

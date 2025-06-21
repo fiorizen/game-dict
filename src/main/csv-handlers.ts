@@ -13,7 +13,7 @@ export class CSVHandlers {
 	}
 
 	/**
-	 * Export all game data to Git-managed CSV format (one file per game)
+	 * Export all game data to Git-managed CSV format (games.csv, categories.csv, game-{ID}.csv)
 	 */
 	async exportToGitCsv(outputDir?: string): Promise<string[]> {
 		const games = this.db.games.getAll();
@@ -25,8 +25,8 @@ export class CSVHandlers {
 			process.env.NODE_ENV === 'test';
 		
 		const defaultDir = isTestEnvironment
-			? path.join(process.cwd(), 'test-data', 'csv-test')
-			: path.join(process.cwd(), 'csv-exports');
+			? path.join(process.cwd(), 'test-data', 'csv')
+			: path.join(process.cwd(), 'csv');
 		
 		const exportDir = outputDir || defaultDir;
 		
@@ -37,6 +37,46 @@ export class CSVHandlers {
 
 		const exportedFiles: string[] = [];
 
+		// 1. Export games.csv
+		if (games.length > 0) {
+			const gamesData = games.map((game) => ({
+				id: game.id,
+				name: game.name,
+				created_at: game.created_at,
+				updated_at: game.updated_at,
+			}));
+
+			const gamesCsvString = stringify(gamesData, {
+				header: true,
+				columns: ["id", "name", "created_at", "updated_at"],
+			});
+
+			const gamesFilePath = path.join(exportDir, "games.csv");
+			fs.writeFileSync(gamesFilePath, gamesCsvString, "utf-8");
+			exportedFiles.push(gamesFilePath);
+		}
+
+		// 2. Export categories.csv
+		if (categories.length > 0) {
+			const categoriesData = categories.map((category) => ({
+				id: category.id,
+				name: category.name,
+				google_ime_name: category.google_ime_name,
+				ms_ime_name: category.ms_ime_name,
+				atok_name: category.atok_name,
+			}));
+
+			const categoriesCsvString = stringify(categoriesData, {
+				header: true,
+				columns: ["id", "name", "google_ime_name", "ms_ime_name", "atok_name"],
+			});
+
+			const categoriesFilePath = path.join(exportDir, "categories.csv");
+			fs.writeFileSync(categoriesFilePath, categoriesCsvString, "utf-8");
+			exportedFiles.push(categoriesFilePath);
+		}
+
+		// 3. Export game-{ID}.csv for each game with entries
 		for (const game of games) {
 			const entries = this.db.entries.getByGameId(game.id);
 			
@@ -119,7 +159,104 @@ export class CSVHandlers {
 	}
 
 	/**
-	 * Import CSV data into the database
+	 * Import all CSV data from Git-managed directory (games.csv, categories.csv, game-*.csv)
+	 */
+	async importFromGitCsvDirectory(inputDir: string): Promise<void> {
+		if (!fs.existsSync(inputDir)) {
+			throw new Error(`Directory not found: ${inputDir}`);
+		}
+
+		const files = fs.readdirSync(inputDir);
+		
+		// 1. Import games.csv first
+		const gamesFile = files.find(f => f === 'games.csv');
+		if (gamesFile) {
+			await this.importGamesFromCsv(path.join(inputDir, gamesFile));
+		}
+		
+		// 2. Import categories.csv
+		const categoriesFile = files.find(f => f === 'categories.csv');
+		if (categoriesFile) {
+			await this.importCategoriesFromCsv(path.join(inputDir, categoriesFile));
+		}
+		
+		// 3. Import game-*.csv files
+		const gameFiles = files.filter(f => f.startsWith('game-') && f.endsWith('.csv'));
+		for (const gameFile of gameFiles) {
+			await this.importFromCsv(path.join(inputDir, gameFile));
+		}
+	}
+
+	/**
+	 * Import games data from games.csv
+	 */
+	private async importGamesFromCsv(filePath: string): Promise<void> {
+		const csvContent = fs.readFileSync(filePath, "utf-8");
+		const records = parse(csvContent, {
+			columns: true,
+			skip_empty_lines: true,
+		}) as Array<{
+			id: string;
+			name: string;
+			created_at?: string;
+			updated_at?: string;
+		}>;
+
+		for (const record of records) {
+			const existingGame = this.db.games.getById(parseInt(record.id));
+			if (!existingGame) {
+				// Create new game with specific ID (Note: this may require custom SQL)
+				const stmt = this.db.getDatabase().prepare(`
+					INSERT INTO games (id, name, created_at, updated_at)
+					VALUES (?, ?, ?, ?)
+				`);
+				stmt.run(
+					parseInt(record.id),
+					record.name,
+					record.created_at || new Date().toISOString(),
+					record.updated_at || new Date().toISOString()
+				);
+			}
+		}
+	}
+
+	/**
+	 * Import categories data from categories.csv
+	 */
+	private async importCategoriesFromCsv(filePath: string): Promise<void> {
+		const csvContent = fs.readFileSync(filePath, "utf-8");
+		const records = parse(csvContent, {
+			columns: true,
+			skip_empty_lines: true,
+		}) as Array<{
+			id: string;
+			name: string;
+			google_ime_name: string;
+			ms_ime_name: string;
+			atok_name: string;
+		}>;
+
+		for (const record of records) {
+			const existingCategory = this.db.categories.getById(parseInt(record.id));
+			if (!existingCategory) {
+				// Create new category with specific ID
+				const stmt = this.db.getDatabase().prepare(`
+					INSERT INTO categories (id, name, google_ime_name, ms_ime_name, atok_name)
+					VALUES (?, ?, ?, ?, ?)
+				`);
+				stmt.run(
+					parseInt(record.id),
+					record.name,
+					record.google_ime_name,
+					record.ms_ime_name,
+					record.atok_name
+				);
+			}
+		}
+	}
+
+	/**
+	 * Import CSV data into the database (single file)
 	 */
 	async importFromCsv(filePath: string): Promise<void> {
 		const csvContent = fs.readFileSync(filePath, "utf-8");

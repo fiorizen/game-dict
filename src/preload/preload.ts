@@ -53,6 +53,8 @@ const api = {
 			ipcRenderer.invoke("csv:exportToImeCsv", gameId, format, outputPath),
 		importFromCsv: (filePath: string) =>
 			ipcRenderer.invoke("csv:importFromCsv", filePath),
+		importFromGitCsvDirectory: (inputDir: string) =>
+			ipcRenderer.invoke("csv:importFromGitCsvDirectory", inputDir),
 		getSuggestedPaths: (gameId?: number) =>
 			ipcRenderer.invoke("csv:getSuggestedPaths", gameId),
 	},

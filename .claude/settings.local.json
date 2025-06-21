@@ -42,7 +42,12 @@
       "Bash(npm test:*)",
       "Bash(find:*)",
       "Bash(timeout 10s npm run electron:dev)",
-      "Bash(gtimeout 10s npm run electron:dev)"
+      "Bash(gtimeout 10s npm run electron:dev)",
+      "Bash(npm run rebuild:node:*)",
+      "Bash(NODE_ENV=test npm run electron:dev)",
+      "Bash(NODE_ENV=test timeout 10s npm run electron:dev)",
+      "Bash(npm run rebuild:electron:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

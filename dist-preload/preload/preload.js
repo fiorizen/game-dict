@@ -34,6 +34,7 @@ const api = {
         exportToGitCsv: (outputPath) => electron_1.ipcRenderer.invoke("csv:exportToGitCsv", outputPath),
         exportToImeCsv: (gameId, format, outputPath) => electron_1.ipcRenderer.invoke("csv:exportToImeCsv", gameId, format, outputPath),
         importFromCsv: (filePath) => electron_1.ipcRenderer.invoke("csv:importFromCsv", filePath),
+        importFromGitCsvDirectory: (inputDir) => electron_1.ipcRenderer.invoke("csv:importFromGitCsvDirectory", inputDir),
         getSuggestedPaths: (gameId) => electron_1.ipcRenderer.invoke("csv:getSuggestedPaths", gameId),
     },
     // File operations

@@ -105,6 +105,15 @@ export class IPCHandlers {
 			}
 		});
 
+		ipcMain.handle("csv:importFromGitCsvDirectory", async (_, inputDir: string) => {
+			try {
+				await this.csvHandlers.importFromGitCsvDirectory(inputDir);
+				return { success: true };
+			} catch (error) {
+				throw new Error(`CSV directory import failed: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		});
+
 		ipcMain.handle("csv:getSuggestedPaths", async (_, gameId?: number) => {
 			return this.csvHandlers.getSuggestedPaths(gameId);
 		});

@@ -27,6 +27,7 @@ declare const api: {
         exportToGitCsv: (outputPath?: string) => Promise<any>;
         exportToImeCsv: (gameId: number, format: "google" | "ms" | "atok", outputPath?: string) => Promise<any>;
         importFromCsv: (filePath: string) => Promise<any>;
+        importFromGitCsvDirectory: (inputDir: string) => Promise<any>;
         getSuggestedPaths: (gameId?: number) => Promise<any>;
     };
     files: {

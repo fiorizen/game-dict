@@ -174,7 +174,7 @@ describe("SQLite Database Tests", () => {
 describe("CSV Export/Import Tests", () => {
 	let db: Database;
 	let csvHandlers: CSVHandlers;
-	const testCsvDir = path.join(testDataPath, "csv-test");
+	const testCsvDir = path.join(testDataPath, "csv");
 
 	it("should initialize CSV handlers", () => {
 		db = Database.getInstance();
