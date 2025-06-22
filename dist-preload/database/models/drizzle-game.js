@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DrizzleGameModel = void 0;
 const drizzle_orm_1 = require("drizzle-orm");
 const schema = __importStar(require("../schema.js"));
+const validation_js_1 = require("../../shared/validation.js");
 class DrizzleGameModel {
     constructor(db) {
         this.db = db;
@@ -57,6 +58,21 @@ class DrizzleGameModel {
         return results[0] || null;
     }
     create(data) {
+        // Validate code
+        const validation = (0, validation_js_1.validateGameCode)(data.code);
+        if (!validation.valid) {
+            throw new Error(`Invalid game code: ${validation.error}`);
+        }
+        // Check if name already exists
+        const existingGameByName = this.getByName(data.name);
+        if (existingGameByName) {
+            throw new Error(`Game name '${data.name}' already exists`);
+        }
+        // Check if code already exists
+        const existingGameByCode = this.getByCode(data.code);
+        if (existingGameByCode) {
+            throw new Error(`Game code '${data.code}' already exists`);
+        }
         const now = new Date().toISOString();
         const result = this.db
             .insert(schema.games)
@@ -72,6 +88,25 @@ class DrizzleGameModel {
     update(id, data) {
         if (Object.keys(data).length === 0) {
             return this.getById(id);
+        }
+        // Validate name if being updated
+        if (data.name) {
+            const existingGameByName = this.getByName(data.name);
+            if (existingGameByName && existingGameByName.id !== id) {
+                throw new Error(`Game name '${data.name}' already exists`);
+            }
+        }
+        // Validate code if being updated
+        if (data.code) {
+            const validation = (0, validation_js_1.validateGameCode)(data.code);
+            if (!validation.valid) {
+                throw new Error(`Invalid game code: ${validation.error}`);
+            }
+            // Check if code already exists (excluding current game)
+            const existingGameByCode = this.getByCode(data.code);
+            if (existingGameByCode && existingGameByCode.id !== id) {
+                throw new Error(`Game code '${data.code}' already exists`);
+            }
         }
         const now = new Date().toISOString();
         const result = this.db
@@ -97,6 +132,18 @@ class DrizzleGameModel {
             .select()
             .from(schema.games)
             .where((0, drizzle_orm_1.eq)(schema.games.name, name))
+            .limit(1)
+            .all();
+        return results[0] || null;
+    }
+    getByName(name) {
+        return this.findByName(name);
+    }
+    getByCode(code) {
+        const results = this.db
+            .select()
+            .from(schema.games)
+            .where((0, drizzle_orm_1.eq)(schema.games.code, code))
             .limit(1)
             .all();
         return results[0] || null;

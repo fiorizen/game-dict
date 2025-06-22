@@ -22,12 +22,24 @@ class DrizzleGameWrapper {
         return (0, adapters_js_1.drizzleGameToLegacy)(result);
     }
     update(id, data) {
-        const drizzleData = data.name ? { name: data.name } : {};
+        const drizzleData = {};
+        if (data.name)
+            drizzleData.name = data.name;
+        if (data.code)
+            drizzleData.code = data.code;
         const result = this.drizzleDb.games.update(id, drizzleData);
         return result ? (0, adapters_js_1.drizzleGameToLegacy)(result) : null;
     }
     delete(id) {
         return this.drizzleDb.games.delete(id);
+    }
+    getByName(name) {
+        const result = this.drizzleDb.games.getByName(name);
+        return result ? (0, adapters_js_1.drizzleGameToLegacy)(result) : null;
+    }
+    getByCode(code) {
+        const result = this.drizzleDb.games.getByCode(code);
+        return result ? (0, adapters_js_1.drizzleGameToLegacy)(result) : null;
     }
 }
 class DrizzleCategoryWrapper {

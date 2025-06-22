@@ -12,6 +12,7 @@ function drizzleGameToLegacy(drizzleGame) {
     return {
         id: drizzleGame.id,
         name: drizzleGame.name,
+        code: drizzleGame.code,
         created_at: drizzleGame.createdAt,
         updated_at: drizzleGame.updatedAt,
     };
@@ -57,6 +58,7 @@ function drizzleEntryWithDetailsToLegacy(drizzleEntry) {
 function legacyGameToDrizzle(legacyGame) {
     return {
         name: legacyGame.name,
+        code: legacyGame.code,
     };
 }
 function legacyCategoryToDrizzle(legacyCategory) {

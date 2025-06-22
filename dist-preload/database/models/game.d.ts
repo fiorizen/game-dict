@@ -9,5 +9,6 @@ export declare class GameModel {
     update(id: number, updates: Partial<NewGame>): Game | null;
     delete(id: number): boolean;
     getByName(name: string): Game | null;
+    getByCode(code: string): Game | null;
 }
 //# sourceMappingURL=game.d.ts.map

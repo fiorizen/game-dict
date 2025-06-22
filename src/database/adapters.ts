@@ -7,6 +7,7 @@ export function drizzleGameToLegacy(drizzleGame: DrizzleGame): Game {
 	return {
 		id: drizzleGame.id,
 		name: drizzleGame.name,
+		code: drizzleGame.code,
 		created_at: drizzleGame.createdAt,
 		updated_at: drizzleGame.updatedAt,
 	};
@@ -53,9 +54,10 @@ export function drizzleEntryWithDetailsToLegacy(drizzleEntry: DrizzleEntryWithDe
 }
 
 // Convert legacy types to Drizzle schema input types (camelCase)
-export function legacyGameToDrizzle(legacyGame: Omit<Game, "id" | "created_at" | "updated_at">): { name: string } {
+export function legacyGameToDrizzle(legacyGame: Omit<Game, "id" | "created_at" | "updated_at">): { name: string; code: string } {
 	return {
 		name: legacyGame.name,
+		code: legacyGame.code,
 	};
 }
 

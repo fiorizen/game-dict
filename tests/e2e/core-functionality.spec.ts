@@ -39,7 +39,7 @@ test.describe('Core Functionality Tests', () => {
     // ゲーム作成APIが正常に呼び出せることを確認
     const createResult = await page.evaluate(async () => {
       try {
-        await (window as any).electronAPI.games.create({ name: 'APIテストゲーム' });
+        await (window as any).electronAPI.games.create({ name: 'APIテストゲーム', code: 'apitestgame' });
         return { success: true };
       } catch (error) {
         return { success: false, error: error.message };

@@ -32,6 +32,9 @@ function setupEventListeners() {
 	// Game selection
 	gameSelect.addEventListener("change", onGameChange);
 	addGameBtn.addEventListener("click", () => openGameModal());
+	
+	// Auto-generate game code from name
+	document.getElementById("game-name").addEventListener("input", onGameNameInput);
 
 	// Entry management - add entry is always inline now
 	addEntryBtn.addEventListener("click", addNewEntryRow);
@@ -166,14 +169,17 @@ async function onGameChange() {
 function openGameModal(game = null) {
 	const title = document.getElementById("game-modal-title");
 	const nameInput = document.getElementById("game-name");
+	const codeInput = document.getElementById("game-code");
 
 	if (game) {
 		title.textContent = "ゲーム編集";
 		nameInput.value = game.name;
+		codeInput.value = game.code;
 		gameForm.dataset.gameId = game.id;
 	} else {
 		title.textContent = "ゲーム追加";
 		nameInput.value = "";
+		codeInput.value = "";
 		delete gameForm.dataset.gameId;
 	}
 
@@ -186,22 +192,57 @@ function closeModals() {
 	gameModal.style.display = "none";
 }
 
+// Auto-generate game code from name
+function onGameNameInput(e) {
+	const name = e.target.value;
+	const codeInput = document.getElementById("game-code");
+	
+	// Only auto-generate if code field is empty or if we're creating a new game (so user can override)
+	if (!codeInput.value.trim() || !gameForm.dataset.gameId) {
+		const suggestedCode = generateGameCodeFromName(name);
+		codeInput.value = suggestedCode;
+	}
+}
+
+// Generate game code from name (client-side version)
+function generateGameCodeFromName(name) {
+	if (!name) return "";
+	
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]/g, "")
+		.substring(0, 16);
+}
+
 // Form submission handlers
 async function onGameSubmit(e) {
 	e.preventDefault();
 
 	const name = document.getElementById("game-name").value.trim();
-	if (!name) return;
+	const code = document.getElementById("game-code").value.trim();
+	
+	if (!name || !code) return;
+
+	// Validate code format
+	if (!/^[a-zA-Z0-9]+$/.test(code)) {
+		showToast("ゲームコードは英数字のみ使用できます", "error");
+		return;
+	}
+
+	if (code.length > 16) {
+		showToast("ゲームコードは16文字以下で入力してください", "error");
+		return;
+	}
 
 	try {
 		const gameId = gameForm.dataset.gameId;
 		let newGameId;
 		
 		if (gameId) {
-			await window.electronAPI.games.update(parseInt(gameId), { name });
+			await window.electronAPI.games.update(parseInt(gameId), { name, code });
 			newGameId = parseInt(gameId);
 		} else {
-			const result = await window.electronAPI.games.create({ name });
+			const result = await window.electronAPI.games.create({ name, code });
 			newGameId = result.id;
 		}
 

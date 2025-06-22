@@ -49,10 +49,11 @@ describe("Drizzle Database Tests", () => {
 	});
 
 	it("should create and retrieve a game", () => {
-		const game = db.games.create({ name: "Test Game" });
+		const game = db.games.create({ name: "Test Game", code: "testgame" });
 		
 		expect(game.id).toBeGreaterThan(0);
 		expect(game.name).toBe("Test Game");
+		expect(game.code).toBe("testgame");
 		expect(game.createdAt).toBeDefined();
 		expect(game.updatedAt).toBeDefined();
 
@@ -61,8 +62,8 @@ describe("Drizzle Database Tests", () => {
 	});
 
 	it("should get all games", () => {
-		db.games.create({ name: "Game 1" });
-		db.games.create({ name: "Game 2" });
+		db.games.create({ name: "Game 1", code: "game1" });
+		db.games.create({ name: "Game 2", code: "game2" });
 		
 		const games = db.games.getAll();
 		expect(games.length).toBe(2);

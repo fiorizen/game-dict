@@ -12,6 +12,9 @@ export declare class DrizzleConnection {
     private getDatabasePath;
     private initializeDatabase;
     private createTablesManually;
+    private migrateGamesTable;
+    private generateCodeFromName;
+    private generateUniqueCodeFromName;
     private insertDefaultCategories;
     getDatabase(): BetterSQLite3Database<typeof schema>;
     getSqlite(): Database.Database;

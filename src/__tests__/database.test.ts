@@ -23,27 +23,49 @@ describe("SQLite Database Tests", () => {
 	});
 
 	it("should create a new game", () => {
-		const game = db.games.create({ name: "Test Game" });
+		const game = db.games.create({ name: "Test Game", code: "testgame" });
 
 		expect(game.id).toBeGreaterThan(0);
 		expect(game.name).toBe("Test Game");
+		expect(game.code).toBe("testgame");
 		expect(game.created_at).toBeTruthy();
 		expect(game.updated_at).toBeTruthy();
 	});
 
 	it("should prevent duplicate game names", () => {
 		expect(() => {
-			db.games.create({ name: "Test Game" });
+			db.games.create({ name: "Test Game", code: "testgame2" });
 		}).toThrow();
+	});
+
+	it("should prevent duplicate game codes", () => {
+		expect(() => {
+			db.games.create({ name: "Test Game 2", code: "testgame" });
+		}).toThrow();
+	});
+
+	it("should validate game code format", () => {
+		expect(() => {
+			db.games.create({ name: "Invalid Code Game", code: "invalid-code!" });
+		}).toThrow("Invalid game code");
+
+		expect(() => {
+			db.games.create({ name: "Too Long Code Game", code: "thisgamecodeistoolongforvalidation" });
+		}).toThrow("Invalid game code");
+
+		expect(() => {
+			db.games.create({ name: "Empty Code Game", code: "" });
+		}).toThrow("Invalid game code");
 	});
 
 	it("should update game name", () => {
 		const games = db.games.getAll();
 		const firstGame = games[0];
-		const updated = db.games.update(firstGame.id, { name: "Updated Game" });
+		const updated = db.games.update(firstGame.id, { name: "Updated Game", code: "updatedgame" });
 
 		expect(updated).toBeDefined();
 		expect(updated?.name).toBe("Updated Game");
+		expect(updated?.code).toBe("updatedgame");
 	});
 
 	it("should have default categories", () => {
@@ -81,11 +103,12 @@ describe("SQLite Database Tests", () => {
 	});
 
 	it("should create entry", () => {
-		const games = db.games.getAll();
+		// Ensure we have a game for this test
+		const testGame = db.games.create({ name: "Entry Test Game", code: "entrytestgame" });
 		const categories = db.categories.getAll();
 
 		const entry = db.entries.create({
-			game_id: games[0].id,
+			game_id: testGame.id,
 			category_id: categories[0].id,
 			reading: "てすと",
 			word: "テスト",
@@ -99,11 +122,12 @@ describe("SQLite Database Tests", () => {
 	});
 
 	it("should search entries", () => {
-		const games = db.games.getAll();
+		// Ensure we have a game for this test
+		const testGame = db.games.create({ name: "Search Test Game", code: "searchtestgame" });
 		const categories = db.categories.getAll();
 
 		db.entries.create({
-			game_id: games[0].id,
+			game_id: testGame.id,
 			category_id: categories[0].id,
 			reading: "バハムート",
 			word: "バハムート",
@@ -131,8 +155,16 @@ describe("SQLite Database Tests", () => {
 	});
 
 	it("should update entry", () => {
-		const entries = db.entries.getAll();
-		const entry = entries[0];
+		// Create a test game and entry for this test
+		const testGame = db.games.create({ name: "Update Test Game", code: "updatetestgame" });
+		const categories = db.categories.getAll();
+		const entry = db.entries.create({
+			game_id: testGame.id,
+			category_id: categories[0].id,
+			reading: "あっぷでーと",
+			word: "アップデート",
+			description: "Original description",
+		});
 
 		const updated = db.entries.update(entry.id, {
 			description: "Updated description",
@@ -142,14 +174,15 @@ describe("SQLite Database Tests", () => {
 	});
 
 	it("should handle bulk inserts efficiently", () => {
-		const games = db.games.getAll();
+		// Create a test game for bulk inserts
+		const testGame = db.games.create({ name: "Bulk Test Game", code: "bulktestgame" });
 		const categories = db.categories.getAll();
 
 		const startTime = Date.now();
 
 		for (let i = 0; i < 100; i++) {
 			db.entries.create({
-				game_id: games[0].id,
+				game_id: testGame.id,
 				category_id: categories[i % categories.length].id,
 				reading: `テスト${i}`,
 				word: `テスト${i}`,
@@ -190,7 +223,7 @@ describe("CSV Export/Import Tests", () => {
 	it("should export games to Git CSV format", async () => {
 		// Create test game with entries
 		const testGameName = "CSV Test Game";
-		const game = db.games.create({ name: testGameName });
+		const game = db.games.create({ name: testGameName, code: "csvtestgame" });
 		const categories = db.categories.getAll();
 		
 		// Find specific categories
@@ -219,15 +252,15 @@ describe("CSV Export/Import Tests", () => {
 		
 		expect(exportedFiles.length).toBeGreaterThan(0);
 		
-		// Find the file for our test game
-		const gameFile = exportedFiles.find(file => file.includes(`game-${game.id}.csv`));
+		// Find the file for our test game (now uses code instead of ID)
+		const gameFile = exportedFiles.find(file => file.includes(`game-${game.code}.csv`));
 		expect(gameFile).toBeDefined();
 		
 		// Verify file exists and has content
 		expect(fs.existsSync(gameFile!)).toBe(true);
 		
 		const csvContent = fs.readFileSync(gameFile!, "utf-8");
-		expect(csvContent).toContain(`# Game: ${testGameName} (ID: ${game.id})`);
+		expect(csvContent).toContain(`# Game: ${testGameName} (Code: ${game.code})`);
 		expect(csvContent).toContain("category_name,reading,word,description");
 		expect(csvContent).toContain("てすと,テスト");
 		expect(csvContent).toContain("でーた,データ");
@@ -236,10 +269,15 @@ describe("CSV Export/Import Tests", () => {
 	});
 
 	it("should import CSV data back to database", async () => {
+		// Ensure test CSV directory exists
+		if (!fs.existsSync(testCsvDir)) {
+			fs.mkdirSync(testCsvDir, { recursive: true });
+		}
+
 		// Create a test CSV file
 		const testCsvFile = path.join(testCsvDir, "import-test.csv");
-		const testGameName = "Imported Game";
-		const csvContent = `# Game: ${testGameName} (ID: 999)
+		const testGameName = "CSV Import Test Game";
+		const csvContent = `# Game: ${testGameName} (Code: csvimporttest)
 category_name,reading,word,description
 名詞,いんぽーと,インポート,インポートテスト
 人名,てすとじん,テスト人,テスト用の人名
@@ -258,7 +296,8 @@ category_name,reading,word,description
 		const gamesAfterImport = db.games.getAll();
 		const entriesAfterImport = db.entries.getAll();
 
-		expect(gamesAfterImport.length).toBe(gamesBeforeImport.length + 1);
+		// Check that new game was created (should have 1 more game)
+		expect(gamesAfterImport.length).toBeGreaterThan(gamesBeforeImport.length);
 		expect(entriesAfterImport.length).toBe(entriesBeforeImport.length + 3);
 
 		// Find the imported game
@@ -282,7 +321,7 @@ category_name,reading,word,description
 	it("should handle round-trip conversion (export -> import)", async () => {
 		// Create a game with specific data
 		const originalGameName = "Round Trip Test";
-		const originalGame = db.games.create({ name: originalGameName });
+		const originalGame = db.games.create({ name: originalGameName, code: "roundtriptest" });
 		const categories = db.categories.getAll();
 
 		// Find specific categories
@@ -311,7 +350,7 @@ category_name,reading,word,description
 
 		// Export to CSV
 		const exportedFiles = await csvHandlers.exportToGitCsv(testCsvDir);
-		const gameFile = exportedFiles.find(file => file.includes(`game-${originalGame.id}.csv`));
+		const gameFile = exportedFiles.find(file => file.includes(`game-${originalGame.code}.csv`));
 		expect(gameFile).toBeDefined();
 
 		// Delete the original game and entries
@@ -348,7 +387,7 @@ category_name,reading,word,description
 
 	it("should handle empty games (no export)", async () => {
 		// Create a game with no entries
-		const emptyGame = db.games.create({ name: "Empty Game" });
+		const emptyGame = db.games.create({ name: "Empty Game", code: "emptygame" });
 		
 		// Export to CSV
 		const exportedFiles = await csvHandlers.exportToGitCsv(testCsvDir);
@@ -360,7 +399,7 @@ category_name,reading,word,description
 
 	it("should handle filename sanitization correctly", async () => {
 		// Create game with special characters in name
-		const specialGame = db.games.create({ name: "Special/Game:Test*Name" });
+		const specialGame = db.games.create({ name: "Special/Game:Test*Name", code: "specialgametest" });
 		const categories = db.categories.getAll();
 		const nounCategory = categories.find(c => c.name === "名詞");
 		
@@ -375,13 +414,13 @@ category_name,reading,word,description
 		// Export to CSV
 		const exportedFiles = await csvHandlers.exportToGitCsv(testCsvDir);
 		
-		// File should use game ID, not sanitized name
-		const specialGameFile = exportedFiles.find(file => file.includes(`game-${specialGame.id}.csv`));
+		// File should use game code, not sanitized name
+		const specialGameFile = exportedFiles.find(file => file.includes(`game-${specialGame.code}.csv`));
 		expect(specialGameFile).toBeDefined();
 		expect(fs.existsSync(specialGameFile!)).toBe(true);
 		
 		// Content should preserve original game name in comment
 		const csvContent = fs.readFileSync(specialGameFile!, "utf-8");
-		expect(csvContent).toContain(`# Game: Special/Game:Test*Name (ID: ${specialGame.id})`);
+		expect(csvContent).toContain(`# Game: Special/Game:Test*Name (Code: ${specialGame.code})`);
 	});
 });

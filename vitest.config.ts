@@ -8,6 +8,8 @@ export default defineConfig({
 		exclude: ["node_modules", "dist", "tests/e2e/**", "test-*.ts"],
 		testTimeout: 10000,
 		hookTimeout: 10000,
+		maxConcurrency: 1,
+		fileParallelism: false,
 	},
 	esbuild: {
 		target: "node22",

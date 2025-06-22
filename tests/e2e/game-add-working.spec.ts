@@ -40,6 +40,10 @@ test.describe('Game Add Functionality', () => {
     const gameNameInput = page.locator('#game-name');
     await gameNameInput.fill('ワーキングテストゲーム');
 
+    // ゲームコードを入力
+    const gameCodeInput = page.locator('#game-code');
+    await gameCodeInput.fill('workingtest');
+
     // 保存ボタンをクリック
     const saveBtn = page.locator('#game-form button[type="submit"]');
     await saveBtn.click();
@@ -54,12 +58,17 @@ test.describe('Game Add Functionality', () => {
   });
 
   test('複数のゲームを追加できる', async () => {
-    const gameNames = ['RPGゲーム', 'アクションゲーム', 'シミュレーションゲーム'];
+    const gameData = [
+      { name: 'RPGゲーム', code: 'rpg' },
+      { name: 'アクションゲーム', code: 'action' },
+      { name: 'シミュレーションゲーム', code: 'simulation' }
+    ];
     
-    for (const gameName of gameNames) {
+    for (const game of gameData) {
       // ゲーム追加プロセス
       await page.locator('#add-game-btn').click();
-      await page.locator('#game-name').fill(gameName);
+      await page.locator('#game-name').fill(game.name);
+      await page.locator('#game-code').fill(game.code);
       await page.locator('#game-form button[type="submit"]').click();
       
       // モーダルが閉じることを確認
@@ -68,8 +77,8 @@ test.describe('Game Add Functionality', () => {
     }
 
     // UI上の選択リストに反映されていることを確認
-    for (const gameName of gameNames) {
-      await expect(page.locator('#game-select').locator('option').filter({ hasText: gameName })).toHaveCount(1);
+    for (const game of gameData) {
+      await expect(page.locator('#game-select').locator('option').filter({ hasText: game.name })).toHaveCount(1);
     }
   });
 });

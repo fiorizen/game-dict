@@ -35,13 +35,25 @@ class DrizzleGameWrapper {
 	}
 
 	public update(id: number, data: Partial<NewGame>): Game | null {
-		const drizzleData = data.name ? { name: data.name } : {};
+		const drizzleData: { name?: string; code?: string } = {};
+		if (data.name) drizzleData.name = data.name;
+		if (data.code) drizzleData.code = data.code;
 		const result = this.drizzleDb.games.update(id, drizzleData);
 		return result ? drizzleGameToLegacy(result) : null;
 	}
 
 	public delete(id: number): boolean {
 		return this.drizzleDb.games.delete(id);
+	}
+
+	public getByName(name: string): Game | null {
+		const result = this.drizzleDb.games.getByName(name);
+		return result ? drizzleGameToLegacy(result) : null;
+	}
+
+	public getByCode(code: string): Game | null {
+		const result = this.drizzleDb.games.getByCode(code);
+		return result ? drizzleGameToLegacy(result) : null;
 	}
 }
 

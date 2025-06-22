@@ -10,6 +10,8 @@ export declare class DrizzleGameModel {
     update(id: number, data: Partial<Omit<NewGame, "id" | "createdAt">>): Game | null;
     delete(id: number): boolean;
     findByName(name: string): Game | null;
+    getByName(name: string): Game | null;
+    getByCode(code: string): Game | null;
     getRecentGames(limit?: number): Game[];
     count(): number;
 }

@@ -8,6 +8,8 @@ declare class DrizzleGameWrapper {
     create(data: NewGame): Game;
     update(id: number, data: Partial<NewGame>): Game | null;
     delete(id: number): boolean;
+    getByName(name: string): Game | null;
+    getByCode(code: string): Game | null;
 }
 declare class DrizzleCategoryWrapper {
     private drizzleDb;

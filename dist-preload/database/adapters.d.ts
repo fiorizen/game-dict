@@ -6,6 +6,7 @@ export declare function drizzleEntryToLegacy(drizzleEntry: DrizzleEntry): Entry;
 export declare function drizzleEntryWithDetailsToLegacy(drizzleEntry: DrizzleEntryWithDetails): EntryWithDetails;
 export declare function legacyGameToDrizzle(legacyGame: Omit<Game, "id" | "created_at" | "updated_at">): {
     name: string;
+    code: string;
 };
 export declare function legacyCategoryToDrizzle(legacyCategory: Omit<Category, "id" | "created_at" | "updated_at"> | {
     name: string;

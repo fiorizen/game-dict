@@ -7,6 +7,7 @@ const sqlite_core_1 = require("drizzle-orm/sqlite-core");
 exports.games = (0, sqlite_core_1.sqliteTable)("games", {
     id: (0, sqlite_core_1.integer)("id").primaryKey({ autoIncrement: true }),
     name: (0, sqlite_core_1.text)("name").notNull().unique(),
+    code: (0, sqlite_core_1.text)("code").notNull().unique(),
     createdAt: (0, sqlite_core_1.text)("created_at").notNull().default((0, drizzle_orm_1.sql) `CURRENT_TIMESTAMP`),
     updatedAt: (0, sqlite_core_1.text)("updated_at").notNull().default((0, drizzle_orm_1.sql) `CURRENT_TIMESTAMP`),
 });

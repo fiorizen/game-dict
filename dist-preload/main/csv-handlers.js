@@ -10,6 +10,7 @@ const node_path_1 = __importDefault(require("node:path"));
 const sync_1 = require("csv-stringify/sync");
 const sync_2 = require("csv-parse/sync");
 const index_js_1 = require("../database/index.js");
+const validation_js_1 = require("../shared/validation.js");
 class CSVHandlers {
     constructor() {
         this.db = index_js_1.Database.getInstance();
@@ -38,12 +39,13 @@ class CSVHandlers {
             const gamesData = games.map((game) => ({
                 id: game.id,
                 name: game.name,
+                code: game.code,
                 created_at: game.created_at,
                 updated_at: game.updated_at,
             }));
             const gamesCsvString = (0, sync_1.stringify)(gamesData, {
                 header: true,
-                columns: ["id", "name", "created_at", "updated_at"],
+                columns: ["id", "name", "code", "created_at", "updated_at"],
             });
             const gamesFilePath = node_path_1.default.join(exportDir, "games.csv");
             node_fs_1.default.writeFileSync(gamesFilePath, gamesCsvString, "utf-8");
@@ -66,7 +68,7 @@ class CSVHandlers {
             node_fs_1.default.writeFileSync(categoriesFilePath, categoriesCsvString, "utf-8");
             exportedFiles.push(categoriesFilePath);
         }
-        // 3. Export game-{ID}.csv for each game with entries
+        // 3. Export game-{code}.csv for each game with entries
         for (const game of games) {
             const entries = this.db.entries.getByGameId(game.id);
             // Skip empty games
@@ -88,9 +90,9 @@ class CSVHandlers {
                 columns: ["category_name", "reading", "word", "description"],
             });
             // Add game name as comment at the top
-            const csvWithComment = `# Game: ${game.name} (ID: ${game.id})\n${csvString}`;
-            // Fixed filename: game-{ID}.csv
-            const filePath = node_path_1.default.join(exportDir, `game-${game.id}.csv`);
+            const csvWithComment = `# Game: ${game.name} (Code: ${game.code})\n${csvString}`;
+            // Fixed filename: game-{code}.csv
+            const filePath = node_path_1.default.join(exportDir, `game-${game.code}.csv`);
             node_fs_1.default.writeFileSync(filePath, csvWithComment, "utf-8");
             exportedFiles.push(filePath);
         }
@@ -147,7 +149,7 @@ class CSVHandlers {
         if (categoriesFile) {
             await this.importCategoriesFromCsv(node_path_1.default.join(inputDir, categoriesFile));
         }
-        // 3. Import game-*.csv files
+        // 3. Import game-*.csv files (both old format game-{id}.csv and new format game-{code}.csv)
         const gameFiles = files.filter(f => f.startsWith('game-') && f.endsWith('.csv'));
         for (const gameFile of gameFiles) {
             await this.importFromCsv(node_path_1.default.join(inputDir, gameFile));
@@ -167,10 +169,10 @@ class CSVHandlers {
             if (!existingGame) {
                 // Create new game with specific ID (Note: this may require custom SQL)
                 const stmt = this.db.getDatabase().prepare(`
-					INSERT INTO games (id, name, created_at, updated_at)
-					VALUES (?, ?, ?, ?)
+					INSERT INTO games (id, name, code, created_at, updated_at)
+					VALUES (?, ?, ?, ?, ?)
 				`);
-                stmt.run(parseInt(record.id), record.name, record.created_at || new Date().toISOString(), record.updated_at || new Date().toISOString());
+                stmt.run(parseInt(record.id), record.name, record.code, record.created_at || new Date().toISOString(), record.updated_at || new Date().toISOString());
             }
         }
     }
@@ -204,9 +206,17 @@ class CSVHandlers {
         let gameNameFromComment = "";
         const lines = csvContent.split('\n');
         if (lines[0].startsWith('#')) {
-            const commentMatch = lines[0].match(/# Game: (.+) \(ID: \d+\)/);
-            if (commentMatch) {
-                gameNameFromComment = commentMatch[1];
+            // Try new format first: # Game: name (Code: code)
+            const newFormatMatch = lines[0].match(/# Game: (.+) \(Code: .+\)/);
+            if (newFormatMatch) {
+                gameNameFromComment = newFormatMatch[1];
+            }
+            else {
+                // Fallback to old format: # Game: name (ID: id)
+                const oldFormatMatch = lines[0].match(/# Game: (.+) \(ID: \d+\)/);
+                if (oldFormatMatch) {
+                    gameNameFromComment = oldFormatMatch[1];
+                }
             }
         }
         const records = (0, sync_2.parse)(csvContent, {
@@ -233,7 +243,23 @@ class CSVHandlers {
                 game = existingGames[0];
             }
             else {
-                game = this.db.games.create({ name: gameName });
+                // Generate a unique code from the game name
+                let gameCode = (0, validation_js_1.generateGameCodeFromName)(gameName);
+                if (!gameCode) {
+                    gameCode = "imported";
+                }
+                // Ensure uniqueness
+                const existingGames = this.db.games.getAll();
+                const existingCodes = existingGames.map(g => g.code);
+                let counter = 1;
+                let finalCode = gameCode;
+                while (existingCodes.includes(finalCode)) {
+                    const suffix = counter.toString();
+                    const maxBaseLength = 16 - suffix.length;
+                    finalCode = gameCode.substring(0, maxBaseLength) + suffix;
+                    counter++;
+                }
+                game = this.db.games.create({ name: gameName, code: finalCode });
             }
             gameCache.set(gameName, game);
         }

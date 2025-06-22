@@ -5,6 +5,7 @@ import { stringify } from "csv-stringify/sync";
 import { parse } from "csv-parse/sync";
 import { Database } from "../database/index.js";
 import type { Game, Category, Entry } from "../shared/types.js";
+import { generateGameCodeFromName } from "../shared/validation.js";
 
 export class CSVHandlers {
 	private db: Database;
@@ -43,13 +44,14 @@ export class CSVHandlers {
 			const gamesData = games.map((game) => ({
 				id: game.id,
 				name: game.name,
+				code: game.code,
 				created_at: game.created_at,
 				updated_at: game.updated_at,
 			}));
 
 			const gamesCsvString = stringify(gamesData, {
 				header: true,
-				columns: ["id", "name", "created_at", "updated_at"],
+				columns: ["id", "name", "code", "created_at", "updated_at"],
 			});
 
 			const gamesFilePath = path.join(exportDir, "games.csv");
@@ -77,7 +79,7 @@ export class CSVHandlers {
 			exportedFiles.push(categoriesFilePath);
 		}
 
-		// 3. Export game-{ID}.csv for each game with entries
+		// 3. Export game-{code}.csv for each game with entries
 		for (const game of games) {
 			const entries = this.db.entries.getByGameId(game.id);
 			
@@ -104,10 +106,10 @@ export class CSVHandlers {
 			});
 
 			// Add game name as comment at the top
-			const csvWithComment = `# Game: ${game.name} (ID: ${game.id})\n${csvString}`;
+			const csvWithComment = `# Game: ${game.name} (Code: ${game.code})\n${csvString}`;
 
-			// Fixed filename: game-{ID}.csv
-			const filePath = path.join(exportDir, `game-${game.id}.csv`);
+			// Fixed filename: game-{code}.csv
+			const filePath = path.join(exportDir, `game-${game.code}.csv`);
 			
 			fs.writeFileSync(filePath, csvWithComment, "utf-8");
 			exportedFiles.push(filePath);
@@ -181,7 +183,7 @@ export class CSVHandlers {
 			await this.importCategoriesFromCsv(path.join(inputDir, categoriesFile));
 		}
 		
-		// 3. Import game-*.csv files
+		// 3. Import game-*.csv files (both old format game-{id}.csv and new format game-{code}.csv)
 		const gameFiles = files.filter(f => f.startsWith('game-') && f.endsWith('.csv'));
 		for (const gameFile of gameFiles) {
 			await this.importFromCsv(path.join(inputDir, gameFile));
@@ -199,6 +201,7 @@ export class CSVHandlers {
 		}) as Array<{
 			id: string;
 			name: string;
+			code: string;
 			created_at?: string;
 			updated_at?: string;
 		}>;
@@ -208,12 +211,13 @@ export class CSVHandlers {
 			if (!existingGame) {
 				// Create new game with specific ID (Note: this may require custom SQL)
 				const stmt = this.db.getDatabase().prepare(`
-					INSERT INTO games (id, name, created_at, updated_at)
-					VALUES (?, ?, ?, ?)
+					INSERT INTO games (id, name, code, created_at, updated_at)
+					VALUES (?, ?, ?, ?, ?)
 				`);
 				stmt.run(
 					parseInt(record.id),
 					record.name,
+					record.code,
 					record.created_at || new Date().toISOString(),
 					record.updated_at || new Date().toISOString()
 				);
@@ -266,9 +270,16 @@ export class CSVHandlers {
 		let gameNameFromComment = "";
 		const lines = csvContent.split('\n');
 		if (lines[0].startsWith('#')) {
-			const commentMatch = lines[0].match(/# Game: (.+) \(ID: \d+\)/);
-			if (commentMatch) {
-				gameNameFromComment = commentMatch[1];
+			// Try new format first: # Game: name (Code: code)
+			const newFormatMatch = lines[0].match(/# Game: (.+) \(Code: .+\)/);
+			if (newFormatMatch) {
+				gameNameFromComment = newFormatMatch[1];
+			} else {
+				// Fallback to old format: # Game: name (ID: id)
+				const oldFormatMatch = lines[0].match(/# Game: (.+) \(ID: \d+\)/);
+				if (oldFormatMatch) {
+					gameNameFromComment = oldFormatMatch[1];
+				}
 			}
 		}
 		
@@ -303,7 +314,26 @@ export class CSVHandlers {
 			if (existingGames.length > 0) {
 				game = existingGames[0];
 			} else {
-				game = this.db.games.create({ name: gameName });
+				// Generate a unique code from the game name
+				let gameCode = generateGameCodeFromName(gameName);
+				if (!gameCode) {
+					gameCode = "imported";
+				}
+				
+				// Ensure uniqueness
+				const existingGames = this.db.games.getAll();
+				const existingCodes = existingGames.map(g => g.code);
+				let counter = 1;
+				let finalCode = gameCode;
+				
+				while (existingCodes.includes(finalCode)) {
+					const suffix = counter.toString();
+					const maxBaseLength = 16 - suffix.length;
+					finalCode = gameCode.substring(0, maxBaseLength) + suffix;
+					counter++;
+				}
+				
+				game = this.db.games.create({ name: gameName, code: finalCode });
 			}
 			gameCache.set(gameName, game);
 		}

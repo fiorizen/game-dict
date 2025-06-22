@@ -119,10 +119,14 @@ export class DrizzleConnection {
 			CREATE TABLE IF NOT EXISTS games (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				name TEXT NOT NULL UNIQUE,
+				code TEXT NOT NULL UNIQUE,
 				created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 			)
 		`);
+
+		// Migrate existing games table if needed
+		this.migrateGamesTable();
 
 		this.sqlite.exec(`
 			CREATE TABLE IF NOT EXISTS categories (
@@ -159,6 +163,82 @@ export class DrizzleConnection {
 		`);
 	}
 
+	private migrateGamesTable(): void {
+		// Check if code column exists
+		const tableInfo = this.sqlite.prepare("PRAGMA table_info(games)").all() as Array<{
+			cid: number;
+			name: string;
+			type: string;
+			notnull: number;
+			dflt_value: any;
+			pk: number;
+		}>;
+
+		const codeColumnExists = tableInfo.some(column => column.name === 'code');
+
+		if (!codeColumnExists) {
+			console.log('Adding code column to games table...');
+			
+			// Add code column (without NOT NULL constraint initially)
+			this.sqlite.exec('ALTER TABLE games ADD COLUMN code TEXT');
+			
+			// Generate codes for existing games
+			const existingGames = this.sqlite.prepare('SELECT id, name FROM games').all() as Array<{
+				id: number;
+				name: string;
+			}>;
+
+			if (existingGames.length > 0) {
+				const updateCode = this.sqlite.prepare('UPDATE games SET code = ? WHERE id = ?');
+				
+				for (const game of existingGames) {
+					const existingCodes = existingGames
+						.filter(g => g.id !== game.id)
+						.map(g => this.generateCodeFromName(g.name))
+						.filter((code): code is string => Boolean(code));
+					const generatedCode = this.generateUniqueCodeFromName(game.name, existingCodes);
+					updateCode.run(generatedCode, game.id);
+				}
+			}
+
+			// Now add the UNIQUE constraint
+			this.sqlite.exec(`
+				CREATE UNIQUE INDEX IF NOT EXISTS idx_games_code ON games(code);
+			`);
+			
+			console.log('Code column migration completed.');
+		}
+	}
+
+	private generateCodeFromName(name: string): string {
+		if (!name) return "";
+		
+		return name
+			.toLowerCase()
+			.replace(/[^a-z0-9]/g, "")
+			.substring(0, 16);
+	}
+
+	private generateUniqueCodeFromName(name: string, existingCodes: string[]): string {
+		let baseCode = this.generateCodeFromName(name);
+		if (!baseCode) {
+			baseCode = "game";
+		}
+
+		let code = baseCode;
+		let counter = 1;
+
+		// Ensure uniqueness
+		while (existingCodes.includes(code)) {
+			const suffix = counter.toString();
+			const maxBaseLength = 16 - suffix.length;
+			code = baseCode.substring(0, maxBaseLength) + suffix;
+			counter++;
+		}
+
+		return code;
+	}
+
 	private insertDefaultCategories(): void {
 		const existingCategories = this.db
 			.select({ count: sql<number>`count(*)` })
@@ -187,7 +267,17 @@ export class DrizzleConnection {
 				},
 			];
 
-			this.db.insert(schema.categories).values(defaultCategories).run();
+			// Use insert ignore or handle conflicts
+			for (const category of defaultCategories) {
+				try {
+					this.db.insert(schema.categories).values(category).run();
+				} catch (error) {
+					// Ignore duplicate category errors
+					if (!(error as any).message?.includes('UNIQUE constraint failed')) {
+						throw error;
+					}
+				}
+			}
 		}
 	}
 

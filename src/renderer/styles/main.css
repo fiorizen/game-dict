@@ -383,6 +383,12 @@ textarea:focus {
 	color: #333;
 }
 
+.form-help {
+	font-size: 0.8rem;
+	color: #666;
+	margin-top: 0.25rem;
+}
+
 .form-actions {
 	display: flex;
 	gap: 0.5rem;

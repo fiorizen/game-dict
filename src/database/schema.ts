@@ -6,6 +6,7 @@ import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
 export const games = sqliteTable("games", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	name: text("name").notNull().unique(),
+	code: text("code").notNull().unique(),
 	createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });

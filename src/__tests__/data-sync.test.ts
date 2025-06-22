@@ -25,8 +25,13 @@ beforeEach(() => {
 
 afterEach(() => {
 	// Clean test CSV data after each test
-	if (fs.existsSync(testCsvPath)) {
-		fs.rmSync(testCsvPath, { recursive: true, force: true });
+	try {
+		if (fs.existsSync(testCsvPath)) {
+			fs.rmSync(testCsvPath, { recursive: true, force: true });
+		}
+	} catch (error) {
+		// Ignore cleanup errors in tests
+		console.warn('CSV cleanup failed:', error);
 	}
 });
 
@@ -48,7 +53,14 @@ describe("Data Sync Manager Tests", () => {
 		expect(status.csvEntryCount).toBe(0);
 		expect(status.dbGameCount).toBeGreaterThanOrEqual(0);
 		expect(status.dbEntryCount).toBeGreaterThanOrEqual(0);
-		expect(status.recommendation).toBe('skip_import');
+		
+		// If DB has data and no CSV exists, recommendation should be 'user_confirm'
+		// If DB is empty, recommendation should be 'skip_import'
+		if (status.dbGameCount > 0 || status.dbEntryCount > 0) {
+			expect(status.recommendation).toBe('user_confirm');
+		} else {
+			expect(status.recommendation).toBe('skip_import');
+		}
 	});
 
 	it("should handle safe auto import when CSV exists and DB is empty", async () => {
@@ -57,9 +69,9 @@ describe("Data Sync Manager Tests", () => {
 			fs.mkdirSync(testCsvPath, { recursive: true });
 		}
 
-		// Create test games.csv
-		const gamesContent = `id,name,created_at,updated_at
-1,Test Game,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z`;
+		// Create test games.csv (with code column)
+		const gamesContent = `id,name,code,created_at,updated_at
+1,Test Game,testgame,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z`;
 		fs.writeFileSync(path.join(testCsvPath, "games.csv"), gamesContent);
 
 		// Create test categories.csv
@@ -68,12 +80,12 @@ describe("Data Sync Manager Tests", () => {
 2,人名,人名,人名,人名`;
 		fs.writeFileSync(path.join(testCsvPath, "categories.csv"), categoriesContent);
 
-		// Create test game-1.csv
-		const gameEntriesContent = `# Game: Test Game (ID: 1)
+		// Create test game-testgame.csv (using code instead of ID)
+		const gameEntriesContent = `# Game: Test Game (Code: testgame)
 category_name,reading,word,description
 名詞,てすと,テスト,テスト用エントリ
 人名,たろう,太郎,テスト人名`;
-		fs.writeFileSync(path.join(testCsvPath, "game-1.csv"), gameEntriesContent);
+		fs.writeFileSync(path.join(testCsvPath, "game-testgame.csv"), gameEntriesContent);
 
 		// Create test sync manager with explicit CSV directory
 		const testSyncManager = new DataSyncManager(testCsvPath);
@@ -94,21 +106,21 @@ category_name,reading,word,description
 		}
 
 		// Create test games.csv with one game
-		const gamesContent = `id,name,created_at,updated_at
-1,CSV Game,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z`;
+		const gamesContent = `id,name,code,created_at,updated_at
+1,CSV Game,csvgame,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z`;
 		fs.writeFileSync(path.join(testCsvPath, "games.csv"), gamesContent);
 
-		// Create test game-1.csv with one entry
-		const gameEntriesContent = `# Game: CSV Game (ID: 1)
+		// Create test game-csvgame.csv with one entry
+		const gameEntriesContent = `# Game: CSV Game (Code: csvgame)
 category_name,reading,word,description
 名詞,しーえすぶい,CSV,CSV用エントリ`;
-		fs.writeFileSync(path.join(testCsvPath, "game-1.csv"), gameEntriesContent);
+		fs.writeFileSync(path.join(testCsvPath, "game-csvgame.csv"), gameEntriesContent);
 
 		const db = Database.getInstance();
 		
 		// Add more data to DB than CSV has
-		const testGame1 = db.games.create({ name: "DB Test Game 1" });
-		const testGame2 = db.games.create({ name: "DB Test Game 2" });
+		const testGame1 = db.games.create({ name: "DB Test Game 1", code: "dbtestgame1" });
+		const testGame2 = db.games.create({ name: "DB Test Game 2", code: "dbtestgame2" });
 		const categories = db.categories.getAll();
 		
 		db.entries.create({
@@ -184,16 +196,16 @@ category_name,reading,word,description
 		}
 
 		// Create test games.csv
-		const gamesContent = `id,name,created_at,updated_at
-1,Test Game,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z`;
+		const gamesContent = `id,name,code,created_at,updated_at
+1,Test Game,testgame,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z`;
 		fs.writeFileSync(path.join(testCsvPath, "games.csv"), gamesContent);
 
-		// Create test game-1.csv
-		const gameEntriesContent = `# Game: Test Game (ID: 1)
+		// Create test game-testgame.csv
+		const gameEntriesContent = `# Game: Test Game (Code: testgame)
 category_name,reading,word,description
 名詞,てすと,テスト,テスト用エントリ
 人名,たろう,太郎,テスト人名`;
-		fs.writeFileSync(path.join(testCsvPath, "game-1.csv"), gameEntriesContent);
+		fs.writeFileSync(path.join(testCsvPath, "game-testgame.csv"), gameEntriesContent);
 		
 		const testSyncManager = new (class extends DataSyncManager {
 			constructor() {
@@ -230,7 +242,7 @@ category_name,reading,word,description
 		const db = Database.getInstance();
 		
 		// Add data to trigger changes
-		const testGame = db.games.create({ name: "Exit Test Game" });
+		const testGame = db.games.create({ name: "Exit Test Game", code: "exittestgame" });
 		const categories = db.categories.getAll();
 		
 		db.entries.create({
@@ -273,7 +285,7 @@ category_name,reading,word,description
 		const db = Database.getInstance();
 		
 		// Add some data to export
-		const testGame = db.games.create({ name: "Auto Export Game" });
+		const testGame = db.games.create({ name: "Auto Export Game", code: "autoexportgame" });
 		const categories = db.categories.getAll();
 		
 		db.entries.create({
