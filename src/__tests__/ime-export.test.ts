@@ -90,10 +90,10 @@ describe("IME Export Functionality", () => {
 		expect(lines).toHaveLength(2);
 
 		// Verify format: reading \t word \t category_name (order may vary)
-		// Note: Default "名詞" category has msImeName = "一般"
+		// Note: Default "名詞" category has msImeName = "名詞"
 		const expectedLines = [
-			"てすと\tテスト\t一般",
-			"げーむ\tゲーム\t一般"
+			"てすと\tテスト\t名詞",
+			"げーむ\tゲーム\t名詞"
 		];
 		
 		// Check that all expected lines are present (regardless of order)
@@ -157,10 +157,10 @@ describe("IME Export Functionality", () => {
 		expect(lines).toHaveLength(2);
 
 		// Verify category names are MS IME format (check content exists regardless of order)
-		// Note: Both categories have msImeName = "一般" by default
+		// Note: Both categories now have msImeName = "名詞"
 		const expectedLines = [
-			"めいし\t名詞\t一般",      // Uses ms_ime_name
-			"むかてごり\t無カテゴリ\t一般"  // Uses ms_ime_name or fallback
+			"めいし\t名詞\t名詞",      // Uses ms_ime_name
+			"むかてごり\t無カテゴリ\t名詞"  // Uses ms_ime_name or fallback
 		];
 		
 		expectedLines.forEach(expectedLine => {

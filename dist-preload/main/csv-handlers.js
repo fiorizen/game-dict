@@ -109,13 +109,13 @@ class CSVHandlers {
             // Map category to IME-specific format
             switch (format) {
                 case "google":
-                    categoryName = category?.google_ime_name || "一般";
+                    categoryName = category?.google_ime_name || "名詞";
                     break;
                 case "ms":
-                    categoryName = category?.ms_ime_name || "一般";
+                    categoryName = category?.ms_ime_name || "名詞";
                     break;
                 case "atok":
-                    categoryName = category?.atok_name || "一般";
+                    categoryName = category?.atok_name || "名詞";
                     break;
             }
             return {
@@ -152,7 +152,7 @@ class CSVHandlers {
         // Build tab-separated content: reading \t word \t category_name
         const lines = entries.map((entry) => {
             const category = categories.find((c) => c.id === entry.category_id);
-            const categoryName = category?.ms_ime_name || "一般";
+            const categoryName = category?.ms_ime_name || "名詞";
             return `${entry.reading}\t${entry.word}\t${categoryName}`;
         });
         const content = lines.join('\n');

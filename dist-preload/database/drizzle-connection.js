@@ -84,7 +84,21 @@ class DrizzleConnection {
             console.log('Using test database:', testDbPath);
             return testDbPath;
         }
-        // For testing environment, check if app is available
+        // In Electron environment (main process or renderer with remote access)
+        try {
+            // Try dynamic import first for ESM compatibility
+            const electronModule = typeof require !== "undefined" ? require("electron") : null;
+            if (electronModule?.app) {
+                const userDataPath = electronModule.app.getPath("userData");
+                const prodDbPath = node_path_1.default.join(userDataPath, "game-dict.db");
+                console.log('Using production database:', prodDbPath);
+                return prodDbPath;
+            }
+        }
+        catch (error) {
+            console.warn('Failed to access Electron app:', error);
+        }
+        // For testing environment, check if app is available in global
         if (typeof global !== "undefined" &&
             global.app) {
             const globalWithApp = global;
@@ -93,20 +107,15 @@ class DrizzleConnection {
             console.log('Using production database:', prodDbPath);
             return prodDbPath;
         }
-        // In Electron environment
-        if (typeof require !== "undefined") {
-            try {
-                const { app } = require("electron");
-                const userDataPath = app.getPath("userData");
+        // Production fallback - use OS user data directory
+        if (process.env.NODE_ENV === 'production') {
+            const os = typeof require !== "undefined" ? require("node:os") : null;
+            if (os) {
+                const homeDir = os.homedir();
+                const userDataPath = node_path_1.default.join(homeDir, "Library", "Application Support", "game-dict");
                 const prodDbPath = node_path_1.default.join(userDataPath, "game-dict.db");
-                console.log('Using production database:', prodDbPath);
+                console.log('Using production database (fallback):', prodDbPath);
                 return prodDbPath;
-            }
-            catch {
-                // Fallback for non-Electron environment
-                const fallbackDbPath = node_path_1.default.join(process.cwd(), "test-data", "game-dict.db");
-                console.log('Using fallback database:', fallbackDbPath);
-                return fallbackDbPath;
             }
         }
         // Default fallback
@@ -231,41 +240,47 @@ class DrizzleConnection {
         return code;
     }
     insertDefaultCategories() {
-        const existingCategories = this.db
-            .select({ count: (0, drizzle_orm_1.sql) `count(*)` })
-            .from(schema.categories)
-            .all();
-        if (existingCategories[0].count === 0) {
-            const defaultCategories = [
-                {
-                    name: "名詞",
-                    googleImeName: "一般",
-                    msImeName: "一般",
-                    atokName: "一般",
-                },
-                {
-                    name: "品詞なし",
-                    googleImeName: "一般",
-                    msImeName: "一般",
-                    atokName: "一般",
-                },
-                {
-                    name: "人名",
-                    googleImeName: "人名",
-                    msImeName: "人名",
-                    atokName: "人名",
-                },
-            ];
-            // Use insert ignore or handle conflicts
-            for (const category of defaultCategories) {
-                try {
-                    this.db.insert(schema.categories).values(category).run();
+        const defaultCategories = [
+            {
+                name: "名詞",
+                googleImeName: "名詞",
+                msImeName: "名詞",
+                atokName: "名詞",
+            },
+            {
+                name: "品詞なし",
+                googleImeName: "名詞",
+                msImeName: "名詞",
+                atokName: "名詞",
+            },
+            {
+                name: "人名",
+                googleImeName: "人名",
+                msImeName: "人名",
+                atokName: "人名",
+            },
+        ];
+        // Insert or update default categories
+        for (const category of defaultCategories) {
+            try {
+                // Try to insert
+                this.db.insert(schema.categories).values(category).run();
+            }
+            catch (error) {
+                // If UNIQUE constraint failed, update existing category
+                if (error.message?.includes('UNIQUE constraint failed')) {
+                    this.db
+                        .update(schema.categories)
+                        .set({
+                        googleImeName: category.googleImeName,
+                        msImeName: category.msImeName,
+                        atokName: category.atokName,
+                    })
+                        .where((0, drizzle_orm_1.eq)(schema.categories.name, category.name))
+                        .run();
                 }
-                catch (error) {
-                    // Ignore duplicate category errors
-                    if (!error.message?.includes('UNIQUE constraint failed')) {
-                        throw error;
-                    }
+                else {
+                    throw error;
                 }
             }
         }

@@ -76,12 +76,12 @@ describe("SQLite Database Tests", () => {
 		// 名詞カテゴリ
 		const nounCategory = categories.find((c) => c.name === "名詞");
 		expect(nounCategory).toBeDefined();
-		expect(nounCategory?.google_ime_name).toBe("一般");
+		expect(nounCategory?.google_ime_name).toBe("名詞");
 
 		// 品詞なしカテゴリ
 		const noPartsCategory = categories.find((c) => c.name === "品詞なし");
 		expect(noPartsCategory).toBeDefined();
-		expect(noPartsCategory?.google_ime_name).toBe("一般");
+		expect(noPartsCategory?.google_ime_name).toBe("名詞");
 
 		// 人名カテゴリ
 		const personCategory = categories.find((c) => c.name === "人名");

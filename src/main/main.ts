@@ -9,14 +9,11 @@ import { DataSyncManager } from "./data-sync-manager.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 class GameDictApp {
-	private ipcHandlers: IPCHandlers;
-	private dataSyncManager: DataSyncManager;
+	private ipcHandlers!: IPCHandlers;
+	private dataSyncManager!: DataSyncManager;
 	private mainWindow: BrowserWindow | null = null;
 
 	constructor() {
-		this.ipcHandlers = new IPCHandlers();
-		this.dataSyncManager = new DataSyncManager();
-		
 		// Register this instance globally for IPC access
 		(global as any).mainAppInstance = this;
 		
@@ -28,6 +25,10 @@ class GameDictApp {
 		(global as any).app = app;
 
 		app.whenReady().then(() => {
+			// Initialize IPC handlers and data sync manager after app is ready
+			this.ipcHandlers = new IPCHandlers();
+			this.dataSyncManager = new DataSyncManager();
+			
 			this.createMainWindow();
 		});
 

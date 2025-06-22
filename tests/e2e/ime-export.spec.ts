@@ -136,7 +136,7 @@ test.describe('IME Export E2E Tests', () => {
     
     // Verify file content
     const content = fs.readFileSync(expectedFilePath, 'utf-8');
-    expect(content.trim()).toBe('てすと\tテスト\t一般');
+    expect(content.trim()).toBe('てすと\tテスト\t名詞');
   });
 
   test('単語がない場合はIME出力ボタンが無効になる', async () => {
@@ -202,8 +202,8 @@ test.describe('IME Export E2E Tests', () => {
     
     // Check that both entries are present (order may vary)
     const expectedLines = [
-      'げーむ\tゲーム\t一般',
-      'たのしい\t楽しい\t一般'
+      'げーむ\tゲーム\t名詞',
+      'たのしい\t楽しい\t名詞'
     ];
     
     expectedLines.forEach(expectedLine => {

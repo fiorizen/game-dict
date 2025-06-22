@@ -3,7 +3,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import * as schema from "./schema.js";
 
 export class DrizzleConnection {
@@ -58,7 +58,22 @@ export class DrizzleConnection {
 			return testDbPath;
 		}
 
-		// For testing environment, check if app is available
+		// In Electron environment (main process or renderer with remote access)
+		try {
+			// Try dynamic import first for ESM compatibility
+			const electronModule = typeof require !== "undefined" ? require("electron") : null;
+			
+			if (electronModule?.app) {
+				const userDataPath = electronModule.app.getPath("userData");
+				const prodDbPath = path.join(userDataPath, "game-dict.db");
+				console.log('Using production database:', prodDbPath);
+				return prodDbPath;
+			}
+		} catch (error) {
+			console.warn('Failed to access Electron app:', error);
+		}
+
+		// For testing environment, check if app is available in global
 		if (
 			typeof global !== "undefined" &&
 			(global as { app?: { getPath: (path: string) => string } }).app
@@ -72,19 +87,15 @@ export class DrizzleConnection {
 			return prodDbPath;
 		}
 
-		// In Electron environment
-		if (typeof require !== "undefined") {
-			try {
-				const { app } = require("electron");
-				const userDataPath = app.getPath("userData");
+		// Production fallback - use OS user data directory
+		if (process.env.NODE_ENV === 'production') {
+			const os = typeof require !== "undefined" ? require("node:os") : null;
+			if (os) {
+				const homeDir = os.homedir();
+				const userDataPath = path.join(homeDir, "Library", "Application Support", "game-dict");
 				const prodDbPath = path.join(userDataPath, "game-dict.db");
-				console.log('Using production database:', prodDbPath);
+				console.log('Using production database (fallback):', prodDbPath);
 				return prodDbPath;
-			} catch {
-				// Fallback for non-Electron environment
-				const fallbackDbPath = path.join(process.cwd(), "test-data", "game-dict.db");
-				console.log('Using fallback database:', fallbackDbPath);
-				return fallbackDbPath;
 			}
 		}
 
@@ -240,42 +251,46 @@ export class DrizzleConnection {
 	}
 
 	private insertDefaultCategories(): void {
-		const existingCategories = this.db
-			.select({ count: sql<number>`count(*)` })
-			.from(schema.categories)
-			.all();
+		const defaultCategories = [
+			{
+				name: "名詞",
+				googleImeName: "名詞",
+				msImeName: "名詞",
+				atokName: "名詞",
+			},
+			{
+				name: "品詞なし",
+				googleImeName: "名詞",
+				msImeName: "名詞",
+				atokName: "名詞",
+			},
+			{
+				name: "人名",
+				googleImeName: "人名",
+				msImeName: "人名",
+				atokName: "人名",
+			},
+		];
 
-		if (existingCategories[0].count === 0) {
-			const defaultCategories = [
-				{
-					name: "名詞",
-					googleImeName: "一般",
-					msImeName: "一般",
-					atokName: "一般",
-				},
-				{
-					name: "品詞なし",
-					googleImeName: "一般",
-					msImeName: "一般",
-					atokName: "一般",
-				},
-				{
-					name: "人名",
-					googleImeName: "人名",
-					msImeName: "人名",
-					atokName: "人名",
-				},
-			];
-
-			// Use insert ignore or handle conflicts
-			for (const category of defaultCategories) {
-				try {
-					this.db.insert(schema.categories).values(category).run();
-				} catch (error) {
-					// Ignore duplicate category errors
-					if (!(error as any).message?.includes('UNIQUE constraint failed')) {
-						throw error;
-					}
+		// Insert or update default categories
+		for (const category of defaultCategories) {
+			try {
+				// Try to insert
+				this.db.insert(schema.categories).values(category).run();
+			} catch (error) {
+				// If UNIQUE constraint failed, update existing category
+				if ((error as any).message?.includes('UNIQUE constraint failed')) {
+					this.db
+						.update(schema.categories)
+						.set({
+							googleImeName: category.googleImeName,
+							msImeName: category.msImeName,
+							atokName: category.atokName,
+						})
+						.where(eq(schema.categories.name, category.name))
+						.run();
+				} else {
+					throw error;
 				}
 			}
 		}

@@ -216,6 +216,16 @@ chmod +x node_modules/@biomejs/cli-*/biome
 
 ---
 
+## タスク管理
+
+このプロジェクトでは **docs/PROJECT_HISTORY.md** でタスク管理を行っています。
+
+- **進行中タスク・未完了タスク**: PROJECT_HISTORY.mdの「タスク一覧とステータス」セクションで管理
+- **チェックボックス形式**: `- [ ]` (未完了) / `- [x]` (完了) で進捗を追跡
+- **詳細な進捗情報**: 各タスクの実装内容・テスト結果・統計情報を記録
+
+---
+
 ## ドキュメント構成
 
 - **CLAUDE.md** (このファイル): 日常運用ガイド
@@ -224,7 +234,7 @@ chmod +x node_modules/@biomejs/cli-*/biome
 - **docs/ARCHITECTURE.md**: 技術アーキテクチャ詳細
 - **docs/UI-REQUIREMENTS.md**: UI仕様詳細
 - **docs/DATABASE_TESTING.md**: テスト手順詳細
-- **docs/PROJECT_HISTORY.md**: 開発履歴・進捗詳細
+- **docs/PROJECT_HISTORY.md**: 開発履歴・進捗詳細・**タスク管理**
 
 ---
 
