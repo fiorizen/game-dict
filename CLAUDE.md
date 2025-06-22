@@ -246,13 +246,21 @@ IME辞書登録用CSVも出力可能。
 
 - [x] **`npm start`の実装** (完了)
   - [x] 日常的に利用する本番DB・CSV接続コマンド実装
-- [ ] gameの削除・編集機能・UI実装
-  - [ ] 削除：削除時はそのgameに紐づくワードもすべて削除する。不可逆な操作なので、ワードが削除することの警告も含めて確認UIを入れること。
-  - [ ] 編集：編集できるのはcodeとnameのみ。使用頻度は低いので、モーダルUIでの編集でOK。
-- [ ] UI調整
-  - [ ] 操作ボタンと重ならないようにトーストUIの表示位置を見直す
-- [ ] npm scriptsの整理
-  - 開発中にデバッグ等で用意した`rebuild:node`や、配布用に仮で用意していた`dist`系について、使っていないことを確認した上で削除する
+
+- [x] **gameの削除・編集機能・UI実装** (完了)
+  - [x] 削除：関連ワード全削除、トランザクション型安全削除、警告UI完備
+  - [x] 編集：code・name編集、重複検証、モーダルUI完備
+  - [x] E2Eテストによる動作確認完了
+
+- [x] **UI調整** (完了)
+  - [x] トースト表示位置を右下に変更（操作ボタンと重複回避）
+  - [x] スタッキング機能とスムーズアニメーション追加
+
+- [x] **npm scriptsの整理・ネイティブモジュール管理自動化** (完了)
+  - [x] better-sqlite3リビルド自動化システム実装
+  - [x] Electron用・Node.js用の2パターン自動切り替え
+  - [x] 包括的ドキュメント化により今後の問題を防止
+  - [x] rebuild:nodeスクリプトをテストワークフローに統合
 
 ### プロジェクト統計
 
@@ -277,6 +285,7 @@ IME辞書登録用CSVも出力可能。
 - **UIフレームワーク**: Electron v36.5.0 + TypeScript
 - **CSV処理**: csv-parse/csv-stringify (業界標準ライブラリ)
 - **型定義**: 完全なTypeScript型安全性
+- **ネイティブモジュール管理**: 自動リビルドシステム（詳細は下記参照）
 - **スキーマ**: games(id,name) / categories(id,name,ime_names) / entries(id,game_id,category_id,reading,word,description)
 - **品質管理**: Biome (Lint・Format) + Prettier (Markdown等)
 - **IPC通信**: contextBridge + ipcRenderer/ipcMain (セキュア設計)
@@ -417,6 +426,80 @@ npm run lint:fix
 - **スマート制御**: 単語がない場合は出力ボタン無効化
 - **エラーハンドリング**: 適切な検証とユーザーフィードバック
 
+---
+
+## 🔧 **ネイティブモジュール管理（重要）**
+
+### better-sqlite3 リビルド自動化システム
+
+このプロジェクトでは **better-sqlite3** ネイティブモジュールを使用しており、実行環境に応じて **2つの異なるリビルド** が必要です。
+
+#### 🎯 **リビルドが必要な理由**
+
+better-sqlite3は **ネイティブモジュール** (C++コンパイル済みバイナリ) のため、実行環境のNode.jsバージョンに一致する必要があります：
+
+- **システムNode.js**: v22.16.0 (NODE_MODULE_VERSION 127)
+- **ElectronのNode.js**: v36.5.0内蔵版 (NODE_MODULE_VERSION 135)
+
+#### 🔄 **2つのリビルドパターン**
+
+| 用途 | コマンド | 実行タイミング | 対象環境 |
+|------|----------|----------------|----------|
+| **Electron用** | `npm run rebuild:electron` | アプリ実行・E2Eテスト | Electron内蔵Node.js |
+| **Node.js用** | `npm run rebuild:node` | Vitestテスト | システムNode.js |
+
+#### 🤖 **自動化された実行フロー**
+
+```bash
+# Electron系（自動実行）
+npm run postinstall        # インストール後 → Electron用リビルド
+npm start                   # 本番実行 → Electron用（postinstallで済み）
+npm run electron:dev        # 開発実行 → Electron用（postinstallで済み）
+npm run test:e2e           # E2Eテスト → rebuild:electron実行
+
+# Vitest系（自動実行）
+npm test                   # rebuild:node → vitest run
+npm run test:watch         # rebuild:node → vitest watch
+npm run test:ui            # rebuild:node → vitest --ui  
+npm run test:coverage      # rebuild:node → vitest coverage
+```
+
+#### ⚠️ **過去の問題と解決策**
+
+**問題**: 
+```
+The module 'better_sqlite3.node' was compiled against a different Node.js version using NODE_MODULE_VERSION XXX. This version requires NODE_MODULE_VERSION YYY.
+```
+
+**解決策**: 
+- ✅ **自動化済み**: 各npm scriptが適切なリビルドを自動実行
+- ✅ **手動実行**: 問題発生時は該当するrebuildスクリプトを実行
+
+#### 🧪 **開発時の注意点**
+
+1. **新しいマシンでのセットアップ**: `npm install` → 自動的にElectron用リビルド
+2. **テスト実行**: `npm test` → 自動的にNode.js用リビルド  
+3. **Electronアプリ実行**: 追加作業不要（postinstallで完了）
+4. **Node.jsバージョン変更後**: 該当するrebuildスクリプトを手動実行
+
+#### 📋 **手動リビルドが必要なケース**
+
+稀にエラーが発生した場合の手動対処法：
+
+```bash
+# Electronアプリでエラーが出る場合
+npm run rebuild:electron
+
+# Vitestテストでエラーが出る場合  
+npm run rebuild:node
+
+# 完全クリーンリビルド
+rm -rf node_modules
+npm install  # postinstallでElectron用リビルド実行
+```
+
+---
+
 ### トラブルシューティング
 
 #### ビルドエラー
@@ -447,16 +530,20 @@ npm run test:db
 
 #### better-sqlite3エラー (NODE_MODULE_VERSION不一致)
 
+**通常は自動化済み** - 以下のコマンドが自動的にリビルドを実行します：
+- `npm test` (Node.js用リビルド付き)
+- `npm run test:e2e` (Electron用リビルド付き)
+- `npm install` (postinstallでElectron用リビルド)
+
+**手動リビルドが必要な場合**:
 ```bash
-# Electronの Node.js バージョン向けにリビルド
-npx @electron/rebuild
+# Electronアプリでエラーが出る場合
+npm run rebuild:electron
 
-# テスト実行前のリビルド（Node.js用）
-npm rebuild better-sqlite3
+# Vitestテストでエラーが出る場合
+npm run rebuild:node
 
-# 注意: ElectronとNode.jsで異なるビルドが必要
-# Electronアプリ用: npx @electron/rebuild
-# Vitestテスト用: npm rebuild better-sqlite3
+# 注意: 自動化により手動実行は通常不要
 ```
 
 ### プロジェクトメモ
