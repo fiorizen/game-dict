@@ -773,57 +773,64 @@ function escapeHtml(text) {
 }
 
 function showSuccess(message) {
-	// 簡潔なサクセストースト表示（3秒で自動消去）
+	showToast(message, 'success');
+}
+
+function showToast(message, type = 'success') {
+	// Calculate position to avoid overlapping with existing toasts
+	const existingToasts = document.querySelectorAll('.toast');
+	let bottomOffset = 20;
+	existingToasts.forEach((existingToast) => {
+		const rect = existingToast.getBoundingClientRect();
+		bottomOffset = Math.max(bottomOffset, window.innerHeight - rect.top + 10);
+	});
+
 	const toast = document.createElement('div');
-	toast.className = 'toast toast-success';
+	toast.className = `toast toast-${type}`;
 	toast.textContent = message;
+	
+	const backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+	const duration = type === 'success' ? 3000 : 5000;
+	
 	toast.style.cssText = `
 		position: fixed;
-		top: 20px;
+		bottom: ${bottomOffset}px;
 		right: 20px;
-		background: #4CAF50;
+		background: ${backgroundColor};
 		color: white;
 		padding: 12px 20px;
 		border-radius: 4px;
 		z-index: 10000;
 		font-size: 14px;
 		box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+		transition: all 0.3s ease;
+		opacity: 0;
+		transform: translateX(100%);
 	`;
 	document.body.appendChild(toast);
 	
-	// 3秒後に自動削除
+	// Animate in
+	requestAnimationFrame(() => {
+		toast.style.opacity = '1';
+		toast.style.transform = 'translateX(0)';
+	});
+	
+	// Auto-remove after duration
 	setTimeout(() => {
 		if (toast.parentNode) {
-			toast.parentNode.removeChild(toast);
+			toast.style.opacity = '0';
+			toast.style.transform = 'translateX(100%)';
+			setTimeout(() => {
+				if (toast.parentNode) {
+					toast.parentNode.removeChild(toast);
+				}
+			}, 300);
 		}
-	}, 3000);
+	}, duration);
 }
 
 function showError(message) {
-	// エラートースト表示（5秒で自動消去）
-	const toast = document.createElement('div');
-	toast.className = 'toast toast-error';
-	toast.textContent = message;
-	toast.style.cssText = `
-		position: fixed;
-		top: 20px;
-		right: 20px;
-		background: #f44336;
-		color: white;
-		padding: 12px 20px;
-		border-radius: 4px;
-		z-index: 10000;
-		font-size: 14px;
-		box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-	`;
-	document.body.appendChild(toast);
-	
-	// 5秒後に自動削除
-	setTimeout(() => {
-		if (toast.parentNode) {
-			toast.parentNode.removeChild(toast);
-		}
-	}, 5000);
+	showToast(message, 'error');
 }
 
 // Data Sync Handlers
