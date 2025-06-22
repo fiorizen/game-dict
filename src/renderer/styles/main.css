@@ -390,6 +390,111 @@ textarea:focus {
 	margin-top: 1.5rem;
 }
 
+/* Data Sync Modal */
+.data-sync-message {
+	background: #fff3cd;
+	border: 1px solid #ffeaa7;
+	color: #856404;
+	padding: 1rem;
+	border-radius: 4px;
+	margin-bottom: 1.5rem;
+	white-space: pre-line;
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.data-sync-options {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.data-sync-option {
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	padding: 1rem;
+	background: #f8f9fa;
+	transition: background-color 0.2s ease;
+}
+
+.data-sync-option:hover {
+	background: #e9ecef;
+}
+
+.data-sync-choice-btn {
+	width: 100%;
+	margin-bottom: 0.5rem;
+	padding: 0.75rem 1rem;
+	font-size: 1rem;
+	font-weight: 500;
+}
+
+.data-sync-choice-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.option-description {
+	margin: 0;
+	font-size: 0.85rem;
+	color: #666;
+	line-height: 1.3;
+}
+
+/* Data Sync Modal - larger content area */
+#data-sync-modal .modal-content {
+	max-width: 600px;
+}
+
+/* Exit Sync Modal */
+.exit-sync-message {
+	background: #f8d7da;
+	border: 1px solid #f5c6cb;
+	color: #721c24;
+	padding: 1rem;
+	border-radius: 4px;
+	margin-bottom: 1.5rem;
+	white-space: pre-line;
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.exit-sync-options {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.exit-sync-option {
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	padding: 1rem;
+	background: #f8f9fa;
+	transition: background-color 0.2s ease;
+}
+
+.exit-sync-option:hover {
+	background: #e9ecef;
+}
+
+.exit-sync-choice-btn {
+	width: 100%;
+	margin-bottom: 0.5rem;
+	padding: 0.75rem 1rem;
+	font-size: 1rem;
+	font-weight: 500;
+}
+
+.exit-sync-choice-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* Exit Sync Modal - larger content area */
+#exit-sync-modal .modal-content {
+	max-width: 600px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
 	.app-main {

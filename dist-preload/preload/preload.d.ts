@@ -1,4 +1,5 @@
 import type { CreateCategoryData, CreateEntryData, CreateGameData, UpdateCategoryData, UpdateEntryData, UpdateGameData } from "../shared/types.js";
+import type { DataSyncChoice, ExitSyncChoice } from "../main/data-sync-manager.js";
 declare const api: {
     games: {
         getAll: () => Promise<any>;
@@ -18,6 +19,7 @@ declare const api: {
         getAll: () => Promise<any>;
         getById: (id: number) => Promise<any>;
         getByGameId: (gameId: number) => Promise<any>;
+        getByGameIdUnsorted: (gameId: number) => Promise<any>;
         create: (data: CreateEntryData) => Promise<any>;
         update: (id: number, data: UpdateEntryData) => Promise<any>;
         delete: (id: number) => Promise<any>;
@@ -33,6 +35,26 @@ declare const api: {
     files: {
         showOpenDialog: (options: any) => Promise<any>;
         showSaveDialog: (options: any) => Promise<any>;
+    };
+    dataSync: {
+        analyzeStatus: () => Promise<any>;
+        performAutoImport: () => Promise<any>;
+        performUserChoice: (choice: DataSyncChoice) => Promise<any>;
+        getConflictMessage: (status: any) => Promise<any>;
+        onShowDialog: (callback: (status: any) => void) => void;
+        removeAllListeners: () => void;
+    };
+    exitSync: {
+        analyzeStatus: () => Promise<any>;
+        performAutoExport: () => Promise<any>;
+        performUserChoice: (choice: ExitSyncChoice) => Promise<any>;
+        getExitMessage: (status: any) => Promise<any>;
+        markLastExportTime: () => Promise<any>;
+        onShowDialog: (callback: (status: any) => void) => void;
+        removeAllListeners: () => void;
+    };
+    app: {
+        forceClose: () => Promise<any>;
     };
 };
 export type ElectronAPI = typeof api;

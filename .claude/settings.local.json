@@ -47,7 +47,18 @@
       "Bash(NODE_ENV=test npm run electron:dev)",
       "Bash(NODE_ENV=test timeout 10s npm run electron:dev)",
       "Bash(npm run rebuild:electron:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(time npm test)",
+      "Bash(time npm run test:e2e)",
+      "Bash(npm run:*)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=60000)",
+      "Bash(NODE_ENV=test node dist/main/main.js --no-sandbox --disable-setuid-sandbox)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=30000)",
+      "WebFetch(domain:www.electronjs.org)",
+      "Bash(npm ls:*)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=15000 --verbose)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=15000 --reporter=line)",
+      "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=20000)"
     ],
     "deny": []
   }

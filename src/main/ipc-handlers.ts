@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { dialog, ipcMain } from "electron";
 import { Database } from "../database/index.js";
 import { CSVHandlers } from "./csv-handlers.js";

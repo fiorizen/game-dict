@@ -203,6 +203,20 @@ IME辞書登録用CSVも出力可能。
   - [x] 設計思想文書化（CSV=正のデータ、SQLite=一時DB）
   - [x] 18/18テスト成功（新ディレクトリ構造対応）
 
+- [x] **DrizzleORM導入・DB接続最適化**
+
+  - [x] DrizzleORM依存関係インストール（drizzle-orm, drizzle-kit）
+  - [x] 完全なスキーマ定義実装（games, categories, entries）
+  - [x] DrizzleORM設定とマイグレーション機能実装
+  - [x] 既存モデルクラスをDrizzleORM同期APIに移行
+  - [x] Database接続クラスをDrizzle対応に更新
+  - [x] DrizzleDatabaseWrapper実装（後方互換性維持）
+  - [x] 型変換アダプター実装（camelCase ↔ snake_case）
+  - [x] DrizzleORM専用テスト実装（4/4テスト成功）
+  - [x] 既存データベーステスト互換性確保（18/18テスト成功）
+  - [x] E2Eテスト完全安定化（22/22テスト成功）
+  - [x] テスト環境用Electron終了処理最適化
+
 - [x] **UI/UX最終調整** (完了)
 
   - [x] 基本UI動作確認
@@ -219,25 +233,33 @@ IME辞書登録用CSVも出力可能。
 
   - [ ] DrizzleORMを導入し、DB操作を移行する
 
+- [ ] gameにcodeを導入する
+  - [ ] ファイル名やCSV内で使用できるように、アルファベット+数字に限定した、各gameにユニークな文字列。最大16文字まで。登録時に必須指定で、編集UIは一旦不要（今後ゲーム全体の編集UIは実装する可能性あり）
+  - [ ] ファイル名にgame idを使っている部分にcodeを使うようにする
+- [ ] IME登録用辞書ファイルの出力機能実装
+  - [ ] 現在表示しているgameの単語全件を`export`ディレクトリに出力する
+  - [ ] Microsoft IME形式：reading、word、category_nameをタブ区切りで並べたUTF-8の.txt。ファイル名はgame codeを使う。
 - [ ] `npm start`の実装 (将来的な拡張)
   - 日常的に利用する、本番DB・CSVに接続するためのコマンド。今回の要件ではこれがあればパッケージングは不要
 
 ### プロジェクト統計
 
-- **完了率**: 15/15 メインタスク (100%)
-- **コードテスト**: 27/30 Pass (90%成功率、データベース接続問題3件)
-- **アプリ状態**: **全要件実装完了・本格運用準備完了**
-- **技術基盤**: SQLite + Vitest + Electron v36 + 完全CSV管理 + インライン編集UI + 自動データ同期
+- **完了率**: 16/16 メインタスク (100%)
+- **コードテスト**: DrizzleORM 4/4 + 既存DB 18/18 + E2E 22/22 = 44/44 Pass (100%成功率)
+- **アプリ状態**: **DrizzleORM完全統合・全機能安定動作確認済み**
+- **技術基盤**: DrizzleORM + SQLite + Vitest + Electron v36 + 完全CSV管理 + インライン編集UI + 安定E2Eテスト
 - **データ管理**: CSV（games.csv + categories.csv + game-\*.csv）による完全な永続化実現
-- **新機能**: CSV自動読み込み・終了時自動保存・先頭ゲーム自動選択・追加ワード最下行表示・アプリ終了バグ修正
-- **残りタスク**: 将来的な拡張のみ（ORM導入・レスポンシブ対応・npm start実装）
+- **ORM統合**: 型安全なDrizzleORM + 後方互換性DrizzleWrapper + テスト環境最適化
+- **安定性**: E2Eテスト完全安定化・Electron終了処理問題解決・DB接続簡素化達成
+- **残りタスク**: 運用最適化・パッケージング準備（npm start実装・レスポンシブ対応）
 
 ### 最新の技術決定事項
 
 - **データ管理思想**: CSV=権威あるデータ、SQLite=一時作業DB
 - **ディレクトリ構造**: `csv/` (本番)、`test-data/csv/` (テスト)
 - **CSV構成**: games.csv + categories.csv + game-{ID}.csv (完全永続化)
-- **データベース**: better-sqlite3 (同期API、高速)
+- **データベース**: DrizzleORM + better-sqlite3 (型安全・同期API・高速)
+- **ORM**: DrizzleORM (型安全クエリビルダー・後方互換性維持)
 - **テストフレームワーク**: Vitest + Vite (業界標準、高速・高機能)
 - **UIフレームワーク**: Electron v36.5.0 + TypeScript
 - **CSV処理**: csv-parse/csv-stringify (業界標準ライブラリ)
@@ -302,15 +324,21 @@ npm run lint:fix
 │   │   ├── index.html     # メインUI
 │   │   ├── styles/        # CSS スタイル
 │   │   └── scripts/       # フロントエンドロジック
-│   ├── database/          # SQLite関連（一時作業用）
-│   │   ├── connection.ts  # データベース接続管理
-│   │   ├── models/        # CRUD操作モデル
-│   │   └── index.ts       # エクスポート
+│   ├── database/          # DrizzleORM + SQLite関連（一時作業用）
+│   │   ├── drizzle-connection.ts  # DrizzleORM接続管理
+│   │   ├── drizzle-database.ts    # DrizzleORM統合データベース
+│   │   ├── drizzle-wrapper.ts     # 後方互換性ラッパー
+│   │   ├── schema.ts      # DrizzleORMスキーマ定義
+│   │   ├── adapters.ts    # 型変換アダプター
+│   │   ├── models/        # DrizzleORM + 既存CRUD操作モデル
+│   │   └── index.ts       # エクスポート（DrizzleWrapper統合）
 │   ├── shared/            # 共通型定義
 │   │   ├── types.ts       # TypeScript型定義
 │   │   └── electron-api.d.ts # Electron API型定義
 │   └── __tests__/         # テストコード
-│       └── database.test.ts # SQLite機能テスト
+│       ├── database.test.ts      # 既存SQLite機能テスト (18テスト)
+│       ├── drizzle-database.test.ts # DrizzleORM機能テスト (4テスト)
+│       └── data-sync.test.ts     # データ同期機能テスト
 └── test-data/
     ├── csv/               # テスト用CSV出力先
     └── game-dict-test.db  # テスト用SQLite（Git無視）
