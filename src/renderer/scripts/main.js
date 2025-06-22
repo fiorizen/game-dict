@@ -3,6 +3,7 @@ let currentGame = null;
 let currentEntries = [];
 let allCategories = [];
 let shouldSortEntries = true;  // Track if entries should be sorted (false after adding new entry)
+let preventAutoSelection = false;  // Flag to prevent auto-selection after game deletion
 
 // DOM elements
 const gameSelect = document.getElementById("game-select");
@@ -140,7 +141,8 @@ function populateGameSelect(games) {
 	});
 	
 	// Auto-select first game if available and no game is currently selected
-	if (games.length > 0 && !currentGame) {
+	// Don't auto-select if we're preventing auto-selection (e.g., after deletion)
+	if (games.length > 0 && !currentGame && !preventAutoSelection) {
 		selectFirstGame(games);
 	}
 }
@@ -212,6 +214,12 @@ function openGameModal(game = null) {
 
 function closeModals() {
 	gameModal.style.display = "none";
+	
+	// Close delete game modal if it exists
+	const deleteGameModal = document.getElementById("delete-game-modal");
+	if (deleteGameModal) {
+		deleteGameModal.style.display = "none";
+	}
 }
 
 // Auto-generate game code from name
@@ -1180,9 +1188,17 @@ async function onConfirmDeleteGame() {
 
 			// Clear current selection and reload games
 			currentGame = null;
-			gameSelect.value = "";
+			preventAutoSelection = true;  // Prevent auto-selection after deletion
 			await loadGames();
-			await onGameChange(); // Update UI state
+			// Force clear selection and update UI - don't auto-select after deletion
+			gameSelect.value = "";
+			currentGameTitle.textContent = "ゲームを選択してください";
+			document.getElementById("edit-game-btn").disabled = true;
+			document.getElementById("delete-game-btn").disabled = true;
+			document.getElementById("add-entry-btn").disabled = true;
+			document.getElementById("export-ime-btn").disabled = true;
+			renderEntriesTable([]);
+			preventAutoSelection = false;  // Reset flag after UI update
 		} else {
 			showError("ゲームの削除に失敗しました");
 		}

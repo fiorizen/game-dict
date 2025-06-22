@@ -102,7 +102,7 @@ test.describe('Game Management Features', () => {
 
     // Wait for deletion to complete
     await expect(deleteModal).not.toBeVisible();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000); // Longer wait for deletion processing
 
     // Verify game was deleted (select should be reset)
     const selectedAfterDelete = await gameSelect.inputValue();
@@ -138,12 +138,15 @@ test.describe('Game Management Features', () => {
     await expect(addEntryBtn).toBeEnabled();
     await addEntryBtn.click();
 
-    // Wait for new entry row to appear
-    await page.waitForTimeout(500);
+    // Wait for new entry row to appear and verify it exists
+    await page.waitForTimeout(1000);
+    
+    // Use the correct selectors for inline editing
+    const newEntryRow = page.locator('#entries-table-body tr[data-is-new="true"]');
+    await expect(newEntryRow).toBeVisible({ timeout: 10000 });
 
-    // Fill in the entry
-    const readingInput = page.locator('input[data-field="reading"]:last-of-type');
-    const wordInput = page.locator('input[data-field="word"]:last-of-type');
+    const readingInput = newEntryRow.locator('input[name="reading"]');
+    const wordInput = newEntryRow.locator('input[name="word"]');
     
     await readingInput.fill('てすと');
     await wordInput.fill('テスト');
@@ -169,7 +172,9 @@ test.describe('Game Management Features', () => {
     // Cancel deletion
     const cancelBtn = page.locator('#cancel-delete-game-btn');
     await cancelBtn.click();
-
+    
+    // Wait for modal to close
+    await page.waitForTimeout(500);
     await expect(deleteModal).not.toBeVisible();
 
     // Verify game still exists
