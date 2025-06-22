@@ -42,6 +42,9 @@ function setupEventListeners() {
 	// CSV operations
 	document.getElementById("export-git-csv-btn").addEventListener("click", onExportGitCsv);
 	document.getElementById("import-csv-btn").addEventListener("click", onImportCsv);
+	
+	// IME operations
+	document.getElementById("export-ime-btn").addEventListener("click", onExportIme);
 
 
 	// Modal handling
@@ -104,11 +107,13 @@ async function loadEntries(gameId) {
 			currentEntries = await window.electronAPI.entries.getByGameIdUnsorted(gameId);
 		}
 		renderEntriesTable(currentEntries || []);
+		updateImeExportButtonState();
 	} catch (error) {
 		console.error("Failed to load entries:", error);
 		// Don't show error for empty data - just show empty state
 		currentEntries = [];
 		renderEntriesTable([]);
+		updateImeExportButtonState();
 	}
 }
 
@@ -159,6 +164,7 @@ async function onGameChange() {
 		currentGame = null;
 		currentGameTitle.textContent = "ゲームを選択してください";
 		addEntryBtn.disabled = true;
+		document.getElementById("export-ime-btn").disabled = true;
 		renderEntriesTable([]);
 	}
 }
@@ -1018,4 +1024,35 @@ async function forceCloseApp() {
 			window.close();
 		}, 100);
 	}
+}
+
+// IME operation handlers
+async function onExportIme() {
+	if (!currentGame) {
+		showError("ゲームが選択されていません");
+		return;
+	}
+
+	try {
+		const result = await window.electronAPI.ime.exportToMicrosoftIme(currentGame);
+		
+		if (result.success && result.filePath) {
+			showSuccess(`IME辞書ファイルを出力しました: ${result.filePath}`);
+		}
+	} catch (error) {
+		console.error("IME export failed:", error);
+		showError(`IME辞書出力に失敗しました: ${error.message}`);
+	}
+}
+
+// Update IME export button state based on entries
+function updateImeExportButtonState() {
+	const imeExportBtn = document.getElementById("export-ime-btn");
+	if (!imeExportBtn) return;
+
+	// Enable IME export button only if there are entries and a game is selected
+	const hasEntries = currentEntries && currentEntries.length > 0;
+	const hasGame = currentGame !== null;
+	
+	imeExportBtn.disabled = !(hasEntries && hasGame);
 }

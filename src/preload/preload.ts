@@ -62,6 +62,12 @@ const api = {
 			ipcRenderer.invoke("csv:getSuggestedPaths", gameId),
 	},
 
+	// IME operations
+	ime: {
+		exportToMicrosoftIme: (gameId: number) =>
+			ipcRenderer.invoke("ime:exportToMicrosoftIme", gameId),
+	},
+
 	// File operations
 	files: {
 		showOpenDialog: (options: any) =>

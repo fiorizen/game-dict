@@ -125,6 +125,15 @@ export class IPCHandlers {
 			return this.csvHandlers.getSuggestedPaths(gameId);
 		});
 
+		ipcMain.handle("ime:exportToMicrosoftIme", async (_, gameId: number) => {
+			try {
+				const filePath = await this.csvHandlers.exportToMicrosoftIme(gameId);
+				return { success: true, filePath };
+			} catch (error) {
+				throw new Error(`Microsoft IME export failed: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		});
+
 		// File dialog handlers
 		ipcMain.handle("files:showOpenDialog", async (_, options) => {
 			const result = await dialog.showOpenDialog(options);

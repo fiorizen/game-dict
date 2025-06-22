@@ -32,6 +32,9 @@ declare const api: {
         importFromGitCsvDirectory: (inputDir: string) => Promise<any>;
         getSuggestedPaths: (gameId?: number) => Promise<any>;
     };
+    ime: {
+        exportToMicrosoftIme: (gameId: number) => Promise<any>;
+    };
     files: {
         showOpenDialog: (options: any) => Promise<any>;
         showSaveDialog: (options: any) => Promise<any>;

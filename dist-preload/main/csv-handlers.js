@@ -132,6 +132,36 @@ class CSVHandlers {
         node_fs_1.default.writeFileSync(outputPath, csvString, "utf-8");
     }
     /**
+     * Export current game entries to Microsoft IME format (.txt with tab-separated values)
+     */
+    async exportToMicrosoftIme(gameId) {
+        const game = this.db.games.getById(gameId);
+        if (!game) {
+            throw new Error(`Game with ID ${gameId} not found`);
+        }
+        const entries = this.db.entries.getByGameId(gameId);
+        // Check if there are any entries to export
+        if (entries.length === 0) {
+            throw new Error(`No entries found for game '${game.name}'. IME export requires at least one entry.`);
+        }
+        const categories = this.db.categories.getAll();
+        // Create export directory if it doesn't exist
+        const exportDir = node_path_1.default.join(process.cwd(), 'export');
+        if (!node_fs_1.default.existsSync(exportDir)) {
+            node_fs_1.default.mkdirSync(exportDir, { recursive: true });
+        }
+        // Build tab-separated content: reading \t word \t category_name
+        const lines = entries.map((entry) => {
+            const category = categories.find((c) => c.id === entry.category_id);
+            const categoryName = category?.ms_ime_name || "一般";
+            return `${entry.reading}\t${entry.word}\t${categoryName}`;
+        });
+        const content = lines.join('\n');
+        const filePath = node_path_1.default.join(exportDir, `${game.code}.txt`);
+        node_fs_1.default.writeFileSync(filePath, content, 'utf-8');
+        return filePath;
+    }
+    /**
      * Import all CSV data from Git-managed directory (games.csv, categories.csv, game-*.csv)
      */
     async importFromGitCsvDirectory(inputDir) {

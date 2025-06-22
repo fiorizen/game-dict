@@ -10,6 +10,10 @@ export declare class CSVHandlers {
      */
     exportToImeCsv(gameId: number, format: "google" | "ms" | "atok", outputPath: string): Promise<void>;
     /**
+     * Export current game entries to Microsoft IME format (.txt with tab-separated values)
+     */
+    exportToMicrosoftIme(gameId: number): Promise<string>;
+    /**
      * Import all CSV data from Git-managed directory (games.csv, categories.csv, game-*.csv)
      */
     importFromGitCsvDirectory(inputDir: string): Promise<void>;

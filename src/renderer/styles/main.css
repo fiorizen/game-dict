@@ -86,6 +86,11 @@ body {
 	color: #333;
 }
 
+.header-buttons {
+	display: flex;
+	gap: 0.5rem;
+}
+
 .entries-container {
 	flex: 1;
 	overflow-y: auto;

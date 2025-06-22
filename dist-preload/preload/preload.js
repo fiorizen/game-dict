@@ -38,6 +38,10 @@ const api = {
         importFromGitCsvDirectory: (inputDir) => electron_1.ipcRenderer.invoke("csv:importFromGitCsvDirectory", inputDir),
         getSuggestedPaths: (gameId) => electron_1.ipcRenderer.invoke("csv:getSuggestedPaths", gameId),
     },
+    // IME operations
+    ime: {
+        exportToMicrosoftIme: (gameId) => electron_1.ipcRenderer.invoke("ime:exportToMicrosoftIme", gameId),
+    },
     // File operations
     files: {
         showOpenDialog: (options) => electron_1.ipcRenderer.invoke("files:showOpenDialog", options),
