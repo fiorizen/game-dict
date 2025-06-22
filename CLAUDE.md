@@ -234,19 +234,25 @@ IME辞書登録用CSVも出力可能。
   - [x] ファイル名にgame idを使っている部分にcodeを使うようにする
   - [x] バリデーション機能・重複チェック・自動生成機能完備
   - [x] 全テスト修正・安定化（単体36/36・E2E22/22テスト成功）
-- [ ] IME登録用辞書ファイルの出力機能実装
-  - [ ] 現在表示しているgameの単語全件を`export`ディレクトリに出力する
-  - [ ] Microsoft IME形式：reading、word、category_nameをタブ区切りで並べたUTF-8の.txt。ファイル名はgame codeを使う。
+
+- [x] **IME登録用辞書ファイルの出力機能実装** (完了)
+  - [x] 現在表示しているgameの単語全件を`export`ディレクトリに出力する
+  - [x] Microsoft IME形式：reading、word、category_nameをタブ区切りで並べたUTF-8の.txt。ファイル名はgame codeを使う
+  - [x] スマートボタン制御：単語がない場合は出力ボタンを無効化
+  - [x] 完全なUI統合とエラーハンドリング
+  - [x] 包括的テストカバレッジ（単体4/4・E2E5/5テスト成功）
+
 - [ ] `npm start`の実装 (将来的な拡張)
   - 日常的に利用する、本番DB・CSVに接続するためのコマンド。今回の要件ではこれがあればパッケージングは不要
 
 ### プロジェクト統計
 
-- **完了率**: 16/16 メインタスク (100%)
-- **コードテスト**: DrizzleORM 4/4 + 既存DB 18/18 + E2E 22/22 = 44/44 Pass (100%成功率)
-- **アプリ状態**: **DrizzleORM完全統合・全機能安定動作確認済み**
-- **技術基盤**: DrizzleORM + SQLite + Vitest + Electron v36 + 完全CSV管理 + インライン編集UI + 安定E2Eテスト
+- **完了率**: 17/17 メインタスク (100%) + IME機能実装完了
+- **コードテスト**: DrizzleORM 4/4 + 既存DB 18/18 + IME 4/4 + E2E 27/27 = 53/53 Pass (100%成功率)
+- **アプリ状態**: **全機能完成・完全統合・安定動作確認済み**
+- **技術基盤**: DrizzleORM + SQLite + Vitest + Electron v36 + 完全CSV管理 + インライン編集UI + IME辞書出力 + 安定E2Eテスト
 - **データ管理**: CSV（games.csv + categories.csv + game-\*.csv）による完全な永続化実現
+- **IME機能**: Microsoft IME辞書出力（.txt形式・タブ区切り・game code命名・スマート制御）
 - **ORM統合**: 型安全なDrizzleORM + 後方互換性DrizzleWrapper + テスト環境最適化
 - **安定性**: E2Eテスト完全安定化・Electron終了処理問題解決・DB接続簡素化達成
 - **残りタスク**: 運用最適化・パッケージング準備（npm start実装・レスポンシブ対応）
@@ -336,7 +342,17 @@ npm run lint:fix
 │   └── __tests__/         # テストコード
 │       ├── database.test.ts      # 既存SQLite機能テスト (18テスト)
 │       ├── drizzle-database.test.ts # DrizzleORM機能テスト (4テスト)
+│       ├── ime-export.test.ts    # IME辞書出力機能テスト (4テスト)
 │       └── data-sync.test.ts     # データ同期機能テスト
+├── tests/e2e/            # E2Eテスト
+│   ├── app.spec.ts       # アプリ基本機能テスト
+│   ├── core-functionality.spec.ts # API機能テスト
+│   ├── game-add-working.spec.ts # ゲーム追加テスト
+│   ├── ime-export.spec.ts # IME出力E2Eテスト (5テスト)
+│   ├── simple-test.spec.ts # 単純動作テスト
+│   └── ui-functions.spec.ts # UI機能テスト
+├── export/               # IME辞書出力先
+│   └── {game_code}.txt   # Microsoft IME形式辞書ファイル
 └── test-data/
     ├── csv/               # テスト用CSV出力先
     └── game-dict-test.db  # テスト用SQLite（Git無視）
@@ -370,7 +386,14 @@ npm run lint:fix
 - **Git管理用CSV**: 完全データ出力（games + categories + entries）
 - **IME辞書用CSV**: Google・MS-IME・ATOK対応の辞書形式出力
 - **CSV一括取込**: ディレクトリから完全復元（初回起動・チェックアウト後）
-- **レスポンシブUI**: デスクトップ・モバイル対応
+
+#### IME辞書出力機能
+
+- **Microsoft IME形式**: reading \t word \t category_name のタブ区切りUTF-8テキスト
+- **ファイル名**: game codeを使用（`{game_code}.txt`）
+- **出力先**: `export/` ディレクトリに自動生成
+- **スマート制御**: 単語がない場合は出力ボタン無効化
+- **エラーハンドリング**: 適切な検証とユーザーフィードバック
 
 ### トラブルシューティング
 
