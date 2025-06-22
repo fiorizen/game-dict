@@ -29,7 +29,8 @@
 		"ensure:node": "prebuild-install --runtime=node --target=$(node --version | sed 's/v//') || npm run rebuild:node",
 		"rebuild:electron": "npx @electron/rebuild -f -w better-sqlite3",
 		"rebuild:node": "npm rebuild better-sqlite3",
-		"postinstall": "npm run ensure:electron"
+		"postinstall": "npm run ensure:electron && npm run fix:biome-permissions",
+		"fix:biome-permissions": "chmod +x node_modules/@biomejs/cli-*/biome 2>/dev/null || true"
 	},
 	"keywords": [],
 	"author": "",

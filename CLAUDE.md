@@ -430,6 +430,34 @@ npm run lint:fix
 
 ## 🔧 **ネイティブモジュール管理（重要）**
 
+### Biome実行権限問題の自動化対応
+
+**問題**: `@biomejs/cli-darwin-arm64/biome`などのプラットフォーム固有バイナリの実行権限が何らかのタイミングで失われ、以下のエラーが発生する：
+
+```
+Error: spawnSync /path/to/node_modules/@biomejs/cli-darwin-arm64/biome EACCES
+```
+
+**解決策**: 自動化された権限修正システムを実装：
+
+```bash
+# 自動実行（インストール時）
+npm install  # postinstall hook で自動実行
+
+# 手動実行（問題発生時）
+npm run fix:biome-permissions
+
+# 直接実行
+chmod +x node_modules/@biomejs/cli-*/biome
+```
+
+**技術実装**:
+- `postinstall`スクリプトでBiome権限を自動修正
+- ワイルドカード対応により全プラットフォーム対応
+- エラー発生時の手動修正コマンド提供
+
+---
+
 ### better-sqlite3 リビルド自動化システム
 
 このプロジェクトでは **better-sqlite3** ネイティブモジュールを使用しており、実行環境に応じて **2つの異なるリビルド** が必要です。
