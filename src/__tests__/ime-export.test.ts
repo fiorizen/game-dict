@@ -84,6 +84,10 @@ describe("IME Export Functionality", () => {
 
 		// Read and verify content
 		const content = fs.readFileSync(expectedPath, 'utf-8');
+		
+		// Verify content ends with newline (required for IME dictionaries)
+		expect(content.endsWith('\n')).toBe(true);
+		
 		const lines = content.trim().split('\n');
 
 		// Should have 2 entries
@@ -151,6 +155,10 @@ describe("IME Export Functionality", () => {
 		// Export and verify
 		const filePath = await csvHandlers.exportToMicrosoftIme(testGame.id);
 		const content = fs.readFileSync(filePath, 'utf-8');
+		
+		// Verify content ends with newline (required for IME dictionaries)
+		expect(content.endsWith('\n')).toBe(true);
+		
 		const lines = content.trim().split('\n');
 
 		// Should have 2 entries

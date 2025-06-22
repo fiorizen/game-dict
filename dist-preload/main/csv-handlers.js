@@ -155,7 +155,7 @@ class CSVHandlers {
             const categoryName = category?.ms_ime_name || "名詞";
             return `${entry.reading}\t${entry.word}\t${categoryName}`;
         });
-        const content = lines.join('\n');
+        const content = lines.join('\n') + '\n';
         const filePath = node_path_1.default.join(exportDir, `${game.code}.txt`);
         node_fs_1.default.writeFileSync(filePath, content, 'utf-8');
         return filePath;
