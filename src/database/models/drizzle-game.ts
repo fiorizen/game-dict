@@ -156,4 +156,44 @@ export class DrizzleGameModel {
 		
 		return result[0].count;
 	}
+
+	public deleteWithRelatedEntries(id: number): { deletedGame: boolean; deletedEntries: number } {
+		return this.db.transaction(() => {
+			// Count related entries first
+			const entryCountResult = this.db
+				.select({ count: sql<number>`count(*)` })
+				.from(schema.entries)
+				.where(eq(schema.entries.gameId, id))
+				.all();
+			
+			const entryCount = entryCountResult[0].count;
+
+			// Delete related entries
+			const deleteEntriesResult = this.db
+				.delete(schema.entries)
+				.where(eq(schema.entries.gameId, id))
+				.run();
+
+			// Delete game
+			const deleteGameResult = this.db
+				.delete(schema.games)
+				.where(eq(schema.games.id, id))
+				.run();
+
+			return {
+				deletedGame: deleteGameResult.changes > 0,
+				deletedEntries: deleteEntriesResult.changes
+			};
+		});
+	}
+
+	public getEntryCount(id: number): number {
+		const result = this.db
+			.select({ count: sql<number>`count(*)` })
+			.from(schema.entries)
+			.where(eq(schema.entries.gameId, id))
+			.all();
+		
+		return result[0].count;
+	}
 }

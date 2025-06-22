@@ -7,6 +7,8 @@ declare const api: {
         create: (data: CreateGameData) => Promise<any>;
         update: (id: number, data: UpdateGameData) => Promise<any>;
         delete: (id: number) => Promise<any>;
+        deleteWithRelatedEntries: (id: number) => Promise<any>;
+        getEntryCount: (id: number) => Promise<any>;
     };
     categories: {
         getAll: () => Promise<any>;

@@ -73,6 +73,30 @@ class GameModel {
         const result = stmt.run(id);
         return result.changes > 0;
     }
+    deleteWithRelatedEntries(id) {
+        // まず関連エントリー数を取得
+        const countStmt = this.db.prepare("SELECT COUNT(*) as count FROM entries WHERE game_id = ?");
+        const entryCount = countStmt.get(id).count;
+        // トランザクション内で関連エントリーとゲームを削除
+        const transaction = this.db.transaction(() => {
+            // 関連エントリーを削除
+            const deleteEntriesStmt = this.db.prepare("DELETE FROM entries WHERE game_id = ?");
+            const entriesResult = deleteEntriesStmt.run(id);
+            // ゲームを削除
+            const deleteGameStmt = this.db.prepare("DELETE FROM games WHERE id = ?");
+            const gameResult = deleteGameStmt.run(id);
+            return {
+                deletedGame: gameResult.changes > 0,
+                deletedEntries: entriesResult.changes
+            };
+        });
+        return transaction();
+    }
+    getEntryCount(id) {
+        const stmt = this.db.prepare("SELECT COUNT(*) as count FROM entries WHERE game_id = ?");
+        const result = stmt.get(id);
+        return result.count;
+    }
     getByName(name) {
         const stmt = this.db.prepare("SELECT * FROM games WHERE name = ?");
         return stmt.get(name) || null;

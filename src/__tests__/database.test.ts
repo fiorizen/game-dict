@@ -423,4 +423,68 @@ category_name,reading,word,description
 		const csvContent = fs.readFileSync(specialGameFile!, "utf-8");
 		expect(csvContent).toContain(`# Game: Special/Game:Test*Name (Code: ${specialGame.code})`);
 	});
+
+	it("should delete game with related entries", () => {
+		// Create a test game with entries
+		const testGame = db.games.create({ name: "Delete Test Game", code: "deletetestgame" });
+		const categories = db.categories.getAll();
+
+		// Add some entries
+		for (let i = 0; i < 5; i++) {
+			db.entries.create({
+				game_id: testGame.id,
+				category_id: categories[0].id,
+				reading: `delete${i}`,
+				word: `Delete${i}`,
+				description: `Delete test ${i}`,
+			});
+		}
+
+		// Verify entries exist
+		const entriesBeforeDelete = db.entries.getByGameId(testGame.id);
+		expect(entriesBeforeDelete).toHaveLength(5);
+
+		// Delete game with related entries
+		const result = db.games.deleteWithRelatedEntries(testGame.id);
+
+		expect(result.deletedGame).toBe(true);
+		expect(result.deletedEntries).toBe(5);
+
+		// Verify game and entries are gone
+		const gameAfterDelete = db.games.getById(testGame.id);
+		expect(gameAfterDelete).toBeNull();
+
+		const entriesAfterDelete = db.entries.getByGameId(testGame.id);
+		expect(entriesAfterDelete).toHaveLength(0);
+	});
+
+	it("should get correct entry count for game", () => {
+		// Create a test game with entries
+		const testGame = db.games.create({ name: "Count Test Game", code: "counttestgame" });
+		const categories = db.categories.getAll();
+
+		// Initially should be 0
+		expect(db.games.getEntryCount(testGame.id)).toBe(0);
+
+		// Add 3 entries
+		for (let i = 0; i < 3; i++) {
+			db.entries.create({
+				game_id: testGame.id,
+				category_id: categories[0].id,
+				reading: `count${i}`,
+				word: `Count${i}`,
+				description: `Count test ${i}`,
+			});
+		}
+
+		// Should now be 3
+		expect(db.games.getEntryCount(testGame.id)).toBe(3);
+
+		// Delete one entry directly
+		const entries = db.entries.getByGameId(testGame.id);
+		db.entries.delete(entries[0].id);
+
+		// Should now be 2
+		expect(db.games.getEntryCount(testGame.id)).toBe(2);
+	});
 });

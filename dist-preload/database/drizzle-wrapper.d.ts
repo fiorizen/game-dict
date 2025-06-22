@@ -8,6 +8,11 @@ declare class DrizzleGameWrapper {
     create(data: NewGame): Game;
     update(id: number, data: Partial<NewGame>): Game | null;
     delete(id: number): boolean;
+    deleteWithRelatedEntries(id: number): {
+        deletedGame: boolean;
+        deletedEntries: number;
+    };
+    getEntryCount(id: number): number;
     getByName(name: string): Game | null;
     getByCode(code: string): Game | null;
 }

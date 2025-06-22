@@ -37,6 +37,10 @@ export class IPCHandlers {
 			this.db.games.update(id, data),
 		);
 		ipcMain.handle("games:delete", (_, id: number) => this.db.games.delete(id));
+		ipcMain.handle("games:deleteWithRelatedEntries", (_, id: number) => 
+			this.db.games.deleteWithRelatedEntries(id));
+		ipcMain.handle("games:getEntryCount", (_, id: number) => 
+			this.db.games.getEntryCount(id));
 
 		// Category handlers
 		ipcMain.handle("categories:getAll", () => this.db.categories.getAll());

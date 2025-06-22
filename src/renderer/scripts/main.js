@@ -8,6 +8,8 @@ let shouldSortEntries = true;  // Track if entries should be sorted (false after
 const gameSelect = document.getElementById("game-select");
 const currentGameTitle = document.getElementById("current-game-title");
 const addGameBtn = document.getElementById("add-game-btn");
+const editGameBtn = document.getElementById("edit-game-btn");
+const deleteGameBtn = document.getElementById("delete-game-btn");
 const addEntryBtn = document.getElementById("add-entry-btn");
 const entriesTableContainer = document.getElementById("entries-table-container");
 const entriesTableBody = document.getElementById("entries-table-body");
@@ -32,6 +34,8 @@ function setupEventListeners() {
 	// Game selection
 	gameSelect.addEventListener("change", onGameChange);
 	addGameBtn.addEventListener("click", () => openGameModal());
+	document.getElementById("edit-game-btn").addEventListener("click", onEditGame);
+	document.getElementById("delete-game-btn").addEventListener("click", onDeleteGame);
 	
 	// Auto-generate game code from name
 	document.getElementById("game-name").addEventListener("input", onGameNameInput);
@@ -72,6 +76,14 @@ function setupModalHandlers() {
 	document
 		.getElementById("cancel-game-btn")
 		.addEventListener("click", closeModals);
+	
+	// Delete game modal buttons
+	document
+		.getElementById("cancel-delete-game-btn")
+		.addEventListener("click", closeModals);
+	document
+		.getElementById("confirm-delete-game-btn")
+		.addEventListener("click", onConfirmDeleteGame);
 }
 
 // Data loading functions
@@ -157,6 +169,8 @@ async function onGameChange() {
 			? selectedGame.name
 			: "Unknown Game";
 		addEntryBtn.disabled = false;
+		document.getElementById("edit-game-btn").disabled = false;
+		document.getElementById("delete-game-btn").disabled = false;
 		// Reset sort flag when changing games (should sort on game change)
 		shouldSortEntries = true;
 		await loadEntries(gameId);
@@ -164,6 +178,8 @@ async function onGameChange() {
 		currentGame = null;
 		currentGameTitle.textContent = "ゲームを選択してください";
 		addEntryBtn.disabled = true;
+		document.getElementById("edit-game-btn").disabled = true;
+		document.getElementById("delete-game-btn").disabled = true;
 		document.getElementById("export-ime-btn").disabled = true;
 		renderEntriesTable([]);
 	}
@@ -1055,4 +1071,126 @@ function updateImeExportButtonState() {
 	const hasGame = currentGame !== null;
 	
 	imeExportBtn.disabled = !(hasEntries && hasGame);
+}
+
+// Game management functions
+async function onEditGame() {
+	if (!currentGame) {
+		showError("ゲームが選択されていません");
+		return;
+	}
+
+	try {
+		const games = await window.electronAPI.games.getAll();
+		const selectedGame = games.find((g) => g.id === currentGame);
+		if (!selectedGame) {
+			showError("選択されたゲームが見つかりません");
+			return;
+		}
+
+		openGameModal(selectedGame);
+	} catch (error) {
+		console.error("Failed to load game for editing:", error);
+		showError(`ゲーム情報の読み込みに失敗しました: ${error.message}`);
+	}
+}
+
+async function onDeleteGame() {
+	if (!currentGame) {
+		showError("ゲームが選択されていません");
+		return;
+	}
+
+	try {
+		const games = await window.electronAPI.games.getAll();
+		const selectedGame = games.find((g) => g.id === currentGame);
+		if (!selectedGame) {
+			showError("選択されたゲームが見つかりません");
+			return;
+		}
+
+		// Get entry count for this game
+		const entryCount = await window.electronAPI.games.getEntryCount(currentGame);
+
+		// Show delete confirmation modal
+		showDeleteGameModal(selectedGame, entryCount);
+	} catch (error) {
+		console.error("Failed to prepare game deletion:", error);
+		showError(`削除準備に失敗しました: ${error.message}`);
+	}
+}
+
+function showDeleteGameModal(game, entryCount) {
+	const modal = document.getElementById("delete-game-modal");
+	const gameNameSpan = document.getElementById("delete-game-name");
+	const entriesCountSpan = document.getElementById("delete-entries-count");
+	const entriesMessage = document.getElementById("delete-entries-message");
+
+	gameNameSpan.textContent = game.name;
+	entriesCountSpan.textContent = entryCount;
+
+	// Hide entries message if no entries
+	if (entryCount === 0) {
+		entriesMessage.style.display = "none";
+	} else {
+		entriesMessage.style.display = "block";
+	}
+
+	// Store game ID for deletion
+	modal.dataset.gameId = game.id;
+
+	modal.style.display = "flex";
+}
+
+async function onConfirmDeleteGame() {
+	const modal = document.getElementById("delete-game-modal");
+	const gameId = parseInt(modal.dataset.gameId);
+
+	if (!gameId) {
+		showError("削除対象のゲームが特定できません");
+		return;
+	}
+
+	try {
+		// Disable buttons during deletion
+		const confirmBtn = document.getElementById("confirm-delete-game-btn");
+		const cancelBtn = document.getElementById("cancel-delete-game-btn");
+		
+		confirmBtn.disabled = true;
+		confirmBtn.textContent = "削除中...";
+		cancelBtn.disabled = true;
+
+		// Execute deletion
+		const result = await window.electronAPI.games.deleteWithRelatedEntries(gameId);
+
+		if (result.deletedGame) {
+			const deletedEntries = result.deletedEntries;
+			let message = "ゲームを削除しました";
+			if (deletedEntries > 0) {
+				message += `（関連する単語${deletedEntries}件も削除）`;
+			}
+			showSuccess(message);
+
+			// Clear current selection and reload games
+			currentGame = null;
+			gameSelect.value = "";
+			await loadGames();
+			await onGameChange(); // Update UI state
+		} else {
+			showError("ゲームの削除に失敗しました");
+		}
+	} catch (error) {
+		console.error("Game deletion failed:", error);
+		showError(`ゲーム削除に失敗しました: ${error.message}`);
+	} finally {
+		// Re-enable buttons and close modal
+		const confirmBtn = document.getElementById("confirm-delete-game-btn");
+		const cancelBtn = document.getElementById("cancel-delete-game-btn");
+		
+		confirmBtn.disabled = false;
+		confirmBtn.textContent = "削除実行";
+		cancelBtn.disabled = false;
+		
+		modal.style.display = "none";
+	}
 }

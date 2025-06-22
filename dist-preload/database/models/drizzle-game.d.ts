@@ -14,5 +14,10 @@ export declare class DrizzleGameModel {
     getByCode(code: string): Game | null;
     getRecentGames(limit?: number): Game[];
     count(): number;
+    deleteWithRelatedEntries(id: number): {
+        deletedGame: boolean;
+        deletedEntries: number;
+    };
+    getEntryCount(id: number): number;
 }
 //# sourceMappingURL=drizzle-game.d.ts.map

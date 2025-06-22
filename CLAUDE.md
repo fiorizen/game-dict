@@ -230,12 +230,14 @@ IME辞書登録用CSVも出力可能。
     - [x] 追加したワードは最下行に表示する（ソートしない）。次回起動時かゲーム切り替えのタイミングでreadingでソートする。
 
 - [x] **gameにcodeを導入する** (完了)
+
   - [x] ファイル名やCSV内で使用できるように、アルファベット+数字に限定した、各gameにユニークな文字列。最大16文字まで。登録時に必須指定で、編集UIは一旦不要（今後ゲーム全体の編集UIは実装する可能性あり）
   - [x] ファイル名にgame idを使っている部分にcodeを使うようにする
   - [x] バリデーション機能・重複チェック・自動生成機能完備
   - [x] 全テスト修正・安定化（単体36/36・E2E22/22テスト成功）
 
 - [x] **IME登録用辞書ファイルの出力機能実装** (完了)
+
   - [x] 現在表示しているgameの単語全件を`export`ディレクトリに出力する
   - [x] Microsoft IME形式：reading、word、category_nameをタブ区切りで並べたUTF-8の.txt。ファイル名はgame codeを使う
   - [x] スマートボタン制御：単語がない場合は出力ボタンを無効化
@@ -244,6 +246,13 @@ IME辞書登録用CSVも出力可能。
 
 - [x] **`npm start`の実装** (完了)
   - [x] 日常的に利用する本番DB・CSV接続コマンド実装
+- [ ] gameの削除・編集機能・UI実装
+  - [ ] 削除：削除時はそのgameに紐づくワードもすべて削除する。不可逆な操作なので、ワードが削除することの警告も含めて確認UIを入れること。
+  - [ ] 編集：編集できるのはcodeとnameのみ。使用頻度は低いので、モーダルUIでの編集でOK。
+- [ ] UI調整
+  - [ ] 操作ボタンと重ならないようにトーストUIの表示位置を見直す
+- [ ] npm scriptsの整理
+  - 開発中にデバッグ等で用意した`rebuild:node`や、配布用に仮で用意していた`dist`系について、使っていないことを確認した上で削除する
 
 ### プロジェクト統計
 
@@ -314,11 +323,11 @@ npm run lint:fix
 
 ### 本番環境と開発環境の違い
 
-| 環境 | データベース | CSVディレクトリ | コマンド |
-|------|-------------|----------------|----------|
-| **本番** | `~/Library/Application Support/game-dict/game-dict.db` | `csv/` | `npm start` |
-| **開発** | `~/Library/Application Support/game-dict/game-dict.db` | `csv/` | `npm run electron:dev` |
-| **テスト** | `test-data/game-dict-test.db` | `test-data/csv/` | `npm test` |
+| 環境       | データベース                                           | CSVディレクトリ  | コマンド               |
+| ---------- | ------------------------------------------------------ | ---------------- | ---------------------- |
+| **本番**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm start`            |
+| **開発**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm run electron:dev` |
+| **テスト** | `test-data/game-dict-test.db`                          | `test-data/csv/` | `npm test`             |
 
 **重要**: `npm start`は本番用の日常利用コマンドです。NODE_ENV=productionが設定され、必ずユーザーデータディレクトリを使用します。
 

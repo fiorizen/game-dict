@@ -58,7 +58,12 @@
       "Bash(npm ls:*)",
       "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=15000 --verbose)",
       "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=15000 --reporter=line)",
-      "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=20000)"
+      "Bash(NODE_ENV=test npx playwright test --project=electron tests/e2e/app.spec.ts -g \"アプリが正常に起動する\" --timeout=20000)",
+      "Bash(npm help:*)",
+      "Bash(npm start)",
+      "Bash(NODE_ENV=production npm run build)",
+      "Bash(timeout 10s npm start)",
+      "Bash(gtimeout 10s npm start)"
     ],
     "deny": []
   }

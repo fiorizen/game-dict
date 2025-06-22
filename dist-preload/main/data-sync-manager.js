@@ -15,9 +15,8 @@ class DataSyncManager {
         this.db = index_js_1.Database.getInstance();
         this.csvHandlers = new csv_handlers_js_1.CSVHandlers();
         // Use test directory if in test environment or if explicitly provided
-        const dbPath = this.db.getDbPath();
-        const isTestEnvironment = dbPath.includes('test-data') || dbPath.includes('test') ||
-            process.env.NODE_ENV === 'test';
+        const isTestEnvironment = process.env.NODE_ENV === 'test' ||
+            process.env.VITEST === 'true';
         this.csvDir = csvDir || (isTestEnvironment
             ? node_path_1.default.join(process.cwd(), 'test-data', 'csv')
             : node_path_1.default.join(process.cwd(), 'csv'));

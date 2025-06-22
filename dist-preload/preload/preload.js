@@ -10,6 +10,8 @@ const api = {
         create: (data) => electron_1.ipcRenderer.invoke("games:create", data),
         update: (id, data) => electron_1.ipcRenderer.invoke("games:update", id, data),
         delete: (id) => electron_1.ipcRenderer.invoke("games:delete", id),
+        deleteWithRelatedEntries: (id) => electron_1.ipcRenderer.invoke("games:deleteWithRelatedEntries", id),
+        getEntryCount: (id) => electron_1.ipcRenderer.invoke("games:getEntryCount", id),
     },
     // Category operations
     categories: {

@@ -19,6 +19,9 @@ const api = {
 		update: (id: number, data: UpdateGameData) =>
 			ipcRenderer.invoke("games:update", id, data),
 		delete: (id: number) => ipcRenderer.invoke("games:delete", id),
+		deleteWithRelatedEntries: (id: number) => 
+			ipcRenderer.invoke("games:deleteWithRelatedEntries", id),
+		getEntryCount: (id: number) => ipcRenderer.invoke("games:getEntryCount", id),
 	},
 
 	// Category operations

@@ -33,6 +33,12 @@ class DrizzleGameWrapper {
     delete(id) {
         return this.drizzleDb.games.delete(id);
     }
+    deleteWithRelatedEntries(id) {
+        return this.drizzleDb.games.deleteWithRelatedEntries(id);
+    }
+    getEntryCount(id) {
+        return this.drizzleDb.games.getEntryCount(id);
+    }
     getByName(name) {
         const result = this.drizzleDb.games.getByName(name);
         return result ? (0, adapters_js_1.drizzleGameToLegacy)(result) : null;

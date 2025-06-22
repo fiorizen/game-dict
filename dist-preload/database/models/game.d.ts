@@ -8,6 +8,11 @@ export declare class GameModel {
     create(game: NewGame): Game;
     update(id: number, updates: Partial<NewGame>): Game | null;
     delete(id: number): boolean;
+    deleteWithRelatedEntries(id: number): {
+        deletedGame: boolean;
+        deletedEntries: number;
+    };
+    getEntryCount(id: number): number;
     getByName(name: string): Game | null;
     getByCode(code: string): Game | null;
 }

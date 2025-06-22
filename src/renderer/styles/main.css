@@ -144,6 +144,15 @@ textarea:focus {
 	background: #7f8c8d;
 }
 
+.btn-danger {
+	background: #e74c3c;
+	color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+	background: #c0392b;
+}
+
 .btn-small {
 	padding: 0.25rem 0.5rem;
 	font-size: 0.8rem;
@@ -153,6 +162,17 @@ textarea:focus {
 .btn:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
+}
+
+/* Game selector buttons */
+.game-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.game-buttons .btn {
+	width: 100%;
 }
 
 /* Entries list */
@@ -375,6 +395,23 @@ textarea:focus {
 
 .modal-body {
 	padding: 1.5rem;
+}
+
+/* Warning styles */
+.warning-message {
+	background: #fff3cd;
+	border: 1px solid #ffeeba;
+	border-radius: 4px;
+	padding: 1rem;
+	margin-bottom: 1rem;
+}
+
+.warning-message p {
+	margin: 0 0 0.5rem 0;
+}
+
+.warning-message p:last-child {
+	margin-bottom: 0;
 }
 
 .form-group {

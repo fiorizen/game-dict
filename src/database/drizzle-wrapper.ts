@@ -46,6 +46,14 @@ class DrizzleGameWrapper {
 		return this.drizzleDb.games.delete(id);
 	}
 
+	public deleteWithRelatedEntries(id: number): { deletedGame: boolean; deletedEntries: number } {
+		return this.drizzleDb.games.deleteWithRelatedEntries(id);
+	}
+
+	public getEntryCount(id: number): number {
+		return this.drizzleDb.games.getEntryCount(id);
+	}
+
 	public getByName(name: string): Game | null {
 		const result = this.drizzleDb.games.getByName(name);
 		return result ? drizzleGameToLegacy(result) : null;
