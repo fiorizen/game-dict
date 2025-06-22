@@ -21,10 +21,9 @@ export class CSVHandlers {
 		const games = this.db.games.getAll();
 		const categories = this.db.categories.getAll();
 		
-		// Use test directory if in test environment (check database path), otherwise use csv-exports
-		const dbPath = this.db.getDbPath();
-		const isTestEnvironment = dbPath.includes('test-data') || dbPath.includes('test') || 
-			process.env.NODE_ENV === 'test';
+		// Use test directory if in test environment, otherwise use csv
+		const isTestEnvironment = process.env.NODE_ENV === 'test' || 
+			process.env.VITEST === 'true';
 		
 		const defaultDir = isTestEnvironment
 			? path.join(process.cwd(), 'test-data', 'csv')

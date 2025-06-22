@@ -242,12 +242,12 @@ IME辞書登録用CSVも出力可能。
   - [x] 完全なUI統合とエラーハンドリング
   - [x] 包括的テストカバレッジ（単体4/4・E2E5/5テスト成功）
 
-- [ ] `npm start`の実装 (将来的な拡張)
-  - 日常的に利用する、本番DB・CSVに接続するためのコマンド。今回の要件ではこれがあればパッケージングは不要
+- [x] **`npm start`の実装** (完了)
+  - [x] 日常的に利用する本番DB・CSV接続コマンド実装
 
 ### プロジェクト統計
 
-- **完了率**: 17/17 メインタスク (100%) + IME機能実装完了
+- **完了率**: 18/18 メインタスク (100%) + IME機能実装完了 + npm start実装完了
 - **コードテスト**: DrizzleORM 4/4 + 既存DB 18/18 + IME 4/4 + E2E 27/27 = 53/53 Pass (100%成功率)
 - **アプリ状態**: **全機能完成・完全統合・安定動作確認済み**
 - **技術基盤**: DrizzleORM + SQLite + Vitest + Electron v36 + 完全CSV管理 + インライン編集UI + IME辞書出力 + 安定E2Eテスト
@@ -255,7 +255,7 @@ IME辞書登録用CSVも出力可能。
 - **IME機能**: Microsoft IME辞書出力（.txt形式・タブ区切り・game code命名・スマート制御）
 - **ORM統合**: 型安全なDrizzleORM + 後方互換性DrizzleWrapper + テスト環境最適化
 - **安定性**: E2Eテスト完全安定化・Electron終了処理問題解決・DB接続簡素化達成
-- **残りタスク**: 運用最適化・パッケージング準備（npm start実装・レスポンシブ対応）
+- **本番実行**: npm start による日常利用コマンド実装完了
 
 ### 最新の技術決定事項
 
@@ -292,7 +292,10 @@ npm run build
 ### 開発コマンド
 
 ```bash
-# アプリケーション実行
+# アプリケーション実行（本番利用）
+npm start
+
+# 開発用アプリケーション実行
 npm run electron:dev
 
 # 開発時のウォッチビルド
@@ -308,6 +311,16 @@ npm run test:db
 npm run lint
 npm run lint:fix
 ```
+
+### 本番環境と開発環境の違い
+
+| 環境 | データベース | CSVディレクトリ | コマンド |
+|------|-------------|----------------|----------|
+| **本番** | `~/Library/Application Support/game-dict/game-dict.db` | `csv/` | `npm start` |
+| **開発** | `~/Library/Application Support/game-dict/game-dict.db` | `csv/` | `npm run electron:dev` |
+| **テスト** | `test-data/game-dict-test.db` | `test-data/csv/` | `npm test` |
+
+**重要**: `npm start`は本番用の日常利用コマンドです。NODE_ENV=productionが設定され、必ずユーザーデータディレクトリを使用します。
 
 ### プロジェクト構造
 

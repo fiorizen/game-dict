@@ -51,6 +51,37 @@ export class DatabaseConnection {
 			return testDbPath;
 		}
 
+		// 本番環境では必ずユーザーデータディレクトリを使用
+		if (process.env.NODE_ENV === 'production') {
+			// For production, always use user data directory
+			if (
+				typeof global !== "undefined" &&
+				(global as { app?: { getPath: (path: string) => string } }).app
+			) {
+				const globalWithApp = global as unknown as {
+					app: { getPath: (path: string) => string };
+				};
+				const userDataPath = globalWithApp.app.getPath("userData");
+				const prodDbPath = path.join(userDataPath, "game-dict.db");
+				console.log('Using production database:', prodDbPath);
+				return prodDbPath;
+			}
+
+			// In Electron environment for production
+			if (typeof require !== "undefined") {
+				try {
+					const { app } = require("electron");
+					const userDataPath = app.getPath("userData");
+					const prodDbPath = path.join(userDataPath, "game-dict.db");
+					console.log('Using production database:', prodDbPath);
+					return prodDbPath;
+				} catch {
+					// Fallback should not happen in production
+					throw new Error('Cannot determine production database path');
+				}
+			}
+		}
+
 		// For testing environment, check if app is available
 		if (
 			typeof global !== "undefined" &&

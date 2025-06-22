@@ -5,6 +5,7 @@
 	"type": "module",
 	"main": "dist/main/main.js",
 	"scripts": {
+		"start": "npm run build && NODE_ENV=production electron .",
 		"build": "tsc && tsc -p tsconfig.preload.json && npm run copy-assets",
 		"copy-assets": "cp -r src/renderer/index.html src/renderer/styles dist/renderer/ && mkdir -p dist/renderer/scripts && cp src/renderer/scripts/main.js dist/renderer/scripts/ && cp -r dist-preload/preload/* dist/preload/",
 		"dev": "tsc --watch",
@@ -25,7 +26,7 @@
 		"test:e2e": "npm run test:clean:db && npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --project=electron",
 		"test:e2e:ui": "npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --ui",
 		"test:e2e:debug": "npm run test:clean:db && npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --project=electron --headed --debug",
-		"rebuild:electron": "npx @electron/rebuild",
+		"rebuild:electron": "npx @electron/rebuild -f -w better-sqlite3",
 		"rebuild:node": "npm rebuild better-sqlite3",
 		"postinstall": "npm run rebuild:electron"
 	},
