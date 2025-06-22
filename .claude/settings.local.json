@@ -64,7 +64,8 @@
       "Bash(NODE_ENV=production npm run build)",
       "Bash(timeout 10s npm start)",
       "Bash(gtimeout 10s npm start)",
-      "Bash(./node_modules/.bin/biome:*)"
+      "Bash(./node_modules/.bin/biome:*)",
+      "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": []
   }
