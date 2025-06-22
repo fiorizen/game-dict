@@ -2,6 +2,7 @@
 let currentGame = null;
 let currentEntries = [];
 let allCategories = [];
+let shouldSortEntries = true;  // Track if entries should be sorted (false after adding new entry)
 
 // DOM elements
 const gameSelect = document.getElementById("game-select");
@@ -18,9 +19,12 @@ const gameForm = document.getElementById("game-form");
 
 // Initialize app
 document.addEventListener("DOMContentLoaded", async () => {
+	// Reset sort flag on app startup
+	shouldSortEntries = true;
 	await loadGames();
 	await loadCategories();
 	setupEventListeners();
+	setupDataSyncHandlers();
 });
 
 // Event listeners
@@ -90,7 +94,12 @@ async function loadCategories() {
 
 async function loadEntries(gameId) {
 	try {
-		currentEntries = await window.electronAPI.entries.getByGameId(gameId);
+		// Use sorted or unsorted data based on current state
+		if (shouldSortEntries) {
+			currentEntries = await window.electronAPI.entries.getByGameId(gameId);
+		} else {
+			currentEntries = await window.electronAPI.entries.getByGameIdUnsorted(gameId);
+		}
 		renderEntriesTable(currentEntries || []);
 	} catch (error) {
 		console.error("Failed to load entries:", error);
@@ -109,6 +118,20 @@ function populateGameSelect(games) {
 		option.textContent = game.name;
 		gameSelect.appendChild(option);
 	});
+	
+	// Auto-select first game if available and no game is currently selected
+	if (games.length > 0 && !currentGame) {
+		selectFirstGame(games);
+	}
+}
+
+// Select first game automatically
+async function selectFirstGame(games) {
+	if (games.length === 0) return;
+	
+	const firstGame = games[0];
+	gameSelect.value = firstGame.id.toString();
+	await onGameChange();
 }
 
 function populateCategorySelects() {
@@ -126,6 +149,8 @@ async function onGameChange() {
 			? selectedGame.name
 			: "Unknown Game";
 		addEntryBtn.disabled = false;
+		// Reset sort flag when changing games (should sort on game change)
+		shouldSortEntries = true;
 		await loadEntries(gameId);
 	} else {
 		currentGame = null;
@@ -472,6 +497,9 @@ async function saveNewEntry(button) {
 		
 		await window.electronAPI.entries.create(data);
 		
+		// Disable sorting for the reload to keep new entry at bottom
+		shouldSortEntries = false;
+		
 		// Reload entries
 		await loadEntries(currentGame);
 		
@@ -659,6 +687,8 @@ async function onImportCsv() {
 
 		if (importResult.success) {
 			showSuccess("CSVファイルのインポートが完了しました");
+			// Reset sort flag on CSV import
+			shouldSortEntries = true;
 			// Reload data
 			await loadGames();
 			await loadCategories();
@@ -731,4 +761,220 @@ function showError(message) {
 			toast.parentNode.removeChild(toast);
 		}
 	}, 5000);
+}
+
+// Data Sync Handlers
+function setupDataSyncHandlers() {
+	// Listen for data sync dialog request from main process
+	if (window.electronAPI && window.electronAPI.dataSync && window.electronAPI.dataSync.onShowDialog) {
+		window.electronAPI.dataSync.onShowDialog((status) => {
+			showDataSyncDialog(status);
+		});
+	} else {
+		console.warn('Data sync IPC listener not available');
+	}
+
+	// Listen for exit sync dialog request from main process
+	if (window.electronAPI && window.electronAPI.exitSync && window.electronAPI.exitSync.onShowDialog) {
+		window.electronAPI.exitSync.onShowDialog((status) => {
+			showExitSyncDialog(status);
+		});
+	} else {
+		console.warn('Exit sync IPC listener not available');
+	}
+}
+
+async function showDataSyncDialog(status) {
+	try {
+		// Get conflict message from main process
+		const conflictData = await window.electronAPI.dataSync.getConflictMessage(status);
+		
+		const modal = document.getElementById('data-sync-modal');
+		const title = document.getElementById('data-sync-modal-title');
+		const message = document.getElementById('data-sync-message');
+		const options = document.getElementById('data-sync-options');
+		
+		// Set title and message
+		title.textContent = conflictData.title;
+		message.textContent = conflictData.message;
+		
+		// Clear previous options
+		options.innerHTML = '';
+		
+		// Create option buttons
+		conflictData.options.forEach(option => {
+			const optionDiv = document.createElement('div');
+			optionDiv.className = 'data-sync-option';
+			optionDiv.innerHTML = `
+				<button class="btn btn-primary data-sync-choice-btn" 
+						data-action="${option.action}">
+					${option.label}
+				</button>
+				<p class="option-description">${option.description}</p>
+			`;
+			options.appendChild(optionDiv);
+		});
+		
+		// Add event listeners to choice buttons
+		options.querySelectorAll('.data-sync-choice-btn').forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				const action = e.target.dataset.action;
+				handleDataSyncChoice(action);
+			});
+		});
+		
+		// Show modal
+		modal.style.display = 'block';
+		
+	} catch (error) {
+		console.error('Failed to show data sync dialog:', error);
+		showError('データ同期ダイアログの表示に失敗しました');
+	}
+}
+
+async function handleDataSyncChoice(action) {
+	const modal = document.getElementById('data-sync-modal');
+	
+	try {
+		// Disable all buttons during processing
+		const buttons = modal.querySelectorAll('.data-sync-choice-btn');
+		buttons.forEach(btn => {
+			btn.disabled = true;
+			btn.textContent = '処理中...';
+		});
+		
+		// Execute user choice
+		const result = await window.electronAPI.dataSync.performUserChoice({
+			action: action,
+			confirmed: true
+		});
+		
+		if (result.success) {
+			showSuccess('データ同期が完了しました');
+			// Reset sort flag on data sync
+			shouldSortEntries = true;
+			// Reload data to reflect changes
+			await loadGames();
+			await loadCategories();
+			if (currentGame) {
+				await loadEntries(currentGame);
+			}
+		} else {
+			showError(`データ同期に失敗しました: ${result.error}`);
+		}
+		
+	} catch (error) {
+		console.error('Data sync choice failed:', error);
+		showError(`データ同期処理に失敗しました: ${error.message}`);
+	} finally {
+		// Close modal
+		modal.style.display = 'none';
+	}
+}
+
+// Exit Sync Handlers
+async function showExitSyncDialog(status) {
+	try {
+		// Get exit message from main process
+		const exitData = await window.electronAPI.exitSync.getExitMessage(status);
+		
+		const modal = document.getElementById('exit-sync-modal');
+		const title = document.getElementById('exit-sync-modal-title');
+		const message = document.getElementById('exit-sync-message');
+		const options = document.getElementById('exit-sync-options');
+		
+		// Set title and message
+		title.textContent = exitData.title;
+		message.textContent = exitData.message;
+		
+		// Clear previous options
+		options.innerHTML = '';
+		
+		// Create option buttons
+		exitData.options.forEach(option => {
+			const optionDiv = document.createElement('div');
+			optionDiv.className = 'exit-sync-option';
+			optionDiv.innerHTML = `
+				<button class="btn btn-primary exit-sync-choice-btn" 
+						data-action="${option.action}">
+					${option.label}
+				</button>
+				<p class="option-description">${option.description}</p>
+			`;
+			options.appendChild(optionDiv);
+		});
+		
+		// Add event listeners to choice buttons
+		options.querySelectorAll('.exit-sync-choice-btn').forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				const action = e.target.dataset.action;
+				handleExitSyncChoice(action);
+			});
+		});
+		
+		// Show modal
+		modal.style.display = 'block';
+		
+	} catch (error) {
+		console.error('Failed to show exit sync dialog:', error);
+		showError('終了時データ同期ダイアログの表示に失敗しました');
+		// Force close if dialog fails
+		forceCloseApp();
+	}
+}
+
+async function handleExitSyncChoice(action) {
+	const modal = document.getElementById('exit-sync-modal');
+	
+	try {
+		// Disable all buttons during processing
+		const buttons = modal.querySelectorAll('.exit-sync-choice-btn');
+		buttons.forEach(btn => {
+			btn.disabled = true;
+			btn.textContent = '処理中...';
+		});
+		
+		// Execute user choice
+		const result = await window.electronAPI.exitSync.performUserChoice({
+			action: action,
+			confirmed: true
+		});
+		
+		if (result.success) {
+			if (action === 'export_csv') {
+				showSuccess('データをCSVに保存しました');
+				await window.electronAPI.exitSync.markLastExportTime();
+			}
+		} else {
+			showError(`データ処理に失敗しました: ${result.error}`);
+		}
+		
+	} catch (error) {
+		console.error('Exit sync choice failed:', error);
+		showError(`終了処理に失敗しました: ${error.message}`);
+	} finally {
+		// Close modal and force close app
+		modal.style.display = 'none';
+		forceCloseApp();
+	}
+}
+
+async function forceCloseApp() {
+	// Request main process to force close the app
+	try {
+		if (window.electronAPI && window.electronAPI.app && window.electronAPI.app.forceClose) {
+			await window.electronAPI.app.forceClose();
+		} else {
+			// Fallback
+			setTimeout(() => {
+				window.close();
+			}, 100);
+		}
+	} catch (error) {
+		console.error('Force close failed:', error);
+		// Fallback
+		setTimeout(() => {
+			window.close();
+		}, 100);
+	}
 }

@@ -34,6 +34,13 @@ export class EntryModel {
 		return stmt.all(gameId) as Entry[];
 	}
 
+	public getByGameIdUnsorted(gameId: number): Entry[] {
+		const stmt = this.db.prepare(
+			"SELECT * FROM entries WHERE game_id = ? ORDER BY id ASC",
+		);
+		return stmt.all(gameId) as Entry[];
+	}
+
 	public getByGameIdWithDetails(gameId: number): EntryWithDetails[] {
 		const stmt = this.db.prepare(`
 			SELECT 
