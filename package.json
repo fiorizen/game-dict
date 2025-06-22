@@ -27,7 +27,6 @@
 		"test:e2e:ui": "npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --ui",
 		"test:e2e:debug": "npm run test:clean:db && npm run build && npm run rebuild:electron && NODE_ENV=test playwright test --project=electron --headed --debug",
 		"rebuild:electron": "npx @electron/rebuild -f -w better-sqlite3",
-		"rebuild:node": "npm rebuild better-sqlite3",
 		"postinstall": "npm run rebuild:electron"
 	},
 	"keywords": [],
