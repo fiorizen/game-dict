@@ -155,6 +155,9 @@ playwright-report/
 *.swp
 *.swo
 
+# Export directory (generated IME dictionary files)
+export/
+
 # OS files
 .DS_Store
 Thumbs.db
