@@ -530,10 +530,15 @@ npm run test:db
 
 #### better-sqlite3エラー (NODE_MODULE_VERSION不一致)
 
-**通常は自動化済み** - 以下のコマンドが自動的にリビルドを実行します：
+**✅ プリビルドバイナリ導入済み** - 以下の仕組みで最適化されています：
+- `npm install` → **prebuild-install** によるプリコンパイル済みバイナリの自動取得
+- プリビルドが無い場合のみリビルド実行（フォールバック）
+- テスト・E2E実行時の自動リビルド継続
+
+**自動化されたコマンド**:
 - `npm test` (Node.js用リビルド付き)
 - `npm run test:e2e` (Electron用リビルド付き)
-- `npm install` (postinstallでElectron用リビルド)
+- `npm install` (prebuild-install → 必要時のみElectron用リビルド)
 
 **手動リビルドが必要な場合**:
 ```bash
@@ -543,7 +548,7 @@ npm run rebuild:electron
 # Vitestテストでエラーが出る場合
 npm run rebuild:node
 
-# 注意: 自動化により手動実行は通常不要
+# 注意: プリビルド導入により手動実行の頻度は大幅削減
 ```
 
 ### プロジェクトメモ
