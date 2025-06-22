@@ -34,10 +34,10 @@ npm run build
 npm start
 
 # 開発用アプリケーション実行
-npm run electron:dev
+npm run dev
 
 # 開発時のウォッチビルド
-npm run dev
+npm run watch
 
 # テスト実行
 npm test
@@ -55,7 +55,7 @@ npm run lint:fix
 | 環境       | データベース                                           | CSVディレクトリ  | コマンド               |
 | ---------- | ------------------------------------------------------ | ---------------- | ---------------------- |
 | **本番**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm start`            |
-| **開発**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm run electron:dev` |
+| **開発**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm run dev` |
 | **テスト** | `test-data/game-dict-test.db`                          | `test-data/csv/` | `npm test`             |
 
 **重要**: `npm start`は本番用の日常利用コマンドです。NODE_ENV=productionが設定され、必ずユーザーデータディレクトリを使用します。

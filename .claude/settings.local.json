@@ -65,7 +65,13 @@
       "Bash(timeout 10s npm start)",
       "Bash(gtimeout 10s npm start)",
       "Bash(./node_modules/.bin/biome:*)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(git rm:*)",
+      "Bash(NODE_ENV=production node -e \"\nconst path = require('path');\nconst fs = require('fs');\nconst os = require('os');\n\n// Simulate what Electron would do\nconst userDataPath = path.join(os.homedir(), 'Library', 'Application Support', 'game-dict');\nconst prodDbPath = path.join(userDataPath, 'game-dict.db');\n\nconsole.log('Production database path would be:', prodDbPath);\nconsole.log('Production database exists:', fs.existsSync(prodDbPath));\n\nif (fs.existsSync(prodDbPath)) {\n  const stats = fs.statSync(prodDbPath);\n  console.log('Production database size:', stats.size, 'bytes');\n  console.log('Production database modified:', stats.mtime);\n}\n\n// Check if there are other databases in the user data directory\nif (fs.existsSync(userDataPath)) {\n  console.log('Files in user data directory:');\n  const files = fs.readdirSync(userDataPath);\n  files.forEach(file => {\n    const filePath = path.join(userDataPath, file);\n    const stats = fs.statSync(filePath);\n    console.log('  -', file, '(', stats.size, 'bytes,', stats.mtime, ')');\n  });\n}\n\")",
+      "Bash(NODE_ENV=production node -e \"console.log('NODE_ENV:', process.env.NODE_ENV)\")",
+      "Bash(timeout 8s npm start)",
+      "Bash(gtimeout:*)",
+      "Bash(NODE_ENV=production node -e \"\nconst path = require('path');\nconst fs = require('fs');\nconst os = require('os');\n\n// Simulate what Electron would do\nconst userDataPath = path.join(os.homedir(), 'Library', 'Application Support', 'game-dict');\nconst prodDbPath = path.join(userDataPath, 'game-dict.db');\n\nconsole.log('Production database path would be:', prodDbPath);\nconsole.log('Production database exists:', fs.existsSync(prodDbPath));\n\nif (fs.existsSync(prodDbPath)) {\n  const stats = fs.statSync(prodDbPath);\n  console.log('Production database size:', stats.size, 'bytes');\n  console.log('Production database modified:', stats.mtime);\n}\n\n// Check if there are other databases in the user data directory\nif (fs.existsSync(userDataPath)) {\n  console.log('Files in user data directory:');\n  const files = fs.readdirSync(userDataPath);\n  files.forEach(file => {\n    const filePath = path.join(userDataPath, file);\n    const stats = fs.statSync(filePath);\n    console.log('  -', file, '(', stats.size, 'bytes,', stats.mtime, ')');\n  });\n}\n\")"
     ],
     "deny": []
   }
