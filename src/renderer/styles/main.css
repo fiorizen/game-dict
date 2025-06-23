@@ -229,8 +229,12 @@ textarea:focus {
 }
 
 @keyframes saveSuccess {
-	0% { background: #d1ecf1; }
-	100% { background: #d4edda; }
+	0% {
+		background: #d1ecf1;
+	}
+	100% {
+		background: #d4edda;
+	}
 }
 
 .entry-input {

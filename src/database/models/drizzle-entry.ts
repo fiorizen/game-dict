@@ -1,7 +1,7 @@
-import { eq, and, or, like, sql, asc } from "drizzle-orm";
+import { and, asc, eq, like, or, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import type { Entry, EntryWithDetails, NewEntry } from "../schema.js";
 import * as schema from "../schema.js";
-import type { Entry, NewEntry, EntryWithDetails } from "../schema.js";
 
 export class DrizzleEntryModel {
 	private db: BetterSQLite3Database<typeof schema>;
@@ -34,7 +34,10 @@ export class DrizzleEntryModel {
 			})
 			.from(schema.entries)
 			.innerJoin(schema.games, eq(schema.entries.gameId, schema.games.id))
-			.innerJoin(schema.categories, eq(schema.entries.categoryId, schema.categories.id))
+			.innerJoin(
+				schema.categories,
+				eq(schema.entries.categoryId, schema.categories.id),
+			)
 			.orderBy(asc(schema.entries.reading))
 			.all();
 
@@ -75,7 +78,10 @@ export class DrizzleEntryModel {
 			})
 			.from(schema.entries)
 			.innerJoin(schema.games, eq(schema.entries.gameId, schema.games.id))
-			.innerJoin(schema.categories, eq(schema.entries.categoryId, schema.categories.id))
+			.innerJoin(
+				schema.categories,
+				eq(schema.entries.categoryId, schema.categories.id),
+			)
 			.where(eq(schema.entries.gameId, gameId))
 			.orderBy(asc(schema.entries.reading))
 			.all();
@@ -90,7 +96,7 @@ export class DrizzleEntryModel {
 			.where(eq(schema.entries.id, id))
 			.limit(1)
 			.all();
-		
+
 		return results[0] || null;
 	}
 
@@ -110,7 +116,10 @@ export class DrizzleEntryModel {
 			})
 			.from(schema.entries)
 			.innerJoin(schema.games, eq(schema.entries.gameId, schema.games.id))
-			.innerJoin(schema.categories, eq(schema.entries.categoryId, schema.categories.id))
+			.innerJoin(
+				schema.categories,
+				eq(schema.entries.categoryId, schema.categories.id),
+			)
 			.where(eq(schema.entries.id, id))
 			.limit(1)
 			.all();
@@ -133,7 +142,10 @@ export class DrizzleEntryModel {
 		return result[0];
 	}
 
-	public update(id: number, data: Partial<Omit<NewEntry, "id" | "createdAt">>): Entry | null {
+	public update(
+		id: number,
+		data: Partial<Omit<NewEntry, "id" | "createdAt">>,
+	): Entry | null {
 		if (Object.keys(data).length === 0) {
 			return this.getById(id);
 		}
@@ -165,10 +177,10 @@ export class DrizzleEntryModel {
 		const searchCondition = or(
 			like(schema.entries.reading, `%${query}%`),
 			like(schema.entries.word, `%${query}%`),
-			like(schema.entries.description, `%${query}%`)
+			like(schema.entries.description, `%${query}%`),
 		);
 
-		const whereCondition = gameId 
+		const whereCondition = gameId
 			? and(searchCondition, eq(schema.entries.gameId, gameId))
 			: searchCondition;
 
@@ -187,7 +199,10 @@ export class DrizzleEntryModel {
 			})
 			.from(schema.entries)
 			.innerJoin(schema.games, eq(schema.entries.gameId, schema.games.id))
-			.innerJoin(schema.categories, eq(schema.entries.categoryId, schema.categories.id))
+			.innerJoin(
+				schema.categories,
+				eq(schema.entries.categoryId, schema.categories.id),
+			)
 			.where(whereCondition)
 			.orderBy(asc(schema.entries.reading))
 			.all();
@@ -209,7 +224,7 @@ export class DrizzleEntryModel {
 			.select({ count: sql<number>`count(*)` })
 			.from(schema.entries)
 			.all();
-		
+
 		return result[0].count;
 	}
 
@@ -219,7 +234,7 @@ export class DrizzleEntryModel {
 			.from(schema.entries)
 			.where(eq(schema.entries.gameId, gameId))
 			.all();
-		
+
 		return result[0].count;
 	}
 }

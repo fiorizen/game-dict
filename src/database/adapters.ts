@@ -1,6 +1,17 @@
 // Type adapters for converting between Drizzle schema and legacy types
-import type { Game as DrizzleGame, Category as DrizzleCategory, Entry as DrizzleEntry, EntryWithDetails as DrizzleEntryWithDetails } from "./schema.js";
-import type { Game, Category, Entry, EntryWithDetails } from "../shared/types.js";
+
+import type {
+	Category,
+	Entry,
+	EntryWithDetails,
+	Game,
+} from "../shared/types.js";
+import type {
+	Category as DrizzleCategory,
+	Entry as DrizzleEntry,
+	EntryWithDetails as DrizzleEntryWithDetails,
+	Game as DrizzleGame,
+} from "./schema.js";
 
 // Convert Drizzle schema types to legacy types (snake_case)
 export function drizzleGameToLegacy(drizzleGame: DrizzleGame): Game {
@@ -13,7 +24,9 @@ export function drizzleGameToLegacy(drizzleGame: DrizzleGame): Game {
 	};
 }
 
-export function drizzleCategoryToLegacy(drizzleCategory: DrizzleCategory): Category {
+export function drizzleCategoryToLegacy(
+	drizzleCategory: DrizzleCategory,
+): Category {
 	return {
 		id: drizzleCategory.id,
 		name: drizzleCategory.name,
@@ -38,7 +51,9 @@ export function drizzleEntryToLegacy(drizzleEntry: DrizzleEntry): Entry {
 	};
 }
 
-export function drizzleEntryWithDetailsToLegacy(drizzleEntry: DrizzleEntryWithDetails): EntryWithDetails {
+export function drizzleEntryWithDetailsToLegacy(
+	drizzleEntry: DrizzleEntryWithDetails,
+): EntryWithDetails {
 	return {
 		id: drizzleEntry.id,
 		game_id: drizzleEntry.gameId,
@@ -54,14 +69,25 @@ export function drizzleEntryWithDetailsToLegacy(drizzleEntry: DrizzleEntryWithDe
 }
 
 // Convert legacy types to Drizzle schema input types (camelCase)
-export function legacyGameToDrizzle(legacyGame: Omit<Game, "id" | "created_at" | "updated_at">): { name: string; code: string } {
+export function legacyGameToDrizzle(
+	legacyGame: Omit<Game, "id" | "created_at" | "updated_at">,
+): { name: string; code: string } {
 	return {
 		name: legacyGame.name,
 		code: legacyGame.code,
 	};
 }
 
-export function legacyCategoryToDrizzle(legacyCategory: Omit<Category, "id" | "created_at" | "updated_at"> | { name: string; google_ime_name?: string; ms_ime_name?: string; atok_name?: string; }): {
+export function legacyCategoryToDrizzle(
+	legacyCategory:
+		| Omit<Category, "id" | "created_at" | "updated_at">
+		| {
+				name: string;
+				google_ime_name?: string;
+				ms_ime_name?: string;
+				atok_name?: string;
+		  },
+): {
 	name: string;
 	googleImeName?: string;
 	msImeName?: string;
@@ -75,7 +101,17 @@ export function legacyCategoryToDrizzle(legacyCategory: Omit<Category, "id" | "c
 	};
 }
 
-export function legacyEntryToDrizzle(legacyEntry: Omit<Entry, "id" | "created_at" | "updated_at"> | { game_id: number; category_id: number; reading: string; word: string; description?: string; }): {
+export function legacyEntryToDrizzle(
+	legacyEntry:
+		| Omit<Entry, "id" | "created_at" | "updated_at">
+		| {
+				game_id: number;
+				category_id: number;
+				reading: string;
+				word: string;
+				description?: string;
+		  },
+): {
 	gameId: number;
 	categoryId: number;
 	reading: string;

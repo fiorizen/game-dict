@@ -1,15 +1,24 @@
 // Wrapper classes to provide legacy API compatibility with Drizzle ORM
-import { DrizzleDatabase } from "./drizzle-database.js";
+
+import type {
+	Category,
+	Entry,
+	EntryWithDetails,
+	Game,
+	NewCategory,
+	NewEntry,
+	NewGame,
+} from "../shared/types.js";
 import {
-	drizzleGameToLegacy,
 	drizzleCategoryToLegacy,
 	drizzleEntryToLegacy,
 	drizzleEntryWithDetailsToLegacy,
-	legacyGameToDrizzle,
+	drizzleGameToLegacy,
 	legacyCategoryToDrizzle,
 	legacyEntryToDrizzle,
+	legacyGameToDrizzle,
 } from "./adapters.js";
-import type { Game, Category, Entry, EntryWithDetails, NewGame, NewEntry, NewCategory } from "../shared/types.js";
+import { DrizzleDatabase } from "./drizzle-database.js";
 
 class DrizzleGameWrapper {
 	private drizzleDb: DrizzleDatabase;
@@ -19,8 +28,7 @@ class DrizzleGameWrapper {
 	}
 
 	public getAll(): Game[] {
-		return this.drizzleDb.games.getAll()
-			.map(drizzleGameToLegacy);
+		return this.drizzleDb.games.getAll().map(drizzleGameToLegacy);
 	}
 
 	public getById(id: number): Game | null {
@@ -46,7 +54,10 @@ class DrizzleGameWrapper {
 		return this.drizzleDb.games.delete(id);
 	}
 
-	public deleteWithRelatedEntries(id: number): { deletedGame: boolean; deletedEntries: number } {
+	public deleteWithRelatedEntries(id: number): {
+		deletedGame: boolean;
+		deletedEntries: number;
+	} {
 		return this.drizzleDb.games.deleteWithRelatedEntries(id);
 	}
 
@@ -73,8 +84,7 @@ class DrizzleCategoryWrapper {
 	}
 
 	public getAll(): Category[] {
-		return this.drizzleDb.categories.getAll()
-			.map(drizzleCategoryToLegacy);
+		return this.drizzleDb.categories.getAll().map(drizzleCategoryToLegacy);
 	}
 
 	public getById(id: number): Category | null {
@@ -91,8 +101,10 @@ class DrizzleCategoryWrapper {
 	public update(id: number, data: Partial<NewCategory>): Category | null {
 		const drizzleData: any = {};
 		if (data.name) drizzleData.name = data.name;
-		if (data.google_ime_name !== undefined) drizzleData.googleImeName = data.google_ime_name;
-		if (data.ms_ime_name !== undefined) drizzleData.msImeName = data.ms_ime_name;
+		if (data.google_ime_name !== undefined)
+			drizzleData.googleImeName = data.google_ime_name;
+		if (data.ms_ime_name !== undefined)
+			drizzleData.msImeName = data.ms_ime_name;
 		if (data.atok_name !== undefined) drizzleData.atokName = data.atok_name;
 
 		const result = this.drizzleDb.categories.update(id, drizzleData);
@@ -112,27 +124,28 @@ class DrizzleEntryWrapper {
 	}
 
 	public getAll(): Entry[] {
-		return this.drizzleDb.entries.getAll()
-			.map(drizzleEntryToLegacy);
+		return this.drizzleDb.entries.getAll().map(drizzleEntryToLegacy);
 	}
 
 	public getAllWithDetails(): EntryWithDetails[] {
-		return this.drizzleDb.entries.getAllWithDetails()
+		return this.drizzleDb.entries
+			.getAllWithDetails()
 			.map(drizzleEntryWithDetailsToLegacy);
 	}
 
 	public getByGameId(gameId: number): Entry[] {
-		return this.drizzleDb.entries.getByGameId(gameId)
-			.map(drizzleEntryToLegacy);
+		return this.drizzleDb.entries.getByGameId(gameId).map(drizzleEntryToLegacy);
 	}
 
 	public getByGameIdUnsorted(gameId: number): Entry[] {
-		return this.drizzleDb.entries.getByGameIdUnsorted(gameId)
+		return this.drizzleDb.entries
+			.getByGameIdUnsorted(gameId)
 			.map(drizzleEntryToLegacy);
 	}
 
 	public getByGameIdWithDetails(gameId: number): EntryWithDetails[] {
-		return this.drizzleDb.entries.getByGameIdWithDetails(gameId)
+		return this.drizzleDb.entries
+			.getByGameIdWithDetails(gameId)
 			.map(drizzleEntryWithDetailsToLegacy);
 	}
 
@@ -155,10 +168,12 @@ class DrizzleEntryWrapper {
 	public update(id: number, data: Partial<NewEntry>): Entry | null {
 		const drizzleData: any = {};
 		if (data.game_id !== undefined) drizzleData.gameId = data.game_id;
-		if (data.category_id !== undefined) drizzleData.categoryId = data.category_id;
+		if (data.category_id !== undefined)
+			drizzleData.categoryId = data.category_id;
 		if (data.reading !== undefined) drizzleData.reading = data.reading;
 		if (data.word !== undefined) drizzleData.word = data.word;
-		if (data.description !== undefined) drizzleData.description = data.description;
+		if (data.description !== undefined)
+			drizzleData.description = data.description;
 
 		const result = this.drizzleDb.entries.update(id, drizzleData);
 		return result ? drizzleEntryToLegacy(result) : null;
@@ -169,7 +184,8 @@ class DrizzleEntryWrapper {
 	}
 
 	public search(query: string, gameId?: number): EntryWithDetails[] {
-		return this.drizzleDb.entries.search(query, gameId)
+		return this.drizzleDb.entries
+			.search(query, gameId)
 			.map(drizzleEntryWithDetailsToLegacy);
 	}
 
@@ -203,7 +219,7 @@ export class DrizzleDatabaseWrapper {
 		if (DrizzleDatabaseWrapper.instance) {
 			DrizzleDatabase.resetInstance();
 		}
-		DrizzleDatabaseWrapper.instance = undefined as any;
+		DrizzleDatabaseWrapper.instance = undefined!;
 	}
 
 	public getDbPath(): string {

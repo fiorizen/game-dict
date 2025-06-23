@@ -50,7 +50,10 @@ describe("SQLite Database Tests", () => {
 		}).toThrow("Invalid game code");
 
 		expect(() => {
-			db.games.create({ name: "Too Long Code Game", code: "thisgamecodeistoolongforvalidation" });
+			db.games.create({
+				name: "Too Long Code Game",
+				code: "thisgamecodeistoolongforvalidation",
+			});
 		}).toThrow("Invalid game code");
 
 		expect(() => {
@@ -61,7 +64,10 @@ describe("SQLite Database Tests", () => {
 	it("should update game name", () => {
 		const games = db.games.getAll();
 		const firstGame = games[0];
-		const updated = db.games.update(firstGame.id, { name: "Updated Game", code: "updatedgame" });
+		const updated = db.games.update(firstGame.id, {
+			name: "Updated Game",
+			code: "updatedgame",
+		});
 
 		expect(updated).toBeDefined();
 		expect(updated?.name).toBe("Updated Game");
@@ -104,7 +110,10 @@ describe("SQLite Database Tests", () => {
 
 	it("should create entry", () => {
 		// Ensure we have a game for this test
-		const testGame = db.games.create({ name: "Entry Test Game", code: "entrytestgame" });
+		const testGame = db.games.create({
+			name: "Entry Test Game",
+			code: "entrytestgame",
+		});
 		const categories = db.categories.getAll();
 
 		const entry = db.entries.create({
@@ -123,7 +132,10 @@ describe("SQLite Database Tests", () => {
 
 	it("should search entries", () => {
 		// Ensure we have a game for this test
-		const testGame = db.games.create({ name: "Search Test Game", code: "searchtestgame" });
+		const testGame = db.games.create({
+			name: "Search Test Game",
+			code: "searchtestgame",
+		});
 		const categories = db.categories.getAll();
 
 		db.entries.create({
@@ -156,7 +168,10 @@ describe("SQLite Database Tests", () => {
 
 	it("should update entry", () => {
 		// Create a test game and entry for this test
-		const testGame = db.games.create({ name: "Update Test Game", code: "updatetestgame" });
+		const testGame = db.games.create({
+			name: "Update Test Game",
+			code: "updatetestgame",
+		});
 		const categories = db.categories.getAll();
 		const entry = db.entries.create({
 			game_id: testGame.id,
@@ -175,7 +190,10 @@ describe("SQLite Database Tests", () => {
 
 	it("should handle bulk inserts efficiently", () => {
 		// Create a test game for bulk inserts
-		const testGame = db.games.create({ name: "Bulk Test Game", code: "bulktestgame" });
+		const testGame = db.games.create({
+			name: "Bulk Test Game",
+			code: "bulktestgame",
+		});
 		const categories = db.categories.getAll();
 
 		const startTime = Date.now();
@@ -213,7 +231,7 @@ describe("CSV Export/Import Tests", () => {
 		db = Database.getInstance();
 		csvHandlers = new CSVHandlers();
 		expect(csvHandlers).toBeDefined();
-		
+
 		// Ensure test CSV directory exists
 		if (!fs.existsSync(testCsvDir)) {
 			fs.mkdirSync(testCsvDir, { recursive: true });
@@ -225,11 +243,11 @@ describe("CSV Export/Import Tests", () => {
 		const testGameName = "CSV Test Game";
 		const game = db.games.create({ name: testGameName, code: "csvtestgame" });
 		const categories = db.categories.getAll();
-		
+
 		// Find specific categories
-		const nounCategory = categories.find(c => c.name === "名詞");
-		const noPartsCategory = categories.find(c => c.name === "品詞なし");
-		
+		const nounCategory = categories.find((c) => c.name === "名詞");
+		const noPartsCategory = categories.find((c) => c.name === "品詞なし");
+
 		// Add some test entries
 		db.entries.create({
 			game_id: game.id,
@@ -238,7 +256,7 @@ describe("CSV Export/Import Tests", () => {
 			word: "テスト",
 			description: "テスト用エントリ",
 		});
-		
+
 		db.entries.create({
 			game_id: game.id,
 			category_id: noPartsCategory!.id,
@@ -249,18 +267,22 @@ describe("CSV Export/Import Tests", () => {
 
 		// Export to CSV
 		const exportedFiles = await csvHandlers.exportToGitCsv(testCsvDir);
-		
+
 		expect(exportedFiles.length).toBeGreaterThan(0);
-		
+
 		// Find the file for our test game (now uses code instead of ID)
-		const gameFile = exportedFiles.find(file => file.includes(`game-${game.code}.csv`));
+		const gameFile = exportedFiles.find((file) =>
+			file.includes(`game-${game.code}.csv`),
+		);
 		expect(gameFile).toBeDefined();
-		
+
 		// Verify file exists and has content
 		expect(fs.existsSync(gameFile!)).toBe(true);
-		
+
 		const csvContent = fs.readFileSync(gameFile!, "utf-8");
-		expect(csvContent).toContain(`# Game: ${testGameName} (Code: ${game.code})`);
+		expect(csvContent).toContain(
+			`# Game: ${testGameName} (Code: ${game.code})`,
+		);
 		expect(csvContent).toContain("category_name,reading,word,description");
 		expect(csvContent).toContain("てすと,テスト");
 		expect(csvContent).toContain("でーた,データ");
@@ -301,19 +323,19 @@ category_name,reading,word,description
 		expect(entriesAfterImport.length).toBe(entriesBeforeImport.length + 3);
 
 		// Find the imported game
-		const importedGame = gamesAfterImport.find(g => g.name === testGameName);
+		const importedGame = gamesAfterImport.find((g) => g.name === testGameName);
 		expect(importedGame).toBeDefined();
 
 		// Verify imported entries
 		const importedEntries = db.entries.getByGameId(importedGame!.id);
 		expect(importedEntries.length).toBe(3);
 
-		const importEntry = importedEntries.find(e => e.reading === "いんぽーと");
+		const importEntry = importedEntries.find((e) => e.reading === "いんぽーと");
 		expect(importEntry).toBeDefined();
 		expect(importEntry!.word).toBe("インポート");
 		expect(importEntry!.description).toBe("インポートテスト");
 
-		const personEntry = importedEntries.find(e => e.reading === "てすとじん");
+		const personEntry = importedEntries.find((e) => e.reading === "てすとじん");
 		expect(personEntry).toBeDefined();
 		expect(personEntry!.word).toBe("テスト人");
 	});
@@ -321,12 +343,15 @@ category_name,reading,word,description
 	it("should handle round-trip conversion (export -> import)", async () => {
 		// Create a game with specific data
 		const originalGameName = "Round Trip Test";
-		const originalGame = db.games.create({ name: originalGameName, code: "roundtriptest" });
+		const originalGame = db.games.create({
+			name: originalGameName,
+			code: "roundtriptest",
+		});
 		const categories = db.categories.getAll();
 
 		// Find specific categories
-		const nounCategory = categories.find(c => c.name === "名詞");
-		const personCategory = categories.find(c => c.name === "人名");
+		const nounCategory = categories.find((c) => c.name === "名詞");
+		const personCategory = categories.find((c) => c.name === "人名");
 
 		const originalEntries = [
 			{
@@ -346,15 +371,17 @@ category_name,reading,word,description
 		];
 
 		// Add entries
-		originalEntries.forEach(entry => db.entries.create(entry));
+		originalEntries.forEach((entry) => db.entries.create(entry));
 
 		// Export to CSV
 		const exportedFiles = await csvHandlers.exportToGitCsv(testCsvDir);
-		const gameFile = exportedFiles.find(file => file.includes(`game-${originalGame.code}.csv`));
+		const gameFile = exportedFiles.find((file) =>
+			file.includes(`game-${originalGame.code}.csv`),
+		);
 		expect(gameFile).toBeDefined();
 
 		// Delete the original game and entries
-		db.entries.getByGameId(originalGame.id).forEach(entry => {
+		db.entries.getByGameId(originalGame.id).forEach((entry) => {
 			db.entries.delete(entry.id);
 		});
 		db.games.delete(originalGame.id);
@@ -367,19 +394,21 @@ category_name,reading,word,description
 		await csvHandlers.importFromCsv(gameFile!);
 
 		// Verify round-trip
-		const restoredGames = db.games.getAll().filter(g => g.name === originalGameName);
+		const restoredGames = db.games
+			.getAll()
+			.filter((g) => g.name === originalGameName);
 		expect(restoredGames.length).toBe(1);
 
 		const restoredGame = restoredGames[0];
 		const restoredEntries = db.entries.getByGameId(restoredGame.id);
 		expect(restoredEntries.length).toBe(2);
 
-		const roundEntry = restoredEntries.find(e => e.reading === "らうんど");
+		const roundEntry = restoredEntries.find((e) => e.reading === "らうんど");
 		expect(roundEntry).toBeDefined();
 		expect(roundEntry!.word).toBe("ラウンド");
 		expect(roundEntry!.description).toBe("ラウンドトリップテスト");
 
-		const nameEntry = restoredEntries.find(e => e.reading === "じんめい");
+		const nameEntry = restoredEntries.find((e) => e.reading === "じんめい");
 		expect(nameEntry).toBeDefined();
 		expect(nameEntry!.word).toBe("人名");
 		expect(nameEntry!.description).toBe("人名テスト");
@@ -387,22 +416,30 @@ category_name,reading,word,description
 
 	it("should handle empty games (no export)", async () => {
 		// Create a game with no entries
-		const emptyGame = db.games.create({ name: "Empty Game", code: "emptygame" });
-		
+		const emptyGame = db.games.create({
+			name: "Empty Game",
+			code: "emptygame",
+		});
+
 		// Export to CSV
 		const exportedFiles = await csvHandlers.exportToGitCsv(testCsvDir);
-		
+
 		// Should not create file for empty game
-		const emptyGameFile = exportedFiles.find(file => file.includes(`game-${emptyGame.id}.csv`));
+		const emptyGameFile = exportedFiles.find((file) =>
+			file.includes(`game-${emptyGame.id}.csv`),
+		);
 		expect(emptyGameFile).toBeUndefined();
 	});
 
 	it("should handle filename sanitization correctly", async () => {
 		// Create game with special characters in name
-		const specialGame = db.games.create({ name: "Special/Game:Test*Name", code: "specialgametest" });
+		const specialGame = db.games.create({
+			name: "Special/Game:Test*Name",
+			code: "specialgametest",
+		});
 		const categories = db.categories.getAll();
-		const nounCategory = categories.find(c => c.name === "名詞");
-		
+		const nounCategory = categories.find((c) => c.name === "名詞");
+
 		db.entries.create({
 			game_id: specialGame.id,
 			category_id: nounCategory!.id,
@@ -413,20 +450,27 @@ category_name,reading,word,description
 
 		// Export to CSV
 		const exportedFiles = await csvHandlers.exportToGitCsv(testCsvDir);
-		
+
 		// File should use game code, not sanitized name
-		const specialGameFile = exportedFiles.find(file => file.includes(`game-${specialGame.code}.csv`));
+		const specialGameFile = exportedFiles.find((file) =>
+			file.includes(`game-${specialGame.code}.csv`),
+		);
 		expect(specialGameFile).toBeDefined();
 		expect(fs.existsSync(specialGameFile!)).toBe(true);
-		
+
 		// Content should preserve original game name in comment
 		const csvContent = fs.readFileSync(specialGameFile!, "utf-8");
-		expect(csvContent).toContain(`# Game: Special/Game:Test*Name (Code: ${specialGame.code})`);
+		expect(csvContent).toContain(
+			`# Game: Special/Game:Test*Name (Code: ${specialGame.code})`,
+		);
 	});
 
 	it("should delete game with related entries", () => {
 		// Create a test game with entries
-		const testGame = db.games.create({ name: "Delete Test Game", code: "deletetestgame" });
+		const testGame = db.games.create({
+			name: "Delete Test Game",
+			code: "deletetestgame",
+		});
 		const categories = db.categories.getAll();
 
 		// Add some entries
@@ -460,7 +504,10 @@ category_name,reading,word,description
 
 	it("should get correct entry count for game", () => {
 		// Create a test game with entries
-		const testGame = db.games.create({ name: "Count Test Game", code: "counttestgame" });
+		const testGame = db.games.create({
+			name: "Count Test Game",
+			code: "counttestgame",
+		});
 		const categories = db.categories.getAll();
 
 		// Initially should be 0

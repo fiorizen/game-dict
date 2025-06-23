@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { beforeEach, afterEach, describe, expect, it } from "vitest";
-import { DataSyncManager } from "../main/data-sync-manager.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Database } from "../database/index.js";
+import { DataSyncManager } from "../main/data-sync-manager.js";
 
 // Setup test environment
 const testDataPath = path.join(process.cwd(), "test-data");
@@ -13,14 +13,14 @@ beforeEach(() => {
 	if (fs.existsSync(testCsvPath)) {
 		fs.rmSync(testCsvPath, { recursive: true, force: true });
 	}
-	
+
 	// Clean database data (games and entries, but keep categories)
 	const db = Database.getInstance();
 	const entries = db.entries.getAll();
 	const games = db.games.getAll();
-	
-	entries.forEach(entry => db.entries.delete(entry.id));
-	games.forEach(game => db.games.delete(game.id));
+
+	entries.forEach((entry) => db.entries.delete(entry.id));
+	games.forEach((game) => db.games.delete(game.id));
 });
 
 afterEach(() => {
@@ -31,7 +31,7 @@ afterEach(() => {
 		}
 	} catch (error) {
 		// Ignore cleanup errors in tests
-		console.warn('CSV cleanup failed:', error);
+		console.warn("CSV cleanup failed:", error);
 	}
 });
 
@@ -46,20 +46,20 @@ describe("Data Sync Manager Tests", () => {
 	it("should analyze data status when no CSV exists", () => {
 		const dataSyncManager = new DataSyncManager(testCsvPath);
 		const status = dataSyncManager.analyzeDataStatus();
-		
+
 		expect(status.csvDirExists).toBe(false);
 		expect(status.csvFilesExist).toBe(false);
 		expect(status.csvGameCount).toBe(0);
 		expect(status.csvEntryCount).toBe(0);
 		expect(status.dbGameCount).toBeGreaterThanOrEqual(0);
 		expect(status.dbEntryCount).toBeGreaterThanOrEqual(0);
-		
+
 		// If DB has data and no CSV exists, recommendation should be 'user_confirm'
 		// If DB is empty, recommendation should be 'skip_import'
 		if (status.dbGameCount > 0 || status.dbEntryCount > 0) {
-			expect(status.recommendation).toBe('user_confirm');
+			expect(status.recommendation).toBe("user_confirm");
 		} else {
-			expect(status.recommendation).toBe('skip_import');
+			expect(status.recommendation).toBe("skip_import");
 		}
 	});
 
@@ -78,25 +78,31 @@ describe("Data Sync Manager Tests", () => {
 		const categoriesContent = `id,name,google_ime_name,ms_ime_name,atok_name
 1,名詞,名詞,名詞,名詞
 2,人名,人名,人名,人名`;
-		fs.writeFileSync(path.join(testCsvPath, "categories.csv"), categoriesContent);
+		fs.writeFileSync(
+			path.join(testCsvPath, "categories.csv"),
+			categoriesContent,
+		);
 
 		// Create test game-testgame.csv (using code instead of ID)
 		const gameEntriesContent = `# Game: Test Game (Code: testgame)
 category_name,reading,word,description
 名詞,てすと,テスト,テスト用エントリ
 人名,たろう,太郎,テスト人名`;
-		fs.writeFileSync(path.join(testCsvPath, "game-testgame.csv"), gameEntriesContent);
+		fs.writeFileSync(
+			path.join(testCsvPath, "game-testgame.csv"),
+			gameEntriesContent,
+		);
 
 		// Create test sync manager with explicit CSV directory
 		const testSyncManager = new DataSyncManager(testCsvPath);
 
 		const status = testSyncManager.analyzeDataStatus();
-		
+
 		expect(status.csvDirExists).toBe(true);
 		expect(status.csvFilesExist).toBe(true);
 		expect(status.csvGameCount).toBe(1);
 		expect(status.csvEntryCount).toBe(2);
-		expect(status.recommendation).toBe('auto_import');
+		expect(status.recommendation).toBe("auto_import");
 	});
 
 	it("should detect conflict when DB has more data than CSV", () => {
@@ -114,58 +120,69 @@ category_name,reading,word,description
 		const gameEntriesContent = `# Game: CSV Game (Code: csvgame)
 category_name,reading,word,description
 名詞,しーえすぶい,CSV,CSV用エントリ`;
-		fs.writeFileSync(path.join(testCsvPath, "game-csvgame.csv"), gameEntriesContent);
+		fs.writeFileSync(
+			path.join(testCsvPath, "game-csvgame.csv"),
+			gameEntriesContent,
+		);
 
 		const db = Database.getInstance();
-		
+
 		// Add more data to DB than CSV has
-		const testGame1 = db.games.create({ name: "DB Test Game 1", code: "dbtestgame1" });
-		const testGame2 = db.games.create({ name: "DB Test Game 2", code: "dbtestgame2" });
+		const testGame1 = db.games.create({
+			name: "DB Test Game 1",
+			code: "dbtestgame1",
+		});
+		const testGame2 = db.games.create({
+			name: "DB Test Game 2",
+			code: "dbtestgame2",
+		});
 		const categories = db.categories.getAll();
-		
+
 		db.entries.create({
 			game_id: testGame1.id,
 			category_id: categories[0].id,
 			reading: "でーたべーす",
 			word: "データベース",
-			description: "DB専用エントリ1"
+			description: "DB専用エントリ1",
 		});
-		
+
 		db.entries.create({
 			game_id: testGame2.id,
 			category_id: categories[0].id,
 			reading: "でーたべーす2",
 			word: "データベース2",
-			description: "DB専用エントリ2"
+			description: "DB専用エントリ2",
 		});
 
 		const testSyncManager = new DataSyncManager(testCsvPath);
 		const status = testSyncManager.analyzeDataStatus();
-		
+
 		expect(status.hasConflict).toBe(true);
-		expect(status.conflictType).toBe('db_has_more_data');
-		expect(status.recommendation).toBe('user_confirm');
+		expect(status.conflictType).toBe("db_has_more_data");
+		expect(status.recommendation).toBe("user_confirm");
 	});
 
 	it("should generate appropriate conflict messages", () => {
 		const testSyncManager = new DataSyncManager(testCsvPath);
 
 		const status = testSyncManager.analyzeDataStatus();
-		
+
 		if (status.hasConflict) {
 			const conflictMessage = testSyncManager.getConflictMessage(status);
-			
+
 			expect(conflictMessage.title).toBeDefined();
 			expect(conflictMessage.message).toBeDefined();
 			expect(conflictMessage.options).toBeDefined();
 			expect(conflictMessage.options.length).toBeGreaterThan(0);
-			
+
 			// Check option structure
-			conflictMessage.options.forEach(option => {
+			conflictMessage.options.forEach((option) => {
 				expect(option.label).toBeDefined();
 				expect(option.action).toBeDefined();
 				expect(option.description).toBeDefined();
-				expect(['import_csv', 'keep_db', 'backup_and_import']).toContain(option.action);
+				expect(["import_csv", "keep_db", "backup_and_import"]).toContain(
+					option.action,
+				);
 			});
 		}
 	});
@@ -175,18 +192,18 @@ category_name,reading,word,description
 
 		// Test 'keep_db' action
 		const keepDbResult = await testSyncManager.performUserChoice({
-			action: 'keep_db',
-			confirmed: true
+			action: "keep_db",
+			confirmed: true,
 		});
 		expect(keepDbResult.success).toBe(true);
 
 		// Test unconfirmed action
 		const unconfirmedResult = await testSyncManager.performUserChoice({
-			action: 'import_csv',
-			confirmed: false
+			action: "import_csv",
+			confirmed: false,
 		});
 		expect(unconfirmedResult.success).toBe(false);
-		expect(unconfirmedResult.error).toContain('cancelled');
+		expect(unconfirmedResult.error).toContain("cancelled");
 	});
 
 	it("should handle CSV counting correctly", () => {
@@ -205,8 +222,11 @@ category_name,reading,word,description
 category_name,reading,word,description
 名詞,てすと,テスト,テスト用エントリ
 人名,たろう,太郎,テスト人名`;
-		fs.writeFileSync(path.join(testCsvPath, "game-testgame.csv"), gameEntriesContent);
-		
+		fs.writeFileSync(
+			path.join(testCsvPath, "game-testgame.csv"),
+			gameEntriesContent,
+		);
+
 		const testSyncManager = new (class extends DataSyncManager {
 			constructor() {
 				super(testCsvPath);
@@ -230,9 +250,9 @@ category_name,reading,word,description
 	it("should analyze exit status with no changes", () => {
 		const testSyncManager = new DataSyncManager(testCsvPath);
 		const exitStatus = testSyncManager.analyzeExitStatus();
-		
+
 		expect(exitStatus.hasChanges).toBe(false);
-		expect(exitStatus.recommendation).toBe('skip_export');
+		expect(exitStatus.recommendation).toBe("skip_export");
 		expect(exitStatus.dbGameCount).toBeGreaterThanOrEqual(0);
 		expect(exitStatus.dbEntryCount).toBeGreaterThanOrEqual(0);
 	});
@@ -240,23 +260,26 @@ category_name,reading,word,description
 	it("should analyze exit status with changes", () => {
 		const testSyncManager = new DataSyncManager(testCsvPath);
 		const db = Database.getInstance();
-		
+
 		// Add data to trigger changes
-		const testGame = db.games.create({ name: "Exit Test Game", code: "exittestgame" });
+		const testGame = db.games.create({
+			name: "Exit Test Game",
+			code: "exittestgame",
+		});
 		const categories = db.categories.getAll();
-		
+
 		db.entries.create({
 			game_id: testGame.id,
 			category_id: categories[0].id,
 			reading: "しゅうりょう",
 			word: "終了",
-			description: "終了テスト"
+			description: "終了テスト",
 		});
 
 		const exitStatus = testSyncManager.analyzeExitStatus();
-		
+
 		expect(exitStatus.hasChanges).toBe(true);
-		expect(exitStatus.recommendation).toBe('user_confirm');
+		expect(exitStatus.recommendation).toBe("user_confirm");
 		expect(exitStatus.dbGameCount).toBeGreaterThan(0);
 		expect(exitStatus.dbEntryCount).toBeGreaterThan(0);
 	});
@@ -266,34 +289,37 @@ category_name,reading,word,description
 
 		// Test 'skip_export' action
 		const skipResult = await testSyncManager.performExitChoice({
-			action: 'skip_export',
-			confirmed: true
+			action: "skip_export",
+			confirmed: true,
 		});
 		expect(skipResult.success).toBe(true);
 
 		// Test unconfirmed action
 		const unconfirmedResult = await testSyncManager.performExitChoice({
-			action: 'export_csv',
-			confirmed: false
+			action: "export_csv",
+			confirmed: false,
 		});
 		expect(unconfirmedResult.success).toBe(false);
-		expect(unconfirmedResult.error).toContain('cancelled');
+		expect(unconfirmedResult.error).toContain("cancelled");
 	});
 
 	it("should perform auto export", async () => {
 		const testSyncManager = new DataSyncManager(testCsvPath);
 		const db = Database.getInstance();
-		
+
 		// Add some data to export
-		const testGame = db.games.create({ name: "Auto Export Game", code: "autoexportgame" });
+		const testGame = db.games.create({
+			name: "Auto Export Game",
+			code: "autoexportgame",
+		});
 		const categories = db.categories.getAll();
-		
+
 		db.entries.create({
 			game_id: testGame.id,
 			category_id: categories[0].id,
 			reading: "じどう",
 			word: "自動",
-			description: "自動エクスポートテスト"
+			description: "自動エクスポートテスト",
 		});
 
 		const result = await testSyncManager.performAutoExport();
@@ -302,7 +328,7 @@ category_name,reading,word,description
 
 	it("should generate exit messages", () => {
 		const testSyncManager = new DataSyncManager(testCsvPath);
-		
+
 		// Test message for changes
 		const changesStatus = {
 			hasChanges: true,
@@ -311,14 +337,14 @@ category_name,reading,word,description
 			dbEntryCount: 5,
 			csvGameCount: 1,
 			csvEntryCount: 3,
-			recommendation: 'user_confirm' as const
+			recommendation: "user_confirm" as const,
 		};
 
 		const changesMessage = testSyncManager.getExitMessage(changesStatus);
-		expect(changesMessage.title).toContain('変更が検出されました');
+		expect(changesMessage.title).toContain("変更が検出されました");
 		expect(changesMessage.options.length).toBe(2);
-		expect(changesMessage.options[0].action).toBe('export_csv');
-		expect(changesMessage.options[1].action).toBe('skip_export');
+		expect(changesMessage.options[0].action).toBe("export_csv");
+		expect(changesMessage.options[1].action).toBe("skip_export");
 
 		// Test message for auto export
 		const autoExportStatus = {
@@ -328,11 +354,11 @@ category_name,reading,word,description
 			dbEntryCount: 3,
 			csvGameCount: 0,
 			csvEntryCount: 0,
-			recommendation: 'auto_export' as const
+			recommendation: "auto_export" as const,
 		};
 
 		const autoExportMessage = testSyncManager.getExitMessage(autoExportStatus);
-		expect(autoExportMessage.title).toContain('バックアップ');
+		expect(autoExportMessage.title).toContain("バックアップ");
 		expect(autoExportMessage.options.length).toBe(2);
 	});
 });

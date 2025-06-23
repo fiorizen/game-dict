@@ -1,8 +1,8 @@
-import { eq, sql, desc } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import * as schema from "../schema.js";
-import type { Game, NewGame } from "../schema.js";
 import { validateGameCode } from "../../shared/validation.js";
+import type { Game, NewGame } from "../schema.js";
+import * as schema from "../schema.js";
 
 export class DrizzleGameModel {
 	private db: BetterSQLite3Database<typeof schema>;
@@ -12,11 +12,7 @@ export class DrizzleGameModel {
 	}
 
 	public getAll(): Game[] {
-		return this.db
-			.select()
-			.from(schema.games)
-			.orderBy(schema.games.name)
-			.all();
+		return this.db.select().from(schema.games).orderBy(schema.games.name).all();
 	}
 
 	public getById(id: number): Game | null {
@@ -26,7 +22,7 @@ export class DrizzleGameModel {
 			.where(eq(schema.games.id, id))
 			.limit(1)
 			.all();
-		
+
 		return results[0] || null;
 	}
 
@@ -63,7 +59,10 @@ export class DrizzleGameModel {
 		return result[0];
 	}
 
-	public update(id: number, data: Partial<Omit<NewGame, "id" | "createdAt">>): Game | null {
+	public update(
+		id: number,
+		data: Partial<Omit<NewGame, "id" | "createdAt">>,
+	): Game | null {
 		if (Object.keys(data).length === 0) {
 			return this.getById(id);
 		}
@@ -99,7 +98,7 @@ export class DrizzleGameModel {
 			})
 			.where(eq(schema.games.id, id))
 			.returning()
-		.all();
+			.all();
 
 		return result[0] || null;
 	}
@@ -120,7 +119,7 @@ export class DrizzleGameModel {
 			.where(eq(schema.games.name, name))
 			.limit(1)
 			.all();
-		
+
 		return results[0] || null;
 	}
 
@@ -135,7 +134,7 @@ export class DrizzleGameModel {
 			.where(eq(schema.games.code, code))
 			.limit(1)
 			.all();
-		
+
 		return results[0] || null;
 	}
 
@@ -153,11 +152,14 @@ export class DrizzleGameModel {
 			.select({ count: sql<number>`count(*)` })
 			.from(schema.games)
 			.all();
-		
+
 		return result[0].count;
 	}
 
-	public deleteWithRelatedEntries(id: number): { deletedGame: boolean; deletedEntries: number } {
+	public deleteWithRelatedEntries(id: number): {
+		deletedGame: boolean;
+		deletedEntries: number;
+	} {
 		return this.db.transaction(() => {
 			// Count related entries first
 			const entryCountResult = this.db
@@ -165,7 +167,7 @@ export class DrizzleGameModel {
 				.from(schema.entries)
 				.where(eq(schema.entries.gameId, id))
 				.all();
-			
+
 			const entryCount = entryCountResult[0].count;
 
 			// Delete related entries
@@ -182,7 +184,7 @@ export class DrizzleGameModel {
 
 			return {
 				deletedGame: deleteGameResult.changes > 0,
-				deletedEntries: deleteEntriesResult.changes
+				deletedEntries: deleteEntriesResult.changes,
 			};
 		});
 	}
@@ -193,7 +195,7 @@ export class DrizzleGameModel {
 			.from(schema.entries)
 			.where(eq(schema.entries.gameId, id))
 			.all();
-		
+
 		return result[0].count;
 	}
 }

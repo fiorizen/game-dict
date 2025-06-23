@@ -1,8 +1,8 @@
 // Legacy implementation using DrizzleDatabaseWrapper for backward compatibility
-import { DrizzleDatabaseWrapper } from "./drizzle-wrapper.js";
 
 // New Drizzle implementation
 import { DrizzleDatabase } from "./drizzle-database.js";
+import { DrizzleDatabaseWrapper } from "./drizzle-wrapper.js";
 
 export class Database {
 	private static instance: Database;
@@ -33,7 +33,7 @@ export class Database {
 				// Ignore errors during close
 			}
 		}
-		Database.instance = undefined as any;
+		Database.instance = undefined!;
 		// Also reset the wrapper
 		DrizzleDatabaseWrapper.resetInstance();
 	}
@@ -52,7 +52,7 @@ export class Database {
 }
 
 // Export new Drizzle database as the recommended implementation
-export { DrizzleDatabase }
+export { DrizzleDatabase };
 
 export * from "../shared/types.js";
 export * from "./models/category.js";

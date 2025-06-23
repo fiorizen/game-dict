@@ -1,8 +1,5 @@
-// @ts-nocheck
 import { dialog, ipcMain } from "electron";
 import { Database } from "../database/index.js";
-import { CSVHandlers } from "./csv-handlers.js";
-import { DataSyncManager, type DataSyncChoice, type ExitSyncChoice } from "./data-sync-manager.js";
 import type {
 	CreateCategoryData,
 	CreateEntryData,
@@ -11,6 +8,12 @@ import type {
 	UpdateEntryData,
 	UpdateGameData,
 } from "../shared/types.js";
+import { CSVHandlers } from "./csv-handlers.js";
+import {
+	type DataSyncChoice,
+	DataSyncManager,
+	type ExitSyncChoice,
+} from "./data-sync-manager.js";
 
 export class IPCHandlers {
 	private db: Database;
@@ -37,10 +40,12 @@ export class IPCHandlers {
 			this.db.games.update(id, data),
 		);
 		ipcMain.handle("games:delete", (_, id: number) => this.db.games.delete(id));
-		ipcMain.handle("games:deleteWithRelatedEntries", (_, id: number) => 
-			this.db.games.deleteWithRelatedEntries(id));
-		ipcMain.handle("games:getEntryCount", (_, id: number) => 
-			this.db.games.getEntryCount(id));
+		ipcMain.handle("games:deleteWithRelatedEntries", (_, id: number) =>
+			this.db.games.deleteWithRelatedEntries(id),
+		);
+		ipcMain.handle("games:getEntryCount", (_, id: number) =>
+			this.db.games.getEntryCount(id),
+		);
 
 		// Category handlers
 		ipcMain.handle("categories:getAll", () => this.db.categories.getAll());
@@ -89,20 +94,29 @@ export class IPCHandlers {
 				const exportedFiles = await this.csvHandlers.exportToGitCsv(outputDir);
 				return { success: true, files: exportedFiles };
 			} catch (error) {
-				throw new Error(`CSV export failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`CSV export failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
 		ipcMain.handle(
 			"csv:exportToImeCsv",
-			async (_, gameId: number, format: "google" | "ms" | "atok", outputPath?: string) => {
+			async (
+				_,
+				gameId: number,
+				format: "google" | "ms" | "atok",
+				outputPath?: string,
+			) => {
 				try {
 					const suggestedPaths = this.csvHandlers.getSuggestedPaths(gameId);
 					const path = outputPath || suggestedPaths[`${format}Csv`];
 					await this.csvHandlers.exportToImeCsv(gameId, format, path);
 					return { success: true, path };
 				} catch (error) {
-					throw new Error(`IME CSV export failed: ${error instanceof Error ? error.message : String(error)}`);
+					throw new Error(
+						`IME CSV export failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
 				}
 			},
 		);
@@ -112,18 +126,25 @@ export class IPCHandlers {
 				await this.csvHandlers.importFromCsv(filePath);
 				return { success: true };
 			} catch (error) {
-				throw new Error(`CSV import failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`CSV import failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
-		ipcMain.handle("csv:importFromGitCsvDirectory", async (_, inputDir: string) => {
-			try {
-				await this.csvHandlers.importFromGitCsvDirectory(inputDir);
-				return { success: true };
-			} catch (error) {
-				throw new Error(`CSV directory import failed: ${error instanceof Error ? error.message : String(error)}`);
-			}
-		});
+		ipcMain.handle(
+			"csv:importFromGitCsvDirectory",
+			async (_, inputDir: string) => {
+				try {
+					await this.csvHandlers.importFromGitCsvDirectory(inputDir);
+					return { success: true };
+				} catch (error) {
+					throw new Error(
+						`CSV directory import failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
+			},
+		);
 
 		ipcMain.handle("csv:getSuggestedPaths", async (_, gameId?: number) => {
 			return this.csvHandlers.getSuggestedPaths(gameId);
@@ -134,18 +155,28 @@ export class IPCHandlers {
 				const filePath = await this.csvHandlers.exportToMicrosoftIme(gameId);
 				return { success: true, filePath };
 			} catch (error) {
-				throw new Error(`Microsoft IME export failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Microsoft IME export failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
-		ipcMain.handle("ime:importFromImeTxt", async (_, gameId: number, filePath: string) => {
-			try {
-				const result = await this.csvHandlers.importFromImeTxt(gameId, filePath);
-				return result;
-			} catch (error) {
-				throw new Error(`Microsoft IME import failed: ${error instanceof Error ? error.message : String(error)}`);
-			}
-		});
+		ipcMain.handle(
+			"ime:importFromImeTxt",
+			async (_, gameId: number, filePath: string) => {
+				try {
+					const result = await this.csvHandlers.importFromImeTxt(
+						gameId,
+						filePath,
+					);
+					return result;
+				} catch (error) {
+					throw new Error(
+						`Microsoft IME import failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
+			},
+		);
 
 		// File dialog handlers
 		ipcMain.handle("files:showOpenDialog", async (_, options) => {
@@ -163,7 +194,9 @@ export class IPCHandlers {
 			try {
 				return this.dataSyncManager.analyzeDataStatus();
 			} catch (error) {
-				throw new Error(`Data sync analysis failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Data sync analysis failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
@@ -171,23 +204,32 @@ export class IPCHandlers {
 			try {
 				return await this.dataSyncManager.performAutoImport();
 			} catch (error) {
-				throw new Error(`Auto import failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Auto import failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
-		ipcMain.handle("dataSync:performUserChoice", async (_, choice: DataSyncChoice) => {
-			try {
-				return await this.dataSyncManager.performUserChoice(choice);
-			} catch (error) {
-				throw new Error(`User choice execution failed: ${error instanceof Error ? error.message : String(error)}`);
-			}
-		});
+		ipcMain.handle(
+			"dataSync:performUserChoice",
+			async (_, choice: DataSyncChoice) => {
+				try {
+					return await this.dataSyncManager.performUserChoice(choice);
+				} catch (error) {
+					throw new Error(
+						`User choice execution failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
+			},
+		);
 
 		ipcMain.handle("dataSync:getConflictMessage", (_, status) => {
 			try {
 				return this.dataSyncManager.getConflictMessage(status);
 			} catch (error) {
-				throw new Error(`Conflict message generation failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Conflict message generation failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
@@ -196,7 +238,9 @@ export class IPCHandlers {
 			try {
 				return this.dataSyncManager.analyzeExitStatus();
 			} catch (error) {
-				throw new Error(`Exit sync analysis failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Exit sync analysis failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
@@ -204,23 +248,32 @@ export class IPCHandlers {
 			try {
 				return await this.dataSyncManager.performAutoExport();
 			} catch (error) {
-				throw new Error(`Auto export failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Auto export failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
-		ipcMain.handle("exitSync:performUserChoice", async (_, choice: ExitSyncChoice) => {
-			try {
-				return await this.dataSyncManager.performExitChoice(choice);
-			} catch (error) {
-				throw new Error(`Exit choice execution failed: ${error instanceof Error ? error.message : String(error)}`);
-			}
-		});
+		ipcMain.handle(
+			"exitSync:performUserChoice",
+			async (_, choice: ExitSyncChoice) => {
+				try {
+					return await this.dataSyncManager.performExitChoice(choice);
+				} catch (error) {
+					throw new Error(
+						`Exit choice execution failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
+			},
+		);
 
 		ipcMain.handle("exitSync:getExitMessage", (_, status) => {
 			try {
 				return this.dataSyncManager.getExitMessage(status);
 			} catch (error) {
-				throw new Error(`Exit message generation failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Exit message generation failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
@@ -229,7 +282,9 @@ export class IPCHandlers {
 				this.dataSyncManager.markLastExportTime();
 				return { success: true };
 			} catch (error) {
-				throw new Error(`Mark export time failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Mark export time failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 
@@ -237,12 +292,14 @@ export class IPCHandlers {
 			try {
 				// Request main app instance to force close
 				const mainApp = (global as any).mainAppInstance;
-				if (mainApp && typeof mainApp.requestForceClose === 'function') {
+				if (mainApp && typeof mainApp.requestForceClose === "function") {
 					mainApp.requestForceClose();
 				}
 				return { success: true };
 			} catch (error) {
-				throw new Error(`Force close failed: ${error instanceof Error ? error.message : String(error)}`);
+				throw new Error(
+					`Force close failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		});
 	}

@@ -90,15 +90,22 @@ export class GameModel {
 		return result.changes > 0;
 	}
 
-	public deleteWithRelatedEntries(id: number): { deletedGame: boolean; deletedEntries: number } {
+	public deleteWithRelatedEntries(id: number): {
+		deletedGame: boolean;
+		deletedEntries: number;
+	} {
 		// まず関連エントリー数を取得
-		const countStmt = this.db.prepare("SELECT COUNT(*) as count FROM entries WHERE game_id = ?");
+		const countStmt = this.db.prepare(
+			"SELECT COUNT(*) as count FROM entries WHERE game_id = ?",
+		);
 		const entryCount = (countStmt.get(id) as { count: number }).count;
 
 		// トランザクション内で関連エントリーとゲームを削除
 		const transaction = this.db.transaction(() => {
 			// 関連エントリーを削除
-			const deleteEntriesStmt = this.db.prepare("DELETE FROM entries WHERE game_id = ?");
+			const deleteEntriesStmt = this.db.prepare(
+				"DELETE FROM entries WHERE game_id = ?",
+			);
 			const entriesResult = deleteEntriesStmt.run(id);
 
 			// ゲームを削除
@@ -107,7 +114,7 @@ export class GameModel {
 
 			return {
 				deletedGame: gameResult.changes > 0,
-				deletedEntries: entriesResult.changes
+				deletedEntries: entriesResult.changes,
 			};
 		});
 
@@ -115,7 +122,9 @@ export class GameModel {
 	}
 
 	public getEntryCount(id: number): number {
-		const stmt = this.db.prepare("SELECT COUNT(*) as count FROM entries WHERE game_id = ?");
+		const stmt = this.db.prepare(
+			"SELECT COUNT(*) as count FROM entries WHERE game_id = ?",
+		);
 		const result = stmt.get(id) as { count: number };
 		return result.count;
 	}

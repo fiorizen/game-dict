@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { DrizzleDatabase } from "../database/drizzle-database.js";
 import fs from "node:fs";
 import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { DrizzleDatabase } from "../database/drizzle-database.js";
 
 describe("Drizzle Database Tests", () => {
 	let db: DrizzleDatabase;
@@ -12,7 +12,7 @@ describe("Drizzle Database Tests", () => {
 		if (fs.existsSync(testDbPath)) {
 			fs.unlinkSync(testDbPath);
 		}
-		
+
 		// Reset the database instance before each test
 		DrizzleDatabase.resetInstance();
 		db = DrizzleDatabase.getInstance();
@@ -24,7 +24,7 @@ describe("Drizzle Database Tests", () => {
 			db.close();
 		}
 		DrizzleDatabase.resetInstance();
-		
+
 		// Remove test database
 		if (fs.existsSync(testDbPath)) {
 			fs.unlinkSync(testDbPath);
@@ -41,8 +41,8 @@ describe("Drizzle Database Tests", () => {
 	it("should have default categories", () => {
 		const categories = db.categories.getAll();
 		expect(categories.length).toBe(3);
-		
-		const categoryNames = categories.map(c => c.name);
+
+		const categoryNames = categories.map((c) => c.name);
 		expect(categoryNames).toContain("名詞");
 		expect(categoryNames).toContain("品詞なし");
 		expect(categoryNames).toContain("人名");
@@ -50,7 +50,7 @@ describe("Drizzle Database Tests", () => {
 
 	it("should create and retrieve a game", () => {
 		const game = db.games.create({ name: "Test Game", code: "testgame" });
-		
+
 		expect(game.id).toBeGreaterThan(0);
 		expect(game.name).toBe("Test Game");
 		expect(game.code).toBe("testgame");
@@ -64,7 +64,7 @@ describe("Drizzle Database Tests", () => {
 	it("should get all games", () => {
 		db.games.create({ name: "Game 1", code: "game1" });
 		db.games.create({ name: "Game 2", code: "game2" });
-		
+
 		const games = db.games.getAll();
 		expect(games.length).toBe(2);
 		expect(games[0].name).toBe("Game 1");

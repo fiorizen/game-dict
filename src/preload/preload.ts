@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
+	DataSyncChoice,
+	ExitSyncChoice,
+} from "../main/data-sync-manager.js";
+import type {
 	CreateCategoryData,
 	CreateEntryData,
 	CreateGameData,
@@ -7,7 +11,6 @@ import type {
 	UpdateEntryData,
 	UpdateGameData,
 } from "../shared/types.js";
-import type { DataSyncChoice, ExitSyncChoice } from "../main/data-sync-manager.js";
 
 // API definition for renderer process
 const api = {
@@ -19,9 +22,10 @@ const api = {
 		update: (id: number, data: UpdateGameData) =>
 			ipcRenderer.invoke("games:update", id, data),
 		delete: (id: number) => ipcRenderer.invoke("games:delete", id),
-		deleteWithRelatedEntries: (id: number) => 
+		deleteWithRelatedEntries: (id: number) =>
 			ipcRenderer.invoke("games:deleteWithRelatedEntries", id),
-		getEntryCount: (id: number) => ipcRenderer.invoke("games:getEntryCount", id),
+		getEntryCount: (id: number) =>
+			ipcRenderer.invoke("games:getEntryCount", id),
 	},
 
 	// Category operations
@@ -53,10 +57,13 @@ const api = {
 
 	// CSV operations
 	csv: {
-		exportToGitCsv: (outputPath?: string) => 
+		exportToGitCsv: (outputPath?: string) =>
 			ipcRenderer.invoke("csv:exportToGitCsv", outputPath),
-		exportToImeCsv: (gameId: number, format: "google" | "ms" | "atok", outputPath?: string) =>
-			ipcRenderer.invoke("csv:exportToImeCsv", gameId, format, outputPath),
+		exportToImeCsv: (
+			gameId: number,
+			format: "google" | "ms" | "atok",
+			outputPath?: string,
+		) => ipcRenderer.invoke("csv:exportToImeCsv", gameId, format, outputPath),
 		importFromCsv: (filePath: string) =>
 			ipcRenderer.invoke("csv:importFromCsv", filePath),
 		importFromGitCsvDirectory: (inputDir: string) =>
@@ -85,12 +92,14 @@ const api = {
 	dataSync: {
 		analyzeStatus: () => ipcRenderer.invoke("dataSync:analyzeStatus"),
 		performAutoImport: () => ipcRenderer.invoke("dataSync:performAutoImport"),
-		performUserChoice: (choice: DataSyncChoice) => 
+		performUserChoice: (choice: DataSyncChoice) =>
 			ipcRenderer.invoke("dataSync:performUserChoice", choice),
-		getConflictMessage: (status: any) => 
+		getConflictMessage: (status: any) =>
 			ipcRenderer.invoke("dataSync:getConflictMessage", status),
 		onShowDialog: (callback: (status: any) => void) => {
-			ipcRenderer.on("show-data-sync-dialog", (event, status) => callback(status));
+			ipcRenderer.on("show-data-sync-dialog", (event, status) =>
+				callback(status),
+			);
 		},
 		removeAllListeners: () => {
 			ipcRenderer.removeAllListeners("show-data-sync-dialog");
@@ -101,13 +110,15 @@ const api = {
 	exitSync: {
 		analyzeStatus: () => ipcRenderer.invoke("exitSync:analyzeStatus"),
 		performAutoExport: () => ipcRenderer.invoke("exitSync:performAutoExport"),
-		performUserChoice: (choice: ExitSyncChoice) => 
+		performUserChoice: (choice: ExitSyncChoice) =>
 			ipcRenderer.invoke("exitSync:performUserChoice", choice),
-		getExitMessage: (status: any) => 
+		getExitMessage: (status: any) =>
 			ipcRenderer.invoke("exitSync:getExitMessage", status),
 		markLastExportTime: () => ipcRenderer.invoke("exitSync:markLastExportTime"),
 		onShowDialog: (callback: (status: any) => void) => {
-			ipcRenderer.on("show-exit-sync-dialog", (event, status) => callback(status));
+			ipcRenderer.on("show-exit-sync-dialog", (event, status) =>
+				callback(status),
+			);
 		},
 		removeAllListeners: () => {
 			ipcRenderer.removeAllListeners("show-exit-sync-dialog");

@@ -1,10 +1,9 @@
-// @ts-nocheck
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { app, BrowserWindow } from "electron";
-import { IPCHandlers } from "./ipc-handlers.js";
 import { DataSyncManager } from "./data-sync-manager.js";
+import { IPCHandlers } from "./ipc-handlers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,7 +15,7 @@ class GameDictApp {
 	constructor() {
 		// Register this instance globally for IPC access
 		(global as any).mainAppInstance = this;
-		
+
 		this.setupApp();
 	}
 
@@ -28,7 +27,7 @@ class GameDictApp {
 			// Initialize IPC handlers and data sync manager after app is ready
 			this.ipcHandlers = new IPCHandlers();
 			this.dataSyncManager = new DataSyncManager();
-			
+
 			this.createMainWindow();
 		});
 
@@ -46,7 +45,7 @@ class GameDictApp {
 
 	private createMainWindow(): void {
 		const preloadPath = path.join(__dirname, "../preload/preload.js");
-		
+
 		this.mainWindow = new BrowserWindow({
 			width: 1200,
 			height: 800,
@@ -81,10 +80,10 @@ class GameDictApp {
 		// Handle window close event to show exit sync dialog
 		this.mainWindow.on("close", async (event) => {
 			// Skip exit sync in test environment
-			if (process.env.NODE_ENV === 'test') {
+			if (process.env.NODE_ENV === "test") {
 				return; // Allow normal close in test environment
 			}
-			
+
 			// Always prevent the default close behavior to handle sync properly
 			event.preventDefault();
 			await this.handleWindowClose();
@@ -96,48 +95,51 @@ class GameDictApp {
 	 */
 	private async performDataSyncCheck(): Promise<void> {
 		// Skip data sync check in test environment
-		if (process.env.NODE_ENV === 'test') {
-			console.log('Skipping data sync check in test environment');
+		if (process.env.NODE_ENV === "test") {
+			console.log("Skipping data sync check in test environment");
 			return;
 		}
-		
+
 		try {
 			const status = this.dataSyncManager.analyzeDataStatus();
-			
+
 			switch (status.recommendation) {
-				case 'auto_import':
+				case "auto_import":
 					// 安全な自動読み込み
 					if (status.csvFilesExist) {
-						console.log('起動時CSV自動読み込みを実行中...');
+						console.log("起動時CSV自動読み込みを実行中...");
 						const result = await this.dataSyncManager.performAutoImport();
 						if (result.success) {
-							console.log('CSV自動読み込みが完了しました');
+							console.log("CSV自動読み込みが完了しました");
 						} else {
-							console.error('CSV自動読み込みに失敗:', result.error);
+							console.error("CSV自動読み込みに失敗:", result.error);
 						}
 					}
 					break;
 
-				case 'user_confirm':
+				case "user_confirm":
 					// ユーザー確認が必要 - ウィンドウ表示後にダイアログを表示
-					console.log('データ競合検出 - ユーザー確認が必要:', status.conflictType);
+					console.log(
+						"データ競合検出 - ユーザー確認が必要:",
+						status.conflictType,
+					);
 					// ウィンドウが表示された後にダイアログを表示するため、イベントを送信
-					this.mainWindow?.webContents.once('did-finish-load', () => {
+					this.mainWindow?.webContents.once("did-finish-load", () => {
 						this.showDataSyncDialog(status);
 					});
 					break;
 
-				case 'skip_import':
+				case "skip_import":
 					// 何もしない
-					console.log('CSV読み込みをスキップ（データなし）');
+					console.log("CSV読み込みをスキップ（データなし）");
 					break;
 
 				default:
-					console.log('データ同期チェック完了（アクションなし）');
+					console.log("データ同期チェック完了（アクションなし）");
 					break;
 			}
 		} catch (error) {
-			console.error('データ同期チェックエラー:', error);
+			console.error("データ同期チェックエラー:", error);
 		}
 	}
 
@@ -146,9 +148,9 @@ class GameDictApp {
 	 */
 	private showDataSyncDialog(status: any): void {
 		if (!this.mainWindow) return;
-		
+
 		// レンダラープロセスにデータ同期ダイアログ表示を依頼
-		this.mainWindow.webContents.send('show-data-sync-dialog', status);
+		this.mainWindow.webContents.send("show-data-sync-dialog", status);
 	}
 
 	/**
@@ -157,35 +159,36 @@ class GameDictApp {
 	private async handleWindowClose(): Promise<void> {
 		try {
 			const status = this.dataSyncManager.analyzeExitStatus();
-			
+
 			switch (status.recommendation) {
-				case 'auto_export':
+				case "auto_export": {
 					// 自動エクスポート
-					console.log('終了時CSV自動エクスポートを実行中...');
+					console.log("終了時CSV自動エクスポートを実行中...");
 					const result = await this.dataSyncManager.performAutoExport();
 					if (result.success) {
-						console.log('CSV自動エクスポートが完了しました');
+						console.log("CSV自動エクスポートが完了しました");
 					} else {
-						console.error('CSV自動エクスポートに失敗:', result.error);
+						console.error("CSV自動エクスポートに失敗:", result.error);
 					}
 					this.forceClose();
 					break;
+				}
 
-				case 'user_confirm':
+				case "user_confirm":
 					// ユーザー確認が必要
-					console.log('終了時データ変更検出 - ユーザー確認が必要');
+					console.log("終了時データ変更検出 - ユーザー確認が必要");
 					this.showExitSyncDialog(status);
 					break;
 
-				case 'skip_export':
+				case "skip_export":
 				default:
 					// 何もしない
-					console.log('終了時CSV出力をスキップ（変更なし）');
+					console.log("終了時CSV出力をスキップ（変更なし）");
 					this.forceClose();
 					break;
 			}
 		} catch (error) {
-			console.error('終了時データ同期チェックエラー:', error);
+			console.error("終了時データ同期チェックエラー:", error);
 			this.forceClose();
 		}
 	}
@@ -195,18 +198,17 @@ class GameDictApp {
 	 */
 	private showExitSyncDialog(status: any): void {
 		if (!this.mainWindow) return;
-		
-		// レンダラープロセスに終了時データ同期ダイアログ表示を依頼
-		this.mainWindow.webContents.send('show-exit-sync-dialog', status);
-	}
 
+		// レンダラープロセスに終了時データ同期ダイアログ表示を依頼
+		this.mainWindow.webContents.send("show-exit-sync-dialog", status);
+	}
 
 	/**
 	 * 強制的にアプリを閉じる
 	 */
 	private forceClose(): void {
 		if (this.mainWindow) {
-			this.mainWindow.removeAllListeners('close');
+			this.mainWindow.removeAllListeners("close");
 			this.mainWindow.close();
 		}
 		// Ensure app quits

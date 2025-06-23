@@ -1,9 +1,12 @@
-import fs from "node:fs";
-import path from "node:path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import Database from "better-sqlite3";
-import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { eq, sql } from "drizzle-orm";
+import {
+	type BetterSQLite3Database,
+	drizzle,
+} from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { sql, eq } from "drizzle-orm";
 import * as schema from "./schema.js";
 
 export class DrizzleConnection {
@@ -23,7 +26,7 @@ export class DrizzleConnection {
 
 		this.sqlite = new Database(this.dbPath);
 		this.sqlite.pragma("foreign_keys = ON");
-		
+
 		this.db = drizzle(this.sqlite, { schema });
 		this.initializeDatabase();
 	}
@@ -43,34 +46,39 @@ export class DrizzleConnection {
 				// Ignore errors during close
 			}
 		}
-		DrizzleConnection.instance = undefined as any;
+		DrizzleConnection.instance = undefined!;
 	}
 
 	private getDatabasePath(): string {
 		// テスト環境の判定（環境変数優先）
-		const isTestEnv = process.env.NODE_ENV === 'test' || 
-						  process.env.VITEST === 'true';
+		const isTestEnv =
+			process.env.NODE_ENV === "test" || process.env.VITEST === "true";
 
 		if (isTestEnv) {
 			// テスト環境では専用のパスを使用
-			const testDbPath = path.join(process.cwd(), "test-data", "game-dict-test.db");
-			console.log('Using test database:', testDbPath);
+			const testDbPath = path.join(
+				process.cwd(),
+				"test-data",
+				"game-dict-test.db",
+			);
+			console.log("Using test database:", testDbPath);
 			return testDbPath;
 		}
 
 		// In Electron environment (main process or renderer with remote access)
 		try {
 			// Try dynamic import first for ESM compatibility
-			const electronModule = typeof require !== "undefined" ? require("electron") : null;
-			
+			const electronModule =
+				typeof require !== "undefined" ? require("electron") : null;
+
 			if (electronModule?.app) {
 				const userDataPath = electronModule.app.getPath("userData");
 				const prodDbPath = path.join(userDataPath, "game-dict.db");
-				console.log('Using production database:', prodDbPath);
+				console.log("Using production database:", prodDbPath);
 				return prodDbPath;
 			}
 		} catch (error) {
-			console.warn('Failed to access Electron app:', error);
+			console.warn("Failed to access Electron app:", error);
 		}
 
 		// For testing environment, check if app is available in global
@@ -83,25 +91,30 @@ export class DrizzleConnection {
 			};
 			const userDataPath = globalWithApp.app.getPath("userData");
 			const prodDbPath = path.join(userDataPath, "game-dict.db");
-			console.log('Using production database:', prodDbPath);
+			console.log("Using production database:", prodDbPath);
 			return prodDbPath;
 		}
 
 		// Production fallback - use OS user data directory
-		if (process.env.NODE_ENV === 'production') {
+		if (process.env.NODE_ENV === "production") {
 			const os = typeof require !== "undefined" ? require("node:os") : null;
 			if (os) {
 				const homeDir = os.homedir();
-				const userDataPath = path.join(homeDir, "Library", "Application Support", "game-dict");
+				const userDataPath = path.join(
+					homeDir,
+					"Library",
+					"Application Support",
+					"game-dict",
+				);
 				const prodDbPath = path.join(userDataPath, "game-dict.db");
-				console.log('Using production database (fallback):', prodDbPath);
+				console.log("Using production database (fallback):", prodDbPath);
 				return prodDbPath;
 			}
 		}
 
 		// Default fallback
 		const defaultDbPath = path.join(process.cwd(), "test-data", "game-dict.db");
-		console.log('Using default database:', defaultDbPath);
+		console.log("Using default database:", defaultDbPath);
 		return defaultDbPath;
 	}
 
@@ -116,7 +129,10 @@ export class DrizzleConnection {
 				this.createTablesManually();
 			}
 		} catch (error) {
-			console.warn("Migration failed, falling back to manual table creation:", error);
+			console.warn(
+				"Migration failed, falling back to manual table creation:",
+				error,
+			);
 			this.createTablesManually();
 		}
 
@@ -176,7 +192,9 @@ export class DrizzleConnection {
 
 	private migrateGamesTable(): void {
 		// Check if code column exists
-		const tableInfo = this.sqlite.prepare("PRAGMA table_info(games)").all() as Array<{
+		const tableInfo = this.sqlite
+			.prepare("PRAGMA table_info(games)")
+			.all() as Array<{
 			cid: number;
 			name: string;
 			type: string;
@@ -185,29 +203,36 @@ export class DrizzleConnection {
 			pk: number;
 		}>;
 
-		const codeColumnExists = tableInfo.some(column => column.name === 'code');
+		const codeColumnExists = tableInfo.some((column) => column.name === "code");
 
 		if (!codeColumnExists) {
-			console.log('Adding code column to games table...');
-			
+			console.log("Adding code column to games table...");
+
 			// Add code column (without NOT NULL constraint initially)
-			this.sqlite.exec('ALTER TABLE games ADD COLUMN code TEXT');
-			
+			this.sqlite.exec("ALTER TABLE games ADD COLUMN code TEXT");
+
 			// Generate codes for existing games
-			const existingGames = this.sqlite.prepare('SELECT id, name FROM games').all() as Array<{
+			const existingGames = this.sqlite
+				.prepare("SELECT id, name FROM games")
+				.all() as Array<{
 				id: number;
 				name: string;
 			}>;
 
 			if (existingGames.length > 0) {
-				const updateCode = this.sqlite.prepare('UPDATE games SET code = ? WHERE id = ?');
-				
+				const updateCode = this.sqlite.prepare(
+					"UPDATE games SET code = ? WHERE id = ?",
+				);
+
 				for (const game of existingGames) {
 					const existingCodes = existingGames
-						.filter(g => g.id !== game.id)
-						.map(g => this.generateCodeFromName(g.name))
+						.filter((g) => g.id !== game.id)
+						.map((g) => this.generateCodeFromName(g.name))
 						.filter((code): code is string => Boolean(code));
-					const generatedCode = this.generateUniqueCodeFromName(game.name, existingCodes);
+					const generatedCode = this.generateUniqueCodeFromName(
+						game.name,
+						existingCodes,
+					);
 					updateCode.run(generatedCode, game.id);
 				}
 			}
@@ -216,21 +241,24 @@ export class DrizzleConnection {
 			this.sqlite.exec(`
 				CREATE UNIQUE INDEX IF NOT EXISTS idx_games_code ON games(code);
 			`);
-			
-			console.log('Code column migration completed.');
+
+			console.log("Code column migration completed.");
 		}
 	}
 
 	private generateCodeFromName(name: string): string {
 		if (!name) return "";
-		
+
 		return name
 			.toLowerCase()
 			.replace(/[^a-z0-9]/g, "")
 			.substring(0, 16);
 	}
 
-	private generateUniqueCodeFromName(name: string, existingCodes: string[]): string {
+	private generateUniqueCodeFromName(
+		name: string,
+		existingCodes: string[],
+	): string {
 		let baseCode = this.generateCodeFromName(name);
 		if (!baseCode) {
 			baseCode = "game";
@@ -279,7 +307,7 @@ export class DrizzleConnection {
 				this.db.insert(schema.categories).values(category).run();
 			} catch (error) {
 				// If UNIQUE constraint failed, update existing category
-				if ((error as any).message?.includes('UNIQUE constraint failed')) {
+				if ((error as any).message?.includes("UNIQUE constraint failed")) {
 					this.db
 						.update(schema.categories)
 						.set({

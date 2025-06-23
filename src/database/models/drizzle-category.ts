@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import * as schema from "../schema.js";
 import type { Category, NewCategory } from "../schema.js";
+import * as schema from "../schema.js";
 
 export class DrizzleCategoryModel {
 	private db: BetterSQLite3Database<typeof schema>;
@@ -15,7 +15,7 @@ export class DrizzleCategoryModel {
 			.select()
 			.from(schema.categories)
 			.orderBy(schema.categories.name)
-		.all();
+			.all();
 	}
 
 	public getById(id: number): Category | null {
@@ -24,12 +24,14 @@ export class DrizzleCategoryModel {
 			.from(schema.categories)
 			.where(eq(schema.categories.id, id))
 			.limit(1)
-		.all();
-		
+			.all();
+
 		return results[0] || null;
 	}
 
-	public create(data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">): Category {
+	public create(
+		data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">,
+	): Category {
 		const now = new Date().toISOString();
 		const result = this.db
 			.insert(schema.categories)
@@ -39,12 +41,15 @@ export class DrizzleCategoryModel {
 				updatedAt: now,
 			})
 			.returning()
-		.all();
+			.all();
 
 		return result[0];
 	}
 
-	public update(id: number, data: Partial<Omit<NewCategory, "id" | "createdAt">>): Category | null {
+	public update(
+		id: number,
+		data: Partial<Omit<NewCategory, "id" | "createdAt">>,
+	): Category | null {
 		if (Object.keys(data).length === 0) {
 			return this.getById(id);
 		}
@@ -58,7 +63,7 @@ export class DrizzleCategoryModel {
 			})
 			.where(eq(schema.categories.id, id))
 			.returning()
-		.all();
+			.all();
 
 		return result[0] || null;
 	}
@@ -78,8 +83,8 @@ export class DrizzleCategoryModel {
 			.from(schema.categories)
 			.where(eq(schema.categories.name, name))
 			.limit(1)
-		.all();
-		
+			.all();
+
 		return results[0] || null;
 	}
 
@@ -88,7 +93,7 @@ export class DrizzleCategoryModel {
 			.select({ count: sql<number>`count(*)` })
 			.from(schema.categories)
 			.all();
-		
+
 		return result[0].count;
 	}
 }

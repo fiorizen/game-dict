@@ -169,6 +169,33 @@
   - カテゴリ「人名」→「人名」
   - それ以外はすべて「名詞」にフォールバックすること
 
+- [x] **Phase 1 リファクタリング: 緊急技術的負債解消** (完了)
+  - [x] @ts-nocheck除去とTypeScript型安全性強化
+    - [x] csv-handlers.ts の @ts-nocheck 除去・Node.jsインポート修正
+    - [x] ipc-handlers.ts の @ts-nocheck 除去・依存関係修正  
+    - [x] main.ts の @ts-nocheck 除去・ESModuleインポート修正
+  - [x] N+1クエリ問題修正
+    - [x] CSV出力時のカテゴリルックアップをMap-based参照に変更（3箇所）
+    - [x] O(n²) → O(n) 性能改善達成・テスト検証完了
+  - [x] main.js最複雑部分のモジュール化
+    - [x] attemptNavigationSave関数のバリデーション部分を分離
+    - [x] validateNavigationSave関数として責任分離・可読性向上
+  - [x] 各修正段階でのテスト実行・品質確認（49/49テスト成功維持）
+
+- [x] **Phase 2 リファクタリング: 保守性向上** (完了)
+  - [x] テスト品質向上とコード共通化
+    - [x] 共通テストヘルパー作成（TestDatabaseHelper, TestConstants）
+    - [x] 重複するセットアップ・ティアダウンコードの統一
+    - [x] テストコード品質改善・可読性向上
+  - [x] TypeScript型安全性さらなる強化
+    - [x] 重要な`any`型の適切な型定義への置換（csv-handlers.ts完全修正）
+    - [x] グローバルオブジェクト（window.electronAPI等）の型定義
+    - [x] Map操作・undefined処理の型安全性向上
+  - [x] パフォーマンス最適化
+    - [x] データベース複合インデックス追加（検索最適化）
+    - [x] entries テーブル用 5つの複合インデックス実装
+  - [x] 各修正段階でのテスト実行・品質確認（49/49テスト成功維持・TypeScriptビルド成功）
+
 ### プロジェクト統計
 
 - **完了率**: 18/18 メインタスク (100%) + IME機能実装完了 + npm start実装完了
