@@ -23,6 +23,7 @@
 		"test:clean": "rm -rf test-data && rm -rf playwright-report && rm -rf test-results",
 		"test:clean:db": "rm -f test-data/game-dict-test.db",
 		"test:e2e": "npm run test:clean:db && npm run build && npm run ensure:electron && NODE_ENV=test playwright test --project=electron",
+		"test:e2e:headless": "npm run test:clean:db && npm run build && npm run ensure:electron && NODE_ENV=test HEADLESS=true playwright test --project=electron-headless",
 		"test:e2e:ui": "npm run build && npm run ensure:electron && NODE_ENV=test playwright test --ui",
 		"test:e2e:debug": "npm run test:clean:db && npm run build && npm run ensure:electron && NODE_ENV=test playwright test --project=electron --headed --debug",
 		"ensure:electron": "prebuild-install --runtime=electron --target=$(npx electron --version | sed 's/v//') || npm run rebuild:electron",

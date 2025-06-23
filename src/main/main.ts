@@ -74,7 +74,13 @@ class GameDictApp implements MainAppInstance {
 
 		this.mainWindow.once("ready-to-show", async () => {
 			await this.performDataSyncCheck();
-			this.mainWindow?.show();
+
+			// Headless mode control for testing
+			const isHeadless =
+				process.env.NODE_ENV === "test" && process.env.HEADLESS === "true";
+			if (!isHeadless) {
+				this.mainWindow?.show();
+			}
 		});
 
 		this.mainWindow.on("closed", () => {

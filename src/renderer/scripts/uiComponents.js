@@ -3,8 +3,8 @@
  * DOM操作、テーブル描画、モーダル管理などのUI関連機能
  */
 
-import { gameState } from './gameState.js';
-import { escapeHtml } from './utils.js';
+import { gameState } from "./gameState.js";
+import { escapeHtml } from "./utils.js";
 
 // DOM要素のキャッシュ
 export const DOM = {
@@ -20,14 +20,14 @@ export const DOM = {
 	gameModal: document.getElementById("game-modal"),
 	gameForm: document.getElementById("game-form"),
 	exportImeBtn: document.getElementById("export-ime-btn"),
-	importImeBtn: document.getElementById("import-ime-btn")
+	importImeBtn: document.getElementById("import-ime-btn"),
 };
 
 // ゲーム選択UI更新
 export function populateGameSelect(games) {
 	const gameSelect = DOM.gameSelect;
 	gameSelect.innerHTML = '<option value="">ゲームを選択してください</option>';
-	
+
 	games.forEach((game) => {
 		const option = document.createElement("option");
 		option.value = game.id;
@@ -48,16 +48,16 @@ export function selectFirstGame(games) {
 export function populateCategorySelects() {
 	const categories = gameState.getAllCategories();
 	const selects = document.querySelectorAll("select[name='category_id']");
-	
+
 	selects.forEach((select) => {
 		const currentValue = select.value;
 		select.innerHTML = "";
-		
+
 		categories.forEach((category) => {
 			const option = document.createElement("option");
 			option.value = category.id;
 			option.textContent = category.name;
-			if (category.id == currentValue) {
+			if (category.id === currentValue) {
 				option.selected = true;
 			}
 			select.appendChild(option);
@@ -69,7 +69,7 @@ export function populateCategorySelects() {
 export function renderEntriesTable(entries) {
 	const tableBody = DOM.entriesTableBody;
 	const noEntriesMessage = DOM.noEntriesMessage;
-	
+
 	if (!entries || entries.length === 0) {
 		tableBody.innerHTML = "";
 		noEntriesMessage.style.display = "block";
@@ -77,18 +77,18 @@ export function renderEntriesTable(entries) {
 	}
 
 	noEntriesMessage.style.display = "none";
-	
+
 	// 既存の行をクリア
 	tableBody.innerHTML = "";
-	
+
 	// DocumentFragmentを使用してパフォーマンスを向上
 	const fragment = document.createDocumentFragment();
-	
+
 	entries.forEach((entry) => {
 		const row = createEntryRow(entry);
 		fragment.appendChild(row);
 	});
-	
+
 	tableBody.appendChild(fragment);
 }
 
@@ -97,7 +97,7 @@ export function createEntryRow(entry) {
 	const category = gameState.getCategoryById(entry.category_id);
 	const row = document.createElement("tr");
 	row.dataset.entryId = entry.id;
-	
+
 	row.innerHTML = `
 		<td class="category-cell">${escapeHtml(category?.name || "")}</td>
 		<td class="reading-cell">${escapeHtml(entry.reading)}</td>
@@ -108,7 +108,7 @@ export function createEntryRow(entry) {
 			<button type="button" class="btn btn-sm btn-outline btn-danger delete-btn">削除</button>
 		</td>
 	`;
-	
+
 	return row;
 }
 
@@ -117,12 +117,15 @@ export function createNewEntryRow() {
 	const categories = gameState.getAllCategories();
 	const row = document.createElement("tr");
 	row.className = "new-entry-row";
-	
+
 	// カテゴリオプション作成
-	const categoryOptions = categories.map(category => 
-		`<option value="${category.id}"${category.name === "名詞" ? " selected" : ""}>${escapeHtml(category.name)}</option>`
-	).join("");
-	
+	const categoryOptions = categories
+		.map(
+			(category) =>
+				`<option value="${category.id}"${category.name === "名詞" ? " selected" : ""}>${escapeHtml(category.name)}</option>`,
+		)
+		.join("");
+
 	row.innerHTML = `
 		<td class="category-cell">
 			<select name="category_id" class="form-control form-control-sm" required>
@@ -146,23 +149,26 @@ export function createNewEntryRow() {
 			<button type="button" class="btn btn-sm btn-outline cancel-btn">キャンセル</button>
 		</td>
 	`;
-	
+
 	return row;
 }
 
 // インライン編集行作成
 export function createEditRow(entry) {
 	const categories = gameState.getAllCategories();
-	const category = gameState.getCategoryById(entry.category_id);
+	const _category = gameState.getCategoryById(entry.category_id);
 	const row = document.createElement("tr");
 	row.className = "edit-entry-row";
 	row.dataset.entryId = entry.id;
-	
+
 	// カテゴリオプション作成
-	const categoryOptions = categories.map(cat => 
-		`<option value="${cat.id}"${cat.id === entry.category_id ? " selected" : ""}>${escapeHtml(cat.name)}</option>`
-	).join("");
-	
+	const categoryOptions = categories
+		.map(
+			(cat) =>
+				`<option value="${cat.id}"${cat.id === entry.category_id ? " selected" : ""}>${escapeHtml(cat.name)}</option>`,
+		)
+		.join("");
+
 	row.innerHTML = `
 		<td class="category-cell">
 			<select name="category_id" class="form-control form-control-sm" required>
@@ -186,7 +192,7 @@ export function createEditRow(entry) {
 			<button type="button" class="btn btn-sm btn-outline cancel-edit-btn">キャンセル</button>
 		</td>
 	`;
-	
+
 	return row;
 }
 
@@ -195,14 +201,14 @@ export function addNewEntryRow() {
 	// 既存の新規エントリー行や編集行をチェック
 	const existingNewRow = DOM.entriesTableBody.querySelector(".new-entry-row");
 	const existingEditRow = DOM.entriesTableBody.querySelector(".edit-entry-row");
-	
+
 	if (existingNewRow || existingEditRow) {
 		return; // 既に入力行が存在する場合は何もしない
 	}
 
 	const newRow = createNewEntryRow();
 	DOM.entriesTableBody.insertBefore(newRow, DOM.entriesTableBody.firstChild);
-	
+
 	// 最初の入力フィールドにフォーカス
 	const firstInput = newRow.querySelector("input[name='reading']");
 	if (firstInput) {
@@ -215,7 +221,7 @@ export function openGameModal(game = null) {
 	const modal = DOM.gameModal;
 	const form = DOM.gameForm;
 	const titleElement = modal.querySelector(".modal-title");
-	
+
 	if (game) {
 		titleElement.textContent = "ゲーム編集";
 		form.elements.game_name.value = game.name;
@@ -226,7 +232,7 @@ export function openGameModal(game = null) {
 		form.reset();
 		delete form.dataset.gameId;
 	}
-	
+
 	modal.style.display = "block";
 	setTimeout(() => form.elements.game_name.focus(), 100);
 }
@@ -242,9 +248,10 @@ export function updateImeExportButtonState() {
 	const currentGame = gameState.getCurrentGame();
 	const currentEntries = gameState.getCurrentEntries();
 	const exportBtn = DOM.exportImeBtn;
-	
+
 	if (exportBtn) {
-		exportBtn.disabled = !currentGame || !currentEntries || currentEntries.length === 0;
+		exportBtn.disabled =
+			!currentGame || !currentEntries || currentEntries.length === 0;
 	}
 }
 
@@ -252,12 +259,14 @@ export function updateImeExportButtonState() {
 export function addEntryToTable(entry) {
 	const newRow = createEntryRow(entry);
 	const tableBody = DOM.entriesTableBody;
-	
+
 	// ソートが有効な場合は適切な位置に挿入
 	if (gameState.getShouldSortEntries()) {
 		let insertPosition = null;
-		const rows = tableBody.querySelectorAll("tr:not(.new-entry-row):not(.edit-entry-row)");
-		
+		const rows = tableBody.querySelectorAll(
+			"tr:not(.new-entry-row):not(.edit-entry-row)",
+		);
+
 		for (const row of rows) {
 			const rowReading = row.querySelector(".reading-cell").textContent;
 			if (entry.reading < rowReading) {
@@ -265,7 +274,7 @@ export function addEntryToTable(entry) {
 				break;
 			}
 		}
-		
+
 		if (insertPosition) {
 			tableBody.insertBefore(newRow, insertPosition);
 		} else {
@@ -273,33 +282,41 @@ export function addEntryToTable(entry) {
 		}
 	} else {
 		// 新規追加の場合は先頭に追加
-		const firstRow = tableBody.querySelector("tr:not(.new-entry-row):not(.edit-entry-row)");
+		const firstRow = tableBody.querySelector(
+			"tr:not(.new-entry-row):not(.edit-entry-row)",
+		);
 		if (firstRow) {
 			tableBody.insertBefore(newRow, firstRow);
 		} else {
 			tableBody.appendChild(newRow);
 		}
 	}
-	
+
 	// no-entries メッセージを非表示
 	DOM.noEntriesMessage.style.display = "none";
 }
 
 export function removeEntryFromTable(entryId) {
-	const row = DOM.entriesTableBody.querySelector(`tr[data-entry-id="${entryId}"]`);
+	const row = DOM.entriesTableBody.querySelector(
+		`tr[data-entry-id="${entryId}"]`,
+	);
 	if (row) {
 		row.remove();
 	}
-	
+
 	// エントリーがなくなった場合はメッセージを表示
-	const remainingRows = DOM.entriesTableBody.querySelectorAll("tr:not(.new-entry-row):not(.edit-entry-row)");
+	const remainingRows = DOM.entriesTableBody.querySelectorAll(
+		"tr:not(.new-entry-row):not(.edit-entry-row)",
+	);
 	if (remainingRows.length === 0) {
 		DOM.noEntriesMessage.style.display = "block";
 	}
 }
 
 export function updateEntryInTable(entryId, updatedEntry) {
-	const row = DOM.entriesTableBody.querySelector(`tr[data-entry-id="${entryId}"]`);
+	const row = DOM.entriesTableBody.querySelector(
+		`tr[data-entry-id="${entryId}"]`,
+	);
 	if (row) {
 		const newRow = createEntryRow(updatedEntry);
 		newRow.dataset.entryId = entryId;

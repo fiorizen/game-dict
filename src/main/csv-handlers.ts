@@ -2,8 +2,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
-import { log } from "../shared/logger.js";
 import { Database } from "../database/index.js";
+import { log } from "../shared/logger.js";
 import type { Category, Entry, Game } from "../shared/types.js";
 import { generateGameCodeFromName } from "../shared/validation.js";
 
@@ -80,7 +80,11 @@ export class CSVHandlers {
 			});
 
 			const categoriesFilePath = path.join(exportDir, "categories.csv");
-			await fs.promises.writeFile(categoriesFilePath, categoriesCsvString, "utf-8");
+			await fs.promises.writeFile(
+				categoriesFilePath,
+				categoriesCsvString,
+				"utf-8",
+			);
 			exportedFiles.push(categoriesFilePath);
 			log.debug("Exported categories.csv", categoriesFilePath);
 		}

@@ -139,7 +139,7 @@ export function getRowFormData(row) {
 // バリデーション
 export function validateEntryData(data) {
 	const errors = [];
-	
+
 	if (!data.reading) {
 		errors.push("読みを入力してください");
 	}
@@ -149,10 +149,10 @@ export function validateEntryData(data) {
 	if (!data.category_id) {
 		errors.push("カテゴリを選択してください");
 	}
-	
+
 	return {
 		isValid: errors.length === 0,
-		errors
+		errors,
 	};
 }
 
@@ -161,7 +161,7 @@ export function setButtonLoading(button, isLoading, loadingText = "処理中..."
 	if (!button.originalText) {
 		button.originalText = button.textContent;
 	}
-	
+
 	button.disabled = isLoading;
 	button.textContent = isLoading ? loadingText : button.originalText;
 }
@@ -171,22 +171,22 @@ export class DuplicateChecker {
 	constructor() {
 		this.entrySet = new Set();
 	}
-	
+
 	buildFromEntries(entries) {
 		this.entrySet.clear();
-		entries.forEach(entry => {
+		entries.forEach((entry) => {
 			this.entrySet.add(`${entry.reading}:${entry.word}:${entry.category_id}`);
 		});
 	}
-	
+
 	isDuplicate(reading, word, categoryId) {
 		return this.entrySet.has(`${reading}:${word}:${categoryId}`);
 	}
-	
+
 	addEntry(reading, word, categoryId) {
 		this.entrySet.add(`${reading}:${word}:${categoryId}`);
 	}
-	
+
 	removeEntry(reading, word, categoryId) {
 		this.entrySet.delete(`${reading}:${word}:${categoryId}`);
 	}
@@ -197,18 +197,18 @@ export class CategoryLookup {
 	constructor() {
 		this.categoryMap = new Map();
 	}
-	
+
 	buildFromCategories(categories) {
 		this.categoryMap.clear();
-		categories.forEach(category => {
+		categories.forEach((category) => {
 			this.categoryMap.set(category.id, category);
 		});
 	}
-	
+
 	getCategory(id) {
 		return this.categoryMap.get(id);
 	}
-	
+
 	getAllCategories() {
 		return Array.from(this.categoryMap.values());
 	}

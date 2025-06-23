@@ -3,31 +3,30 @@
  * アプリケーションの全てのイベントハンドラーを管理
  */
 
-import { gameState, loadGames, loadCategories, loadEntries } from './gameState.js';
-import { 
-	populateGameSelect, 
-	selectFirstGame, 
-	populateCategorySelects, 
-	renderEntriesTable,
-	openGameModal, 
-	closeModals, 
+import { deleteEntry, startEditEntry } from "./entryManager.js";
+import {
+	gameState,
+	loadCategories,
+	loadEntries,
+	loadGames,
+} from "./gameState.js";
+import {
+	addNewEntryRow,
+	closeModals,
 	DOM,
+	openGameModal,
+	populateCategorySelects,
+	populateGameSelect,
+	renderEntriesTable,
+	selectFirstGame,
 	updateImeExportButtonState,
-	addNewEntryRow
-} from './uiComponents.js';
-import { 
-	saveNewEntry, 
-	deleteEntry, 
-	addAutoSaveListeners, 
-	addKeyboardNavigationListeners,
-	startEditEntry
-} from './entryManager.js';
-import { showError, showSuccess, setButtonLoading } from './utils.js';
+} from "./uiComponents.js";
+import { setButtonLoading, showError, showSuccess } from "./utils.js";
 
 // ゲーム選択変更
 export async function onGameChange(event) {
 	const gameId = parseInt(event.target.value);
-	
+
 	if (!gameId) {
 		gameState.setCurrentGame(null);
 		gameState.setCurrentEntries([]);
@@ -41,13 +40,15 @@ export async function onGameChange(event) {
 		const game = await window.electronAPI.games.getById(gameId);
 		gameState.setCurrentGame(game);
 		gameState.setShouldSortEntries(true);
-		
-		DOM.currentGameTitle.textContent = game ? game.name : "ゲームが選択されていません";
-		
+
+		DOM.currentGameTitle.textContent = game
+			? game.name
+			: "ゲームが選択されていません";
+
 		const entries = await loadEntries(gameId);
 		renderEntriesTable(entries);
 		updateImeExportButtonState();
-		
+
 		// 新しいエントリー行を追加
 		addNewEntryRow();
 	} catch (error) {
@@ -60,7 +61,7 @@ export async function onGameChange(event) {
 export function onGameNameInput(event) {
 	const nameField = event.target;
 	const codeField = document.getElementById("game-code");
-	
+
 	if (codeField && !codeField.dataset.userModified) {
 		// ゲーム名からコードを自動生成
 		const code = nameField.value
@@ -74,13 +75,13 @@ export function onGameNameInput(event) {
 // ゲームフォーム送信
 export async function onGameSubmit(event) {
 	event.preventDefault();
-	
+
 	const form = event.target;
 	const formData = new FormData(form);
 	const submitBtn = form.querySelector('button[type="submit"]');
-	
+
 	setButtonLoading(submitBtn, true);
-	
+
 	try {
 		const gameData = {
 			name: formData.get("game_name").trim(),
@@ -97,7 +98,10 @@ export async function onGameSubmit(event) {
 
 		if (gameId) {
 			// 更新
-			result = await window.electronAPI.games.update(parseInt(gameId), gameData);
+			result = await window.electronAPI.games.update(
+				parseInt(gameId),
+				gameData,
+			);
 			showSuccess(`ゲーム「${result.name}」を更新しました`);
 		} else {
 			// 新規作成
@@ -106,15 +110,14 @@ export async function onGameSubmit(event) {
 		}
 
 		closeModals();
-		
+
 		// ゲーム一覧を再読み込み
 		const games = await loadGames();
 		populateGameSelect(games);
-		
+
 		// 作成/更新したゲームを選択
 		DOM.gameSelect.value = result.id;
 		DOM.gameSelect.dispatchEvent(new Event("change"));
-		
 	} catch (error) {
 		console.error("Failed to save game:", error);
 		showError("ゲームの保存に失敗しました");
@@ -130,7 +133,7 @@ export async function onEditGame() {
 		showError("編集するゲームが選択されていません");
 		return;
 	}
-	
+
 	openGameModal(currentGame);
 }
 
@@ -143,33 +146,36 @@ export async function onDeleteGame() {
 	}
 
 	try {
-		const entryCount = await window.electronAPI.games.getEntryCount(currentGame.id);
-		
+		const entryCount = await window.electronAPI.games.getEntryCount(
+			currentGame.id,
+		);
+
 		if (entryCount > 0) {
 			const confirmed = confirm(
 				`ゲーム「${currentGame.name}」には${entryCount}個のエントリーがあります。\n` +
-				"ゲームを削除すると、関連するエントリーもすべて削除されます。\n" +
-				"本当に削除しますか？"
+					"ゲームを削除すると、関連するエントリーもすべて削除されます。\n" +
+					"本当に削除しますか？",
 			);
-			
+
 			if (!confirmed) return;
-			
+
 			await window.electronAPI.games.deleteWithRelatedEntries(currentGame.id);
 		} else {
-			const confirmed = confirm(`ゲーム「${currentGame.name}」を削除しますか？`);
+			const confirmed = confirm(
+				`ゲーム「${currentGame.name}」を削除しますか？`,
+			);
 			if (!confirmed) return;
-			
+
 			await window.electronAPI.games.delete(currentGame.id);
 		}
 
 		showSuccess(`ゲーム「${currentGame.name}」を削除しました`);
-		
+
 		// 自動選択を防止してゲーム一覧を再読み込み
 		gameState.setPreventAutoSelection(true);
 		const games = await loadGames();
 		populateGameSelect(games);
 		selectFirstGame(games);
-		
 	} catch (error) {
 		console.error("Failed to delete game:", error);
 		showError("ゲームの削除に失敗しました");
@@ -180,11 +186,13 @@ export async function onDeleteGame() {
 export async function onExportGitCsv() {
 	const exportBtn = document.getElementById("export-git-csv-btn");
 	setButtonLoading(exportBtn, true, "エクスポート中...");
-	
+
 	try {
 		const result = await window.electronAPI.csv.exportToGitCsv();
 		if (result.success) {
-			showSuccess(`CSVファイルをエクスポートしました（${result.files.length}ファイル）`);
+			showSuccess(
+				`CSVファイルをエクスポートしました（${result.files.length}ファイル）`,
+			);
 		} else {
 			showError("CSVエクスポートに失敗しました");
 		}
@@ -214,7 +222,7 @@ export async function onImportCsv() {
 		try {
 			await window.electronAPI.csv.importFromCsv(filePath);
 			showSuccess("CSVファイルをインポートしました");
-			
+
 			// データを再読み込み
 			await refreshAllData();
 		} finally {
@@ -248,8 +256,11 @@ export async function onImportIme() {
 		setButtonLoading(importBtn, true, "インポート中...");
 
 		try {
-			const importResult = await window.electronAPI.ime.importFromImeTxt(currentGame.id, filePath);
-			
+			const importResult = await window.electronAPI.ime.importFromImeTxt(
+				currentGame.id,
+				filePath,
+			);
+
 			if (importResult.errors && importResult.errors.length > 0) {
 				showError(`インポートエラー: ${importResult.errors.join(", ")}`);
 				return;
@@ -257,7 +268,7 @@ export async function onImportIme() {
 
 			const message = `インポート完了: ${importResult.imported}個追加、${importResult.skipped}個スキップ`;
 			showSuccess(message);
-			
+
 			// エントリーを再読み込み
 			const entries = await loadEntries(currentGame.id);
 			renderEntriesTable(entries);
@@ -283,8 +294,10 @@ export async function onExportIme() {
 	setButtonLoading(exportBtn, true, "エクスポート中...");
 
 	try {
-		const result = await window.electronAPI.ime.exportToMicrosoftIme(currentGame.id);
-		
+		const result = await window.electronAPI.ime.exportToMicrosoftIme(
+			currentGame.id,
+		);
+
 		if (result.success) {
 			showSuccess(`IME辞書ファイルをエクスポートしました: ${result.filePath}`);
 		} else {
@@ -302,7 +315,7 @@ export async function onExportIme() {
 export function handleTableEvents(event) {
 	const target = event.target;
 	const row = target.closest("tr");
-	
+
 	if (target.classList.contains("edit-btn")) {
 		const entryId = parseInt(row.dataset.entryId);
 		startEditEntry(entryId);
@@ -318,11 +331,11 @@ async function refreshAllData() {
 		// カテゴリを再読み込み
 		await loadCategories();
 		populateCategorySelects();
-		
+
 		// ゲームを再読み込み
 		const games = await loadGames();
 		populateGameSelect(games);
-		
+
 		// 現在のゲームのエントリーを再読み込み
 		const currentGame = gameState.getCurrentGame();
 		if (currentGame) {

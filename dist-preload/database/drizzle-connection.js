@@ -43,6 +43,7 @@ const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const drizzle_orm_1 = require("drizzle-orm");
 const better_sqlite3_2 = require("drizzle-orm/better-sqlite3");
 const migrator_1 = require("drizzle-orm/better-sqlite3/migrator");
+const logger_js_1 = require("../shared/logger.js");
 const schema = __importStar(require("./schema.js"));
 class DrizzleConnection {
     constructor() {
@@ -80,7 +81,7 @@ class DrizzleConnection {
         if (isTestEnv) {
             // テスト環境では専用のパスを使用
             const testDbPath = path.join(process.cwd(), "test-data", "game-dict-test.db");
-            console.log("Using test database:", testDbPath);
+            logger_js_1.log.database("Using test database", testDbPath);
             return testDbPath;
         }
         // In Electron environment (main process or renderer with remote access)
@@ -90,12 +91,12 @@ class DrizzleConnection {
             if (electronModule?.app) {
                 const userDataPath = electronModule.app.getPath("userData");
                 const prodDbPath = path.join(userDataPath, "game-dict.db");
-                console.log("Using production database:", prodDbPath);
+                logger_js_1.log.database("Using production database", prodDbPath);
                 return prodDbPath;
             }
         }
         catch (error) {
-            console.warn("Failed to access Electron app:", error);
+            logger_js_1.log.warn("Failed to access Electron app:", error);
         }
         // For testing environment, check if app is available in global
         if (typeof global !== "undefined" &&
@@ -103,7 +104,7 @@ class DrizzleConnection {
             const globalWithApp = global;
             const userDataPath = globalWithApp.app.getPath("userData");
             const prodDbPath = path.join(userDataPath, "game-dict.db");
-            console.log("Using production database:", prodDbPath);
+            logger_js_1.log.database("Using production database", prodDbPath);
             return prodDbPath;
         }
         // Production fallback - use OS user data directory
@@ -113,13 +114,13 @@ class DrizzleConnection {
                 const homeDir = os.homedir();
                 const userDataPath = path.join(homeDir, "Library", "Application Support", "game-dict");
                 const prodDbPath = path.join(userDataPath, "game-dict.db");
-                console.log("Using production database (fallback):", prodDbPath);
+                logger_js_1.log.database("Using production database (fallback)", prodDbPath);
                 return prodDbPath;
             }
         }
         // Default fallback
         const defaultDbPath = path.join(process.cwd(), "test-data", "game-dict.db");
-        console.log("Using default database:", defaultDbPath);
+        logger_js_1.log.database("Using default database", defaultDbPath);
         return defaultDbPath;
     }
     initializeDatabase() {
@@ -135,7 +136,7 @@ class DrizzleConnection {
             }
         }
         catch (error) {
-            console.warn("Migration failed, falling back to manual table creation:", error);
+            logger_js_1.log.warn("Migration failed, falling back to manual table creation:", error);
             this.createTablesManually();
         }
         // Insert default categories
@@ -193,7 +194,7 @@ class DrizzleConnection {
             .all();
         const codeColumnExists = tableInfo.some((column) => column.name === "code");
         if (!codeColumnExists) {
-            console.log("Adding code column to games table...");
+            logger_js_1.log.database("Adding code column to games table");
             // Add code column (without NOT NULL constraint initially)
             this.sqlite.exec("ALTER TABLE games ADD COLUMN code TEXT");
             // Generate codes for existing games
@@ -215,7 +216,7 @@ class DrizzleConnection {
             this.sqlite.exec(`
 				CREATE UNIQUE INDEX IF NOT EXISTS idx_games_code ON games(code);
 			`);
-            console.log("Code column migration completed.");
+            logger_js_1.log.database("Code column migration completed");
         }
     }
     generateCodeFromName(name) {

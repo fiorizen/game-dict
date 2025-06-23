@@ -3,7 +3,7 @@
  * アプリケーションの状態とデータ読み込みを管理
  */
 
-import { CategoryLookup, DuplicateChecker, showError } from './utils.js';
+import { CategoryLookup, DuplicateChecker, showError } from "./utils.js";
 
 // 状態管理クラス
 class GameStateManager {
@@ -13,7 +13,7 @@ class GameStateManager {
 		this.allCategories = [];
 		this.shouldSortEntries = true;
 		this.preventAutoSelection = false;
-		
+
 		// パフォーマンス最適化用
 		this.categoryLookup = new CategoryLookup();
 		this.duplicateChecker = new DuplicateChecker();
@@ -40,27 +40,43 @@ class GameStateManager {
 
 	addEntry(entry) {
 		this.currentEntries.push(entry);
-		this.duplicateChecker.addEntry(entry.reading, entry.word, entry.category_id);
+		this.duplicateChecker.addEntry(
+			entry.reading,
+			entry.word,
+			entry.category_id,
+		);
 	}
 
 	removeEntry(entryId) {
-		const index = this.currentEntries.findIndex(e => e.id === entryId);
+		const index = this.currentEntries.findIndex((e) => e.id === entryId);
 		if (index !== -1) {
 			const entry = this.currentEntries[index];
-			this.duplicateChecker.removeEntry(entry.reading, entry.word, entry.category_id);
+			this.duplicateChecker.removeEntry(
+				entry.reading,
+				entry.word,
+				entry.category_id,
+			);
 			this.currentEntries.splice(index, 1);
 		}
 	}
 
 	updateEntry(entryId, updatedData) {
-		const index = this.currentEntries.findIndex(e => e.id === entryId);
+		const index = this.currentEntries.findIndex((e) => e.id === entryId);
 		if (index !== -1) {
 			const oldEntry = this.currentEntries[index];
-			this.duplicateChecker.removeEntry(oldEntry.reading, oldEntry.word, oldEntry.category_id);
-			
+			this.duplicateChecker.removeEntry(
+				oldEntry.reading,
+				oldEntry.word,
+				oldEntry.category_id,
+			);
+
 			this.currentEntries[index] = { ...oldEntry, ...updatedData };
 			const newEntry = this.currentEntries[index];
-			this.duplicateChecker.addEntry(newEntry.reading, newEntry.word, newEntry.category_id);
+			this.duplicateChecker.addEntry(
+				newEntry.reading,
+				newEntry.word,
+				newEntry.category_id,
+			);
 		}
 	}
 
@@ -82,14 +98,19 @@ class GameStateManager {
 	isDuplicateEntry(reading, word, categoryId, excludeEntryId = null) {
 		if (excludeEntryId) {
 			// 編集時は該当エントリーを除外してチェック
-			return this.currentEntries.some(entry => 
-				entry.id !== excludeEntryId &&
-				entry.reading === reading &&
-				entry.word === word &&
-				entry.category_id === parseInt(categoryId)
+			return this.currentEntries.some(
+				(entry) =>
+					entry.id !== excludeEntryId &&
+					entry.reading === reading &&
+					entry.word === word &&
+					entry.category_id === parseInt(categoryId),
 			);
 		}
-		return this.duplicateChecker.isDuplicate(reading, word, parseInt(categoryId));
+		return this.duplicateChecker.isDuplicate(
+			reading,
+			word,
+			parseInt(categoryId),
+		);
 	}
 
 	// ソート設定
@@ -157,7 +178,7 @@ export async function loadEntries(gameId) {
 		const entries = gameState.getShouldSortEntries()
 			? await window.electronAPI.entries.getByGameId(gameId)
 			: await window.electronAPI.entries.getByGameIdUnsorted(gameId);
-		
+
 		gameState.setCurrentEntries(entries);
 		return entries;
 	} catch (error) {

@@ -45,6 +45,11 @@ npm test
 # データベーステストのみ
 npm run test:db
 
+# E2Eテスト実行
+npm run test:e2e            # 通常（UI表示）
+npm run test:e2e:headless   # headless（真のheadless・高速・CI向け）
+npm run test:e2e:debug      # デバッグ用（詳細表示）
+
 # コード品質チェック（必須）
 npm run lint
 npm run lint:fix

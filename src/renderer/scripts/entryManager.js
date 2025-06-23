@@ -3,9 +3,22 @@
  * エントリーのCRUD操作、バリデーション、自動保存機能
  */
 
-import { gameState } from './gameState.js';
-import { validateEntryData, getRowFormData, setButtonLoading, showSuccess, showError } from './utils.js';
-import { addEntryToTable, removeEntryFromTable, updateEntryInTable, DOM, populateCategorySelects, createEditRow } from './uiComponents.js';
+import { gameState } from "./gameState.js";
+import {
+	addEntryToTable,
+	createEditRow,
+	DOM,
+	populateCategorySelects,
+	removeEntryFromTable,
+	updateEntryInTable,
+} from "./uiComponents.js";
+import {
+	getRowFormData,
+	setButtonLoading,
+	showError,
+	showSuccess,
+	validateEntryData,
+} from "./utils.js";
 
 // 自動保存のデバウンシング
 let autoSaveTimeout = null;
@@ -27,7 +40,13 @@ export async function saveNewEntry(formData) {
 		}
 
 		// 重複チェック
-		if (gameState.isDuplicateEntry(formData.reading, formData.word, formData.category_id)) {
+		if (
+			gameState.isDuplicateEntry(
+				formData.reading,
+				formData.word,
+				formData.category_id,
+			)
+		) {
 			showError("同じ読み・単語・カテゴリの組み合わせが既に存在します");
 			return false;
 		}
@@ -41,12 +60,12 @@ export async function saveNewEntry(formData) {
 		};
 
 		const newEntry = await window.electronAPI.entries.create(entryData);
-		
+
 		// 状態とUIを更新
 		gameState.addEntry(newEntry);
 		gameState.setShouldSortEntries(false); // 新規追加後はソートしない
 		addEntryToTable(newEntry);
-		
+
 		showSuccess(`「${newEntry.word}」を追加しました`);
 		return true;
 	} catch (error) {
@@ -66,7 +85,14 @@ export async function updateEntry(entryId, formData) {
 		}
 
 		// 重複チェック（自分自身は除外）
-		if (gameState.isDuplicateEntry(formData.reading, formData.word, formData.category_id, entryId)) {
+		if (
+			gameState.isDuplicateEntry(
+				formData.reading,
+				formData.word,
+				formData.category_id,
+				entryId,
+			)
+		) {
 			showError("同じ読み・単語・カテゴリの組み合わせが既に存在します");
 			return false;
 		}
@@ -78,12 +104,15 @@ export async function updateEntry(entryId, formData) {
 			description: formData.description || undefined,
 		};
 
-		const updatedEntry = await window.electronAPI.entries.update(entryId, updateData);
-		
+		const updatedEntry = await window.electronAPI.entries.update(
+			entryId,
+			updateData,
+		);
+
 		// 状態とUIを更新
 		gameState.updateEntry(entryId, updatedEntry);
 		updateEntryInTable(entryId, updatedEntry);
-		
+
 		showSuccess(`「${updatedEntry.word}」を更新しました`);
 		return true;
 	} catch (error) {
@@ -97,7 +126,7 @@ export async function updateEntry(entryId, formData) {
 export async function deleteEntry(entryId) {
 	try {
 		const entries = gameState.getCurrentEntries();
-		const entry = entries.find(e => e.id === entryId);
+		const entry = entries.find((e) => e.id === entryId);
 		if (!entry) {
 			showError("エントリーが見つかりません");
 			return false;
@@ -107,11 +136,11 @@ export async function deleteEntry(entryId) {
 		if (!confirmed) return false;
 
 		await window.electronAPI.entries.delete(entryId);
-		
+
 		// 状態とUIを更新
 		gameState.removeEntry(entryId);
 		removeEntryFromTable(entryId);
-		
+
 		showSuccess(`「${entry.word}」を削除しました`);
 		return true;
 	} catch (error) {
@@ -131,7 +160,7 @@ export function attemptAutoSave(row, entryId = null) {
 	autoSaveTimeout = setTimeout(async () => {
 		try {
 			const formData = getRowFormData(row);
-			
+
 			// 必須フィールドの簡単なチェック
 			if (!formData.reading || !formData.word || !formData.category_id) {
 				return; // 不完全なデータは保存しない
@@ -140,10 +169,10 @@ export function attemptAutoSave(row, entryId = null) {
 			if (entryId) {
 				// 更新
 				await updateEntry(entryId, formData);
-				
+
 				// 編集行を通常行に戻す
 				const entries = gameState.getCurrentEntries();
-				const entry = entries.find(e => e.id === entryId);
+				const entry = entries.find((e) => e.id === entryId);
 				if (entry) {
 					updateEntryInTable(entryId, entry);
 				}
@@ -170,11 +199,11 @@ export function attemptNavigationSave(row, entryId = null) {
 		setTimeout(async () => {
 			const activeElement = document.activeElement;
 			const isStillInRow = row.contains(activeElement);
-			
+
 			if (!isStillInRow) {
 				try {
 					const formData = getRowFormData(row);
-					
+
 					// データが入力されていない場合は削除
 					if (!formData.reading && !formData.word) {
 						if (row.classList.contains("new-entry-row")) {
@@ -182,7 +211,7 @@ export function attemptNavigationSave(row, entryId = null) {
 						} else if (row.classList.contains("edit-entry-row")) {
 							// 編集をキャンセルして元の行に戻す
 							const entries = gameState.getCurrentEntries();
-							const entry = entries.find(e => e.id === entryId);
+							const entry = entries.find((e) => e.id === entryId);
 							if (entry) {
 								updateEntryInTable(entryId, entry);
 							}
@@ -202,7 +231,7 @@ export function attemptNavigationSave(row, entryId = null) {
 						const success = await updateEntry(entryId, formData);
 						if (success) {
 							const entries = gameState.getCurrentEntries();
-							const entry = entries.find(e => e.id === entryId);
+							const entry = entries.find((e) => e.id === entryId);
 							if (entry) {
 								updateEntryInTable(entryId, entry);
 							}
@@ -226,7 +255,7 @@ export function attemptNavigationSave(row, entryId = null) {
 // エントリー行のイベントリスナー設定
 export function addAutoSaveListeners(row, entryId = null) {
 	const inputs = row.querySelectorAll("input, select, textarea");
-	
+
 	inputs.forEach((input) => {
 		// 入力時の自動保存
 		input.addEventListener("input", () => {
@@ -242,10 +271,10 @@ export function addAutoSaveListeners(row, entryId = null) {
 		input.addEventListener("keydown", async (e) => {
 			if (e.key === "Enter" && !e.shiftKey) {
 				e.preventDefault();
-				
+
 				const formData = getRowFormData(row);
 				const validation = validateEntryData(formData);
-				
+
 				if (!validation.isValid) {
 					showError(validation.errors.join("、"));
 					return;
@@ -255,7 +284,7 @@ export function addAutoSaveListeners(row, entryId = null) {
 					const success = await updateEntry(entryId, formData);
 					if (success) {
 						const entries = gameState.getCurrentEntries();
-						const entry = entries.find(e => e.id === entryId);
+						const entry = entries.find((e) => e.id === entryId);
 						if (entry) {
 							updateEntryInTable(entryId, entry);
 						}
@@ -276,15 +305,15 @@ export function addAutoSaveListeners(row, entryId = null) {
 	if (saveBtn) {
 		saveBtn.addEventListener("click", async () => {
 			setButtonLoading(saveBtn, true);
-			
+
 			try {
 				const formData = getRowFormData(row);
-				
+
 				if (entryId) {
 					const success = await updateEntry(entryId, formData);
 					if (success) {
 						const entries = gameState.getCurrentEntries();
-						const entry = entries.find(e => e.id === entryId);
+						const entry = entries.find((e) => e.id === entryId);
 						if (entry) {
 							updateEntryInTable(entryId, entry);
 						}
@@ -311,7 +340,7 @@ export function addAutoSaveListeners(row, entryId = null) {
 			} else if (row.classList.contains("edit-entry-row") && entryId) {
 				// 編集をキャンセルして元の行に戻す
 				const entries = gameState.getCurrentEntries();
-				const entry = entries.find(e => e.id === entryId);
+				const entry = entries.find((e) => e.id === entryId);
 				if (entry) {
 					updateEntryInTable(entryId, entry);
 				}
@@ -323,7 +352,7 @@ export function addAutoSaveListeners(row, entryId = null) {
 // キーボードナビゲーション
 export function addKeyboardNavigationListeners(row) {
 	const inputs = row.querySelectorAll("input, select");
-	
+
 	inputs.forEach((input, index) => {
 		input.addEventListener("keydown", (e) => {
 			if (e.key === "Tab" && !e.shiftKey && index === inputs.length - 1) {
@@ -342,15 +371,17 @@ export function addKeyboardNavigationListeners(row) {
 // 垂直ナビゲーション処理
 function handleVerticalNavigation(currentInput, direction) {
 	const currentRow = currentInput.closest("tr");
-	const currentCellIndex = Array.from(currentRow.children).indexOf(currentInput.closest("td"));
-	
+	const currentCellIndex = Array.from(currentRow.children).indexOf(
+		currentInput.closest("td"),
+	);
+
 	let targetRow;
 	if (direction === "down") {
 		targetRow = currentRow.nextElementSibling;
 	} else {
 		targetRow = currentRow.previousElementSibling;
 	}
-	
+
 	if (targetRow) {
 		const targetCell = targetRow.children[currentCellIndex];
 		const targetInput = targetCell?.querySelector("input, select");
@@ -363,14 +394,14 @@ function handleVerticalNavigation(currentInput, direction) {
 // エントリー編集の開始
 export function startEditEntry(entryId) {
 	const entries = gameState.getCurrentEntries();
-	const entry = entries.find(e => e.id === entryId);
+	const entry = entries.find((e) => e.id === entryId);
 	if (!entry) return;
 
 	// 既存の編集行があれば削除
 	const existingEditRow = DOM.entriesTableBody.querySelector(".edit-entry-row");
 	if (existingEditRow) {
 		const existingEntryId = existingEditRow.dataset.entryId;
-		const existingEntry = entries.find(e => e.id == existingEntryId);
+		const existingEntry = entries.find((e) => e.id === existingEntryId);
 		if (existingEntry) {
 			updateEntryInTable(parseInt(existingEntryId), existingEntry);
 		}
@@ -383,18 +414,20 @@ export function startEditEntry(entryId) {
 	}
 
 	// 編集行を作成
-	const currentRow = DOM.entriesTableBody.querySelector(`tr[data-entry-id="${entryId}"]`);
+	const currentRow = DOM.entriesTableBody.querySelector(
+		`tr[data-entry-id="${entryId}"]`,
+	);
 	if (currentRow) {
 		const editRow = createEditRow(entry);
 		currentRow.replaceWith(editRow);
-		
+
 		// カテゴリセレクトを更新
 		populateCategorySelects();
-		
+
 		// イベントリスナーを追加
 		addAutoSaveListeners(editRow, entryId);
 		addKeyboardNavigationListeners(editRow);
-		
+
 		// 最初のインプットにフォーカス
 		const firstInput = editRow.querySelector("input[name='reading']");
 		if (firstInput) {

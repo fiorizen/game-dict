@@ -21,5 +21,12 @@ export default defineConfig({
 				...devices["Desktop Chrome"],
 			},
 		},
+		{
+			name: "electron-headless",
+			use: {
+				...devices["Desktop Chrome"],
+				headless: true,
+			},
+		},
 	],
 });

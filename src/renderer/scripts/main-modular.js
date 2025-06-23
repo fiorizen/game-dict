@@ -3,53 +3,53 @@
  * アプリケーションの初期化と各モジュールの統合を管理
  */
 
-import { gameState, loadGames, loadCategories } from './gameState.js';
-import { 
-	populateGameSelect, 
-	selectFirstGame, 
-	populateCategorySelects, 
-	closeModals,
-	openGameModal,
-	DOM,
-	addNewEntryRow
-} from './uiComponents.js';
-import { 
+import {
+	addAutoSaveListeners,
+	addKeyboardNavigationListeners,
+} from "./entryManager.js";
+import {
+	handleTableEvents,
+	onDeleteGame,
+	onEditGame,
+	onExportGitCsv,
+	onExportIme,
 	onGameChange,
 	onGameNameInput,
 	onGameSubmit,
-	onEditGame,
-	onDeleteGame,
-	onExportGitCsv,
 	onImportCsv,
 	onImportIme,
-	onExportIme,
-	handleTableEvents,
-	setupDataSyncHandlers
-} from './eventHandlers.js';
-import { 
-	addAutoSaveListeners, 
-	addKeyboardNavigationListeners 
-} from './entryManager.js';
+	setupDataSyncHandlers,
+} from "./eventHandlers.js";
+import { gameState, loadCategories, loadGames } from "./gameState.js";
+import {
+	addNewEntryRow,
+	closeModals,
+	DOM,
+	openGameModal,
+	populateCategorySelects,
+	populateGameSelect,
+	selectFirstGame,
+} from "./uiComponents.js";
 
 // アプリケーション初期化
 document.addEventListener("DOMContentLoaded", async () => {
 	try {
 		// 状態をリセット
 		gameState.reset();
-		
+
 		// データを読み込み
 		await loadCategories();
 		const games = await loadGames();
-		
+
 		// UIを初期化
 		populateGameSelect(games);
 		populateCategorySelects();
 		selectFirstGame(games);
-		
+
 		// イベントリスナーを設定
 		setupEventListeners();
 		setupDataSyncHandlers();
-		
+
 		console.log("Application initialized successfully");
 	} catch (error) {
 		console.error("Failed to initialize application:", error);
@@ -63,23 +63,25 @@ function setupEventListeners() {
 	DOM.addGameBtn.addEventListener("click", () => openGameModal());
 	DOM.editGameBtn.addEventListener("click", onEditGame);
 	DOM.deleteGameBtn.addEventListener("click", onDeleteGame);
-	
+
 	// ゲームフォーム
-	document.getElementById("game-name").addEventListener("input", onGameNameInput);
-	
+	document
+		.getElementById("game-name")
+		.addEventListener("input", onGameNameInput);
+
 	// ゲームコードの手動変更検知
 	document.getElementById("game-code").addEventListener("input", (e) => {
 		e.target.dataset.userModified = "true";
 	});
-	
+
 	DOM.gameForm.addEventListener("submit", onGameSubmit);
-	
+
 	// エントリー管理
 	DOM.addEntryBtn.addEventListener("click", addNewEntryRow);
-	
+
 	// エントリーテーブルのイベント委譲
 	DOM.entriesTableBody.addEventListener("click", handleTableEvents);
-	
+
 	// 新しいエントリー行のイベント処理
 	DOM.entriesTableBody.addEventListener("DOMNodeInserted", (event) => {
 		const insertedNode = event.target;
@@ -94,15 +96,19 @@ function setupEventListeners() {
 			}
 		}
 	});
-	
+
 	// CSV操作
-	document.getElementById("export-git-csv-btn").addEventListener("click", onExportGitCsv);
-	document.getElementById("import-csv-btn").addEventListener("click", onImportCsv);
-	
+	document
+		.getElementById("export-git-csv-btn")
+		.addEventListener("click", onExportGitCsv);
+	document
+		.getElementById("import-csv-btn")
+		.addEventListener("click", onImportCsv);
+
 	// IME操作
 	DOM.importImeBtn.addEventListener("click", onImportIme);
 	DOM.exportImeBtn.addEventListener("click", onExportIme);
-	
+
 	// モーダル処理
 	setupModalHandlers();
 }
@@ -124,8 +130,10 @@ function setupModalHandlers() {
 	});
 
 	// キャンセルボタン
-	document.getElementById("cancel-game-btn").addEventListener("click", closeModals);
-	
+	document
+		.getElementById("cancel-game-btn")
+		.addEventListener("click", closeModals);
+
 	// ESCキーでモーダルを閉じる
 	document.addEventListener("keydown", (e) => {
 		if (e.key === "Escape") {
@@ -153,8 +161,8 @@ if (process.env.NODE_ENV === "development") {
 			loadGames,
 			loadCategories,
 			populateGameSelect,
-			populateCategorySelects
-		}
+			populateCategorySelects,
+		},
 	};
 }
 
