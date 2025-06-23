@@ -69,6 +69,8 @@ const api = {
 	ime: {
 		exportToMicrosoftIme: (gameId: number) =>
 			ipcRenderer.invoke("ime:exportToMicrosoftIme", gameId),
+		importFromImeTxt: (gameId: number, filePath: string) =>
+			ipcRenderer.invoke("ime:importFromImeTxt", gameId, filePath),
 	},
 
 	// File operations

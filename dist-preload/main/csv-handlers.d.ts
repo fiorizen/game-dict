@@ -30,6 +30,14 @@ export declare class CSVHandlers {
      */
     importFromCsv(filePath: string): Promise<void>;
     /**
+     * Import entries from Microsoft IME text file
+     */
+    importFromImeTxt(gameId: number, filePath: string): Promise<{
+        imported: number;
+        skipped: number;
+        errors: string[];
+    }>;
+    /**
      * Get suggested file paths for exports
      */
     getSuggestedPaths(gameId?: number): {

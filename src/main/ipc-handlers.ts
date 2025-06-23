@@ -138,6 +138,15 @@ export class IPCHandlers {
 			}
 		});
 
+		ipcMain.handle("ime:importFromImeTxt", async (_, gameId: number, filePath: string) => {
+			try {
+				const result = await this.csvHandlers.importFromImeTxt(gameId, filePath);
+				return result;
+			} catch (error) {
+				throw new Error(`Microsoft IME import failed: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		});
+
 		// File dialog handlers
 		ipcMain.handle("files:showOpenDialog", async (_, options) => {
 			const result = await dialog.showOpenDialog(options);

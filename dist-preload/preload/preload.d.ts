@@ -36,6 +36,7 @@ declare const api: {
     };
     ime: {
         exportToMicrosoftIme: (gameId: number) => Promise<any>;
+        importFromImeTxt: (gameId: number, filePath: string) => Promise<any>;
     };
     files: {
         showOpenDialog: (options: any) => Promise<any>;

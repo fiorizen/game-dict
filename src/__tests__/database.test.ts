@@ -92,14 +92,14 @@ describe("SQLite Database Tests", () => {
 	it("should create custom category", () => {
 		const category = db.categories.create({
 			name: "カスタムカテゴリ",
-			google_ime_name: "一般",
-			ms_ime_name: "一般",
-			atok_name: "一般",
+			google_ime_name: "名詞",
+			ms_ime_name: "名詞",
+			atok_name: "名詞",
 		});
 
 		expect(category.id).toBeGreaterThan(0);
 		expect(category.name).toBe("カスタムカテゴリ");
-		expect(category.google_ime_name).toBe("一般");
+		expect(category.google_ime_name).toBe("名詞");
 	});
 
 	it("should create entry", () => {

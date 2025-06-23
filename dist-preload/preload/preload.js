@@ -43,6 +43,7 @@ const api = {
     // IME operations
     ime: {
         exportToMicrosoftIme: (gameId) => electron_1.ipcRenderer.invoke("ime:exportToMicrosoftIme", gameId),
+        importFromImeTxt: (gameId, filePath) => electron_1.ipcRenderer.invoke("ime:importFromImeTxt", gameId, filePath),
     },
     // File operations
     files: {

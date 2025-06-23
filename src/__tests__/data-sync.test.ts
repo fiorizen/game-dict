@@ -76,7 +76,7 @@ describe("Data Sync Manager Tests", () => {
 
 		// Create test categories.csv
 		const categoriesContent = `id,name,google_ime_name,ms_ime_name,atok_name
-1,名詞,一般,一般,一般
+1,名詞,名詞,名詞,名詞
 2,人名,人名,人名,人名`;
 		fs.writeFileSync(path.join(testCsvPath, "categories.csv"), categoriesContent);
 

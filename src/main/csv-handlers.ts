@@ -391,9 +391,9 @@ export class CSVHandlers {
 					// Create category with default IME mappings
 					category = this.db.categories.create({
 						name: record.category_name,
-						google_ime_name: "一般",
-						ms_ime_name: "一般",
-						atok_name: "一般",
+						google_ime_name: "名詞",
+						ms_ime_name: "名詞",
+						atok_name: "名詞",
 					});
 				}
 				categoryCache.set(record.category_name, category);
@@ -420,6 +420,131 @@ export class CSVHandlers {
 				});
 			}
 		}
+	}
+
+	/**
+	 * Import entries from Microsoft IME text file
+	 */
+	async importFromImeTxt(gameId: number, filePath: string): Promise<{
+		imported: number;
+		skipped: number;
+		errors: string[];
+	}> {
+		if (!fs.existsSync(filePath)) {
+			throw new Error(`File not found: ${filePath}`);
+		}
+
+		const game = this.db.games.getById(gameId);
+		if (!game) {
+			throw new Error(`Game with ID ${gameId} not found`);
+		}
+
+		// Read and validate entire file first
+		const content = fs.readFileSync(filePath, 'utf-8');
+		const lines = content.split('\n').filter(line => line.trim());
+		
+		const errors: string[] = [];
+		const validEntries: Array<{ reading: string; word: string; categoryName: string }> = [];
+
+		// Validate all lines first
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i].trim();
+			const parts = line.split('\t');
+			
+			if (parts.length !== 3) {
+				errors.push(`Line ${i + 1}: Expected 3 tab-separated fields, got ${parts.length}`);
+				continue;
+			}
+
+			const [reading, word, categoryName] = parts;
+			
+			if (!reading.trim()) {
+				errors.push(`Line ${i + 1}: Reading field is empty`);
+			}
+			
+			if (!word.trim()) {
+				errors.push(`Line ${i + 1}: Word field is empty`);
+			}
+			
+			if (!categoryName.trim()) {
+				errors.push(`Line ${i + 1}: Category field is empty`);
+			}
+
+			if (reading.trim() && word.trim() && categoryName.trim()) {
+				validEntries.push({
+					reading: reading.trim(),
+					word: word.trim(),
+					categoryName: categoryName.trim()
+				});
+			}
+		}
+
+		// If any validation errors, return without importing
+		if (errors.length > 0) {
+			return {
+				imported: 0,
+				skipped: 0,
+				errors
+			};
+		}
+
+		// All validations passed, proceed with import
+		const categoryCache = new Map<string, Category>();
+		let importedCount = 0;
+		let skippedCount = 0;
+
+		for (const entry of validEntries) {
+			// Get or create category
+			let category = categoryCache.get(entry.categoryName);
+			if (!category) {
+				const existingCategories = this.db.categories
+					.getAll()
+					.filter((c) => c.name === entry.categoryName);
+				
+				if (existingCategories.length > 0) {
+					category = existingCategories[0];
+				} else {
+					// Create new category with "名詞" as default
+					category = this.db.categories.create({
+						name: entry.categoryName,
+						google_ime_name: "名詞",
+						ms_ime_name: "名詞",
+						atok_name: "名詞",
+					});
+				}
+				categoryCache.set(entry.categoryName, category);
+			}
+
+			// Check if entry already exists
+			const existingEntries = this.db.entries
+				.getByGameId(gameId)
+				.filter(
+					(e) =>
+						e.reading === entry.reading &&
+						e.word === entry.word &&
+						e.category_id === category.id,
+				);
+
+			if (existingEntries.length === 0) {
+				// Create new entry
+				this.db.entries.create({
+					game_id: gameId,
+					category_id: category.id,
+					reading: entry.reading,
+					word: entry.word,
+					description: undefined,
+				});
+				importedCount++;
+			} else {
+				skippedCount++;
+			}
+		}
+
+		return {
+			imported: importedCount,
+			skipped: skippedCount,
+			errors: []
+		};
 	}
 
 	/**

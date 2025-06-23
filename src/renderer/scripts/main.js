@@ -49,6 +49,7 @@ function setupEventListeners() {
 	document.getElementById("import-csv-btn").addEventListener("click", onImportCsv);
 	
 	// IME operations
+	document.getElementById("import-ime-btn").addEventListener("click", onImportIme);
 	document.getElementById("export-ime-btn").addEventListener("click", onExportIme);
 
 
@@ -173,6 +174,7 @@ async function onGameChange() {
 		addEntryBtn.disabled = false;
 		document.getElementById("edit-game-btn").disabled = false;
 		document.getElementById("delete-game-btn").disabled = false;
+		document.getElementById("import-ime-btn").disabled = false;
 		// Reset sort flag when changing games (should sort on game change)
 		shouldSortEntries = true;
 		await loadEntries(gameId);
@@ -182,6 +184,7 @@ async function onGameChange() {
 		addEntryBtn.disabled = true;
 		document.getElementById("edit-game-btn").disabled = true;
 		document.getElementById("delete-game-btn").disabled = true;
+		document.getElementById("import-ime-btn").disabled = true;
 		document.getElementById("export-ime-btn").disabled = true;
 		renderEntriesTable([]);
 	}
@@ -1284,6 +1287,66 @@ async function forceCloseApp() {
 }
 
 // IME operation handlers
+async function onImportIme() {
+	if (!currentGame) {
+		showError("ゲームが選択されていません");
+		return;
+	}
+
+	try {
+		const result = await window.electronAPI.files.showOpenDialog({
+			title: "インポートするIME辞書ファイルを選択",
+			filters: [{ name: "Text Files", extensions: ["txt"] }],
+			properties: ["openFile"],
+		});
+
+		if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+			return;
+		}
+
+		const filePath = result.filePaths[0];
+		
+		// Show loading state
+		const importBtn = document.getElementById("import-ime-btn");
+		const originalText = importBtn.textContent;
+		importBtn.disabled = true;
+		importBtn.textContent = "インポート中...";
+		
+		try {
+			const importResult = await window.electronAPI.ime.importFromImeTxt(currentGame, filePath);
+
+			if (importResult.errors && importResult.errors.length > 0) {
+				// Show validation errors
+				const errorMessage = "ファイル形式に問題があります:\\n" + importResult.errors.join("\\n");
+				showError(errorMessage);
+				return;
+			}
+
+			// Show success with details
+			let message = `インポートが完了しました:`;
+			if (importResult.imported > 0) {
+				message += ` ${importResult.imported}件を追加`;
+			}
+			if (importResult.skipped > 0) {
+				message += `, ${importResult.skipped}件をスキップ（重複）`;
+			}
+			
+			showSuccess(message);
+			
+			// Reload entries to show imported data
+			shouldSortEntries = true;
+			await loadEntries(currentGame);
+		} finally {
+			// Restore button state
+			importBtn.disabled = false;
+			importBtn.textContent = originalText;
+		}
+	} catch (error) {
+		console.error("IME import failed:", error);
+		showError(`IME辞書インポートに失敗しました: ${error.message}`);
+	}
+}
+
 async function onExportIme() {
 	if (!currentGame) {
 		showError("ゲームが選択されていません");
@@ -1422,6 +1485,7 @@ async function onConfirmDeleteGame() {
 			document.getElementById("edit-game-btn").disabled = true;
 			document.getElementById("delete-game-btn").disabled = true;
 			document.getElementById("add-entry-btn").disabled = true;
+			document.getElementById("import-ime-btn").disabled = true;
 			document.getElementById("export-ime-btn").disabled = true;
 			renderEntriesTable([]);
 			preventAutoSelection = false;  // Reset flag after UI update
