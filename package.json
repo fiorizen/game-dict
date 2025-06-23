@@ -7,7 +7,7 @@
 	"scripts": {
 		"start": "npm run build && npm run ensure:electron && NODE_ENV=production electron .",
 		"build": "tsc && tsc -p tsconfig.preload.json && npm run copy-assets",
-		"copy-assets": "cp -r src/renderer/index.html src/renderer/styles dist/renderer/ && mkdir -p dist/renderer/scripts && cp src/renderer/scripts/main.js dist/renderer/scripts/ && cp -r dist-preload/preload/* dist/preload/",
+		"copy-assets": "cp -r src/renderer/index.html src/renderer/styles dist/renderer/ && mkdir -p dist/renderer/scripts && cp src/renderer/scripts/*.js dist/renderer/scripts/ && cp -r dist-preload/preload/* dist/preload/",
 		"dev": "npm run build && npm run ensure:electron && NODE_ENV=development electron .",
 		"watch": "tsc --watch",
 		"dist": "npm run build && electron-builder",
