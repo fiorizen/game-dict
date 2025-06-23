@@ -387,6 +387,9 @@ function createNewEntryRow() {
 	// Add auto-save on focusout for the entire row
 	addAutoSaveListeners(row);
 	
+	// Add keyboard navigation listeners
+	addKeyboardNavigationListeners(row);
+	
 	// Focus on reading input
 	setTimeout(() => {
 		const readingInput = row.querySelector('input[name="reading"]');
@@ -458,12 +461,209 @@ function addAutoSaveListeners(row) {
 	});
 }
 
+// Keyboard navigation for entry rows
+function addKeyboardNavigationListeners(row) {
+	const inputs = row.querySelectorAll('input, select');
+	
+	inputs.forEach(input => {
+		input.addEventListener('keydown', (e) => {
+			// Skip if IME is composing
+			if (e.isComposing) return;
+			
+			if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+				e.preventDefault();
+				handleVerticalNavigation(row, e.key === 'ArrowDown');
+			}
+		});
+	});
+}
+
+// Handle vertical navigation (↑↓ keys)
+async function handleVerticalNavigation(currentRow, isDownward) {
+	// First attempt to save current row
+	const saveResult = await attemptNavigationSave(currentRow);
+	
+	// If save failed (validation error), stay in current row
+	if (saveResult === false) {
+		return;
+	}
+	
+	const allRows = Array.from(entriesTableBody.querySelectorAll('tr'));
+	const currentIndex = allRows.indexOf(currentRow);
+	
+	let targetRow;
+	
+	if (isDownward) {
+		// Move down: next row or create new one
+		if (currentIndex < allRows.length - 1) {
+			targetRow = allRows[currentIndex + 1];
+		} else {
+			// At bottom - create new entry row
+			const newRow = createNewEntryRow();
+			entriesTableBody.appendChild(newRow);
+			targetRow = newRow;
+		}
+	} else {
+		// Move up: previous row (don't go above first row)
+		if (currentIndex > 0) {
+			targetRow = allRows[currentIndex - 1];
+		} else {
+			return; // Stay at first row
+		}
+	}
+	
+	// Focus on reading input of target row
+	if (targetRow) {
+		const readingInput = targetRow.querySelector('input[name="reading"]');
+		if (readingInput) {
+			readingInput.focus();
+		}
+	}
+}
+
+// Navigation-specific save function
+async function attemptNavigationSave(row) {
+	if (!row || !currentGame) return false;
+	
+	// Check if already saving to prevent duplicate saves
+	if (row.dataset.navigating === 'true') {
+		return true; // Already processing, skip
+	}
+	
+	const formData = getRowFormData(row);
+	
+	// Skip empty rows
+	if (!formData.reading && !formData.word) {
+		return true;
+	}
+	
+	// Validate required fields
+	if (!formData.reading || !formData.word || !formData.category) {
+		// Show validation error for navigation
+		showValidationError(row, '読み、単語、カテゴリは必須です');
+		return false;
+	}
+	
+	// Check for duplicate reading+word combination
+	const isDuplicate = await checkDuplicateEntry(formData, row);
+	if (isDuplicate) {
+		showValidationError(row, 'この読み・単語の組み合わせは既に登録されています');
+		return false;
+	}
+	
+	// Set navigation flag to prevent duplicate saves
+	row.dataset.navigating = 'true';
+	
+	try {
+		if (row.dataset.isNew) {
+			// Cancel any pending auto-save
+			row.dataset.saving = 'false';
+			
+			// Save new entry
+			const data = {
+				game_id: currentGame,
+				category_id: parseInt(formData.category),
+				reading: formData.reading,
+				word: formData.word,
+				description: formData.description || null,
+			};
+			
+			await window.electronAPI.entries.create(data);
+			
+			// Disable sorting for the reload to keep new entry at bottom
+			shouldSortEntries = false;
+			
+			await loadEntries(currentGame);
+		} else if (row.classList.contains('editing')) {
+			// Save edited entry
+			const entryId = parseInt(row.dataset.entryId);
+			const data = {
+				game_id: currentGame,
+				category_id: parseInt(formData.category),
+				reading: formData.reading,
+				word: formData.word,
+				description: formData.description || null,
+			};
+			
+			await window.electronAPI.entries.update(entryId, data);
+			await loadEntries(currentGame);
+		}
+		
+		return true;
+	} catch (error) {
+		console.error('Error saving entry during navigation:', error);
+		showValidationError(row, '保存に失敗しました');
+		return false;
+	} finally {
+		// Clear navigation flag
+		row.dataset.navigating = 'false';
+	}
+}
+
+// Show validation error for navigation
+function showValidationError(row, message) {
+	// Remove any existing error messages
+	clearValidationErrors();
+	
+	// Create error message element
+	const errorDiv = document.createElement('div');
+	errorDiv.className = 'validation-error';
+	errorDiv.textContent = message;
+	errorDiv.style.cssText = `
+		color: #dc3545;
+		background-color: #f8d7da;
+		border: 1px solid #f5c6cb;
+		border-radius: 4px;
+		padding: 8px 12px;
+		margin: 4px 0;
+		font-size: 0.875rem;
+		position: absolute;
+		z-index: 1000;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	`;
+	
+	// Position error message near the row
+	const firstCell = row.querySelector('td');
+	if (firstCell) {
+		firstCell.style.position = 'relative';
+		firstCell.appendChild(errorDiv);
+		
+		// Auto-remove error message after 3 seconds
+		setTimeout(() => {
+			clearValidationErrors();
+		}, 3000);
+	}
+}
+
+// Clear validation error messages
+function clearValidationErrors() {
+	const errorMessages = document.querySelectorAll('.validation-error');
+	errorMessages.forEach(msg => msg.remove());
+}
+
+// Check for duplicate reading+word combination
+async function checkDuplicateEntry(formData, currentRow) {
+	if (!currentEntries) return false;
+	
+	// Get current entry ID if editing
+	const currentEntryId = currentRow.dataset.entryId ? parseInt(currentRow.dataset.entryId) : null;
+	
+	// Check if reading+word combination already exists (excluding current entry)
+	const duplicate = currentEntries.find(entry => {
+		return entry.id !== currentEntryId &&
+		       entry.reading === formData.reading &&
+		       entry.word === formData.word;
+	});
+	
+	return !!duplicate;
+}
+
 async function attemptAutoSave(row) {
 	// Only auto-save if this is a new entry row
 	if (!row.dataset.isNew) return;
 	
-	// Check if already saving to prevent duplicate saves
-	if (row.dataset.saving === 'true') {
+	// Check if already saving or navigating to prevent duplicate saves
+	if (row.dataset.saving === 'true' || row.dataset.navigating === 'true') {
 		return;
 	}
 	
@@ -493,6 +693,12 @@ async function attemptAutoSave(row) {
 		return; // Invalid data, don't auto-save
 	}
 	
+	// Check for duplicate reading+word combination
+	const isDuplicate = await checkDuplicateEntry(formData, row);
+	if (isDuplicate) {
+		return; // Duplicate entry, don't auto-save
+	}
+	
 	// Mark as saving and disable save button
 	row.dataset.saving = 'true';
 	const saveButton = row.querySelector('button[onclick*="saveNewEntry"]');
@@ -515,6 +721,9 @@ async function attemptAutoSave(row) {
 		// Mark the row as saved
 		row.classList.remove('new-entry');
 		row.classList.add('auto-saved');
+		
+		// Disable sorting for the reload to keep new entry at bottom
+		shouldSortEntries = false;
 		
 		// Reload entries
 		await loadEntries(currentGame);
@@ -541,14 +750,21 @@ async function attemptAutoSave(row) {
 async function saveNewEntry(button) {
 	const row = button.closest("tr");
 	
-	// Check if already saving to prevent duplicate saves
-	if (row.dataset.saving === 'true') {
+	// Check if already saving or navigating to prevent duplicate saves
+	if (row.dataset.saving === 'true' || row.dataset.navigating === 'true') {
 		return;
 	}
 	
 	const formData = getRowFormData(row);
 	
 	if (!validateEntryData(formData, row)) {
+		return;
+	}
+	
+	// Check for duplicate reading+word combination
+	const isDuplicate = await checkDuplicateEntry(formData, row);
+	if (isDuplicate) {
+		showError('この読み・単語の組み合わせは既に登録されています');
 		return;
 	}
 	
@@ -616,6 +832,9 @@ async function editEntryInline(entryId) {
 			<button class="btn btn-secondary" onclick="cancelEditEntry(this, ${entryId})">キャンセル</button>
 		</td>
 	`;
+	
+	// Add keyboard navigation listeners
+	addKeyboardNavigationListeners(row);
 }
 
 async function saveEditedEntry(button, entryId) {
@@ -623,6 +842,13 @@ async function saveEditedEntry(button, entryId) {
 	const formData = getRowFormData(row);
 	
 	if (!validateEntryData(formData, row)) {
+		return;
+	}
+	
+	// Check for duplicate reading+word combination
+	const isDuplicate = await checkDuplicateEntry(formData, row);
+	if (isDuplicate) {
+		showError('この読み・単語の組み合わせは既に登録されています');
 		return;
 	}
 	
