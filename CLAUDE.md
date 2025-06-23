@@ -45,24 +45,37 @@ npm test
 # データベーステストのみ
 npm run test:db
 
-# コード品質チェック
+# コード品質チェック（必須）
 npm run lint
 npm run lint:fix
+
+# TypeScriptコンパイル確認（必須）
+npm run build
 ```
 
 ### 本番環境と開発環境の違い
 
-| 環境       | データベース                                           | CSVディレクトリ  | コマンド               |
-| ---------- | ------------------------------------------------------ | ---------------- | ---------------------- |
-| **本番**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm start`            |
+| 環境       | データベース                                           | CSVディレクトリ  | コマンド      |
+| ---------- | ------------------------------------------------------ | ---------------- | ------------- |
+| **本番**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm start`   |
 | **開発**   | `~/Library/Application Support/game-dict/game-dict.db` | `csv/`           | `npm run dev` |
-| **テスト** | `test-data/game-dict-test.db`                          | `test-data/csv/` | `npm test`             |
+| **テスト** | `test-data/game-dict-test.db`                          | `test-data/csv/` | `npm test`    |
 
 **重要**: `npm start`は本番用の日常利用コマンドです。NODE_ENV=productionが設定され、必ずユーザーデータディレクトリを使用します。
 
 ---
 
 ## 開発ガイドライン
+
+### 絶対禁止事項
+
+- テストエラーや型エラー解消のための条件緩和
+- テストのスキップや不適切なモック化による回避
+- **lintエラー・警告が残存する状態でのタスク完了**
+- `any`型の不適切な使用や型安全性の軽視
+- 出力やレスポンスのハードコード
+- エラーメッセージの無視や隠蔽
+- 一時的な修正による問題の先送り
 
 ### 仕様検討・合意フェーズ（実装前必須）
 
@@ -76,12 +89,25 @@ npm run lint:fix
 
 ### テスト品質保証の原則（必須）
 
-- **タスク完了時点でテストが100%通過していることが必須条件**
+- タスク完了時点で全テストカテゴリが100%通過していることが必須条件。関連する単体テストだけでなく、全体のE2Eテストもタスク完了を判断する前に実行する。
 - 新機能追加時は既存テストが破綻していないかチェックする
 - テスト失敗が発生した場合は**原因を特定して修正する**（skip/commentアウト禁止）
 - 修正困難な場合は**必ずユーザーに相談**し、仕様の妥当性を確認する
 - **テストが通らない状態での「こっそり完了」は絶対禁止**
 - テスト問題の隠蔽ではなく、透明性のある報告と解決を最優先とする
+
+### コード品質保証の原則（必須）
+
+- **タスク完了時点でlintエラー・警告が0個であることが必須条件**。`npm run lint`の実行結果が100%クリーンな状態でのみタスク完了とする。
+- **タスク完了時点でTypeScriptコンパイルエラーが0個であることが必須条件**。`npm run build`の実行結果が成功する状態でのみタスク完了とする。
+- 新機能追加・リファクタリング時は既存コードのlint品質を維持・向上させる
+- lint警告も含めて完全解決を原則とし、警告の無視や回避は禁止
+- 型安全性の確保：`any`型の使用は適切な型定義への置換を必須とする
+- `undefined as any`や不適切な非null assertion (`!`) の使用禁止
+- グローバル型定義（`global-types.d.ts`）の適切な管理と型安全性の確保
+- コードスタイル・import整理・型定義の一貫性を保つ
+- **lint問題・TypeScriptエラーが残存する状態での「仮完了」は絶対禁止**
+- Biome設定（`biome.json`）の適切な管理と`dist/`等のビルド成果物の除外
 
 ---
 
@@ -148,16 +174,19 @@ npm run test:db
 ### better-sqlite3エラー (NODE_MODULE_VERSION不一致)
 
 **✅ プリビルドバイナリ導入済み** - 以下の仕組みで最適化されています：
+
 - `npm install` → **prebuild-install** によるプリコンパイル済みバイナリの自動取得
 - プリビルドが無い場合のみリビルド実行（フォールバック）
 - テスト・E2E実行時の自動リビルド継続
 
 **自動化されたコマンド**:
+
 - `npm test` (Node.js用リビルド付き)
 - `npm run test:e2e` (Electron用リビルド付き)
 - `npm install` (prebuild-install → 必要時のみElectron用リビルド)
 
 **手動リビルドが必要な場合**:
+
 ```bash
 # Electronアプリでエラーが出る場合
 npm run rebuild:electron
@@ -173,6 +202,7 @@ npm run rebuild:node
 **問題**: `Error: spawnSync .../biome EACCES`
 
 **解決策**:
+
 ```bash
 # 自動実行（インストール時）
 npm install  # postinstall hook で自動実行
@@ -200,17 +230,21 @@ chmod +x node_modules/@biomejs/cli-*/biome
 プロジェクトには以下のカスタムClaude Codeコマンドが設定されています：
 
 ### クイックコミット
+
 ```
 /commit
 ```
+
 - 現在の変更を自動的にステージング・コミット
 - 適切なコミットメッセージを自動生成
 - Claude Code attribution付きでコミット実行
 
 ### 詳細コミット
+
 ```
-/project:smart-commit  
+/project:smart-commit
 ```
+
 - より詳細な分析とステップバイステップ処理
 - 段階的なコミット確認
 

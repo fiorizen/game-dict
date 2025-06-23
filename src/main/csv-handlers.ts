@@ -212,7 +212,7 @@ export class CSVHandlers {
 			return `${entry.reading}\t${entry.word}\t${categoryName}`;
 		});
 
-		const content = lines.join("\n") + "\n";
+		const content = `${lines.join("\n")}\n`;
 		const filePath = path.join(exportDir, `${game.code}.txt`);
 
 		fs.writeFileSync(filePath, content, "utf-8");

@@ -76,7 +76,7 @@ class GameModel {
     deleteWithRelatedEntries(id) {
         // まず関連エントリー数を取得
         const countStmt = this.db.prepare("SELECT COUNT(*) as count FROM entries WHERE game_id = ?");
-        const entryCount = countStmt.get(id).count;
+        const _entryCount = countStmt.get(id).count;
         // トランザクション内で関連エントリーとゲームを削除
         const transaction = this.db.transaction(() => {
             // 関連エントリーを削除
@@ -87,7 +87,7 @@ class GameModel {
             const gameResult = deleteGameStmt.run(id);
             return {
                 deletedGame: gameResult.changes > 0,
-                deletedEntries: entriesResult.changes
+                deletedEntries: entriesResult.changes,
             };
         });
         return transaction();

@@ -1,5 +1,5 @@
-import type { Game as DrizzleGame, Category as DrizzleCategory, Entry as DrizzleEntry, EntryWithDetails as DrizzleEntryWithDetails } from "./schema.js";
-import type { Game, Category, Entry, EntryWithDetails } from "../shared/types.js";
+import type { Category, Entry, EntryWithDetails, Game } from "../shared/types.js";
+import type { Category as DrizzleCategory, Entry as DrizzleEntry, EntryWithDetails as DrizzleEntryWithDetails, Game as DrizzleGame } from "./schema.js";
 export declare function drizzleGameToLegacy(drizzleGame: DrizzleGame): Game;
 export declare function drizzleCategoryToLegacy(drizzleCategory: DrizzleCategory): Category;
 export declare function drizzleEntryToLegacy(drizzleEntry: DrizzleEntry): Entry;

@@ -3,7 +3,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 
 export class DatabaseConnection {
-	private static instance: DatabaseConnection;
+	private static instance: DatabaseConnection | undefined;
 	private db: Database.Database;
 	private dbPath: string;
 
@@ -36,7 +36,7 @@ export class DatabaseConnection {
 				// Ignore errors during close
 			}
 		}
-		DatabaseConnection.instance = undefined!;
+		DatabaseConnection.instance = undefined;
 	}
 
 	private getDatabasePath(): string {
@@ -188,7 +188,7 @@ export class DatabaseConnection {
 			name: string;
 			type: string;
 			notnull: number;
-			dflt_value: any;
+			dflt_value: string | number | null;
 			pk: number;
 		}>;
 

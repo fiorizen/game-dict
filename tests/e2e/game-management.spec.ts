@@ -1,229 +1,235 @@
-import { test, expect } from '@playwright/test';
-import { _electron as electron } from 'playwright';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { expect, test } from "@playwright/test";
+import {
+	type ElectronApplication,
+	_electron as electron,
+	type Page,
+} from "playwright";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-test.describe('Game Management Features', () => {
-  let electronApp: any;
-  let page: any;
+test.describe("Game Management Features", () => {
+	let electronApp: ElectronApplication;
+	let page: Page;
 
-  test.beforeAll(async () => {
-    // Electronアプリを起動
-    electronApp = await electron.launch({
-      args: [path.join(__dirname, '../../dist/main/main.js')],
-      cwd: path.join(__dirname, '../..'),
-    });
-    
-    // 最初のウィンドウを取得
-    page = await electronApp.firstWindow();
-    
-    // ウィンドウが読み込まれるまで待機
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000); // Additional wait for initialization
-  });
+	test.beforeAll(async () => {
+		// Electronアプリを起動
+		electronApp = await electron.launch({
+			args: [path.join(__dirname, "../../dist/main/main.js")],
+			cwd: path.join(__dirname, "../.."),
+		});
 
-  test.afterAll(async () => {
-    if (electronApp) {
-      await electronApp.close();
-    }
-  });
+		// 最初のウィンドウを取得
+		page = await electronApp.firstWindow();
 
-  test('ゲーム追加・編集・削除の一連の流れ', async () => {
-    // Test game creation
-    const addGameBtn = page.locator('#add-game-btn');
-    await expect(addGameBtn).toBeVisible();
-    await addGameBtn.click();
+		// ウィンドウが読み込まれるまで待機
+		await page.waitForLoadState("domcontentloaded");
+		await page.waitForTimeout(2000); // Additional wait for initialization
+	});
 
-    const gameModal = page.locator('#game-modal');
-    await expect(gameModal).toBeVisible();
+	test.afterAll(async () => {
+		if (electronApp) {
+			await electronApp.close();
+		}
+	});
 
-    const nameInput = page.locator('#game-name');
-    const codeInput = page.locator('#game-code');
-    
-    await nameInput.fill('Test Edit Game');
-    await codeInput.fill('testeditgame');
+	test("ゲーム追加・編集・削除の一連の流れ", async () => {
+		// Test game creation
+		const addGameBtn = page.locator("#add-game-btn");
+		await expect(addGameBtn).toBeVisible();
+		await addGameBtn.click();
 
-    const submitBtn = page.locator('#game-form button[type="submit"]');
-    await submitBtn.click();
+		const gameModal = page.locator("#game-modal");
+		await expect(gameModal).toBeVisible();
 
-    // Wait for modal to close and game to be created
-    await expect(gameModal).not.toBeVisible();
-    await page.waitForTimeout(1000);
+		const nameInput = page.locator("#game-name");
+		const codeInput = page.locator("#game-code");
 
-    // Verify game was created and selected
-    const gameSelect = page.locator('#game-select');
-    const selectedOption = await gameSelect.inputValue();
-    expect(selectedOption).not.toBe('');
+		await nameInput.fill("Test Edit Game");
+		await codeInput.fill("testeditgame");
 
-    // Verify edit and delete buttons are enabled
-    const editGameBtn = page.locator('#edit-game-btn');
-    const deleteGameBtn = page.locator('#delete-game-btn');
-    
-    await expect(editGameBtn).toBeEnabled();
-    await expect(deleteGameBtn).toBeEnabled();
+		const submitBtn = page.locator('#game-form button[type="submit"]');
+		await submitBtn.click();
 
-    // Test game editing
-    await editGameBtn.click();
-    await expect(gameModal).toBeVisible();
+		// Wait for modal to close and game to be created
+		await expect(gameModal).not.toBeVisible();
+		await page.waitForTimeout(1000);
 
-    // Verify modal is in edit mode
-    const modalTitle = page.locator('#game-modal-title');
-    await expect(modalTitle).toHaveText('ゲーム編集');
+		// Verify game was created and selected
+		const gameSelect = page.locator("#game-select");
+		const selectedOption = await gameSelect.inputValue();
+		expect(selectedOption).not.toBe("");
 
-    // Edit the game
-    await nameInput.fill('Test Edit Game Updated');
-    await codeInput.fill('testeditgameupd');
-    await submitBtn.click();
+		// Verify edit and delete buttons are enabled
+		const editGameBtn = page.locator("#edit-game-btn");
+		const deleteGameBtn = page.locator("#delete-game-btn");
 
-    // Wait for modal to close
-    await expect(gameModal).not.toBeVisible();
-    await page.waitForTimeout(1000);
+		await expect(editGameBtn).toBeEnabled();
+		await expect(deleteGameBtn).toBeEnabled();
 
-    // Verify the game title was updated
-    const currentGameTitle = page.locator('#current-game-title');
-    await expect(currentGameTitle).toHaveText('Test Edit Game Updated');
+		// Test game editing
+		await editGameBtn.click();
+		await expect(gameModal).toBeVisible();
 
-    // Test game deletion
-    await deleteGameBtn.click();
+		// Verify modal is in edit mode
+		const modalTitle = page.locator("#game-modal-title");
+		await expect(modalTitle).toHaveText("ゲーム編集");
 
-    const deleteModal = page.locator('#delete-game-modal');
-    await expect(deleteModal).toBeVisible();
+		// Edit the game
+		await nameInput.fill("Test Edit Game Updated");
+		await codeInput.fill("testeditgameupd");
+		await submitBtn.click();
 
-    // Verify warning information
-    const gameNameSpan = page.locator('#delete-game-name');
-    await expect(gameNameSpan).toHaveText('Test Edit Game Updated');
+		// Wait for modal to close
+		await expect(gameModal).not.toBeVisible();
+		await page.waitForTimeout(1000);
 
-    // Confirm deletion
-    const confirmDeleteBtn = page.locator('#confirm-delete-game-btn');
-    await confirmDeleteBtn.click();
+		// Verify the game title was updated
+		const currentGameTitle = page.locator("#current-game-title");
+		await expect(currentGameTitle).toHaveText("Test Edit Game Updated");
 
-    // Wait for deletion to complete
-    await expect(deleteModal).not.toBeVisible();
-    await page.waitForTimeout(2000); // Longer wait for deletion processing
+		// Test game deletion
+		await deleteGameBtn.click();
 
-    // Verify game was deleted (select should be reset)
-    const selectedAfterDelete = await gameSelect.inputValue();
-    expect(selectedAfterDelete).toBe('');
+		const deleteModal = page.locator("#delete-game-modal");
+		await expect(deleteModal).toBeVisible();
 
-    // Verify buttons are disabled again
-    await expect(editGameBtn).toBeDisabled();
-    await expect(deleteGameBtn).toBeDisabled();
-  });
+		// Verify warning information
+		const gameNameSpan = page.locator("#delete-game-name");
+		await expect(gameNameSpan).toHaveText("Test Edit Game Updated");
 
-  test('ゲーム削除時のエントリー警告表示', async () => {
-    // Create a game with entries
-    const addGameBtn = page.locator('#add-game-btn');
-    await addGameBtn.click();
+		// Confirm deletion
+		const confirmDeleteBtn = page.locator("#confirm-delete-game-btn");
+		await confirmDeleteBtn.click();
 
-    const gameModal = page.locator('#game-modal');
-    await expect(gameModal).toBeVisible();
+		// Wait for deletion to complete
+		await expect(deleteModal).not.toBeVisible();
+		await page.waitForTimeout(2000); // Longer wait for deletion processing
 
-    const nameInput = page.locator('#game-name');
-    const codeInput = page.locator('#game-code');
-    
-    await nameInput.fill('Game With Entries');
-    await codeInput.fill('gamewithentries');
+		// Verify game was deleted (select should be reset)
+		const selectedAfterDelete = await gameSelect.inputValue();
+		expect(selectedAfterDelete).toBe("");
 
-    const submitBtn = page.locator('#game-form button[type="submit"]');
-    await submitBtn.click();
+		// Verify buttons are disabled again
+		await expect(editGameBtn).toBeDisabled();
+		await expect(deleteGameBtn).toBeDisabled();
+	});
 
-    await expect(gameModal).not.toBeVisible();
-    await page.waitForTimeout(1000);
+	test("ゲーム削除時のエントリー警告表示", async () => {
+		// Create a game with entries
+		const addGameBtn = page.locator("#add-game-btn");
+		await addGameBtn.click();
 
-    // Add an entry to this game
-    const addEntryBtn = page.locator('#add-entry-btn');
-    await expect(addEntryBtn).toBeEnabled();
-    await addEntryBtn.click();
+		const gameModal = page.locator("#game-modal");
+		await expect(gameModal).toBeVisible();
 
-    // Wait for new entry row to appear and verify it exists
-    await page.waitForTimeout(1000);
-    
-    // Use the correct selectors for inline editing
-    const newEntryRow = page.locator('#entries-table-body tr[data-is-new="true"]');
-    await expect(newEntryRow).toBeVisible({ timeout: 10000 });
+		const nameInput = page.locator("#game-name");
+		const codeInput = page.locator("#game-code");
 
-    const readingInput = newEntryRow.locator('input[name="reading"]');
-    const wordInput = newEntryRow.locator('input[name="word"]');
-    
-    await readingInput.fill('てすと');
-    await wordInput.fill('テスト');
-    
-    // Click outside to trigger save
-    await page.locator('body').click();
-    await page.waitForTimeout(1000);
+		await nameInput.fill("Game With Entries");
+		await codeInput.fill("gamewithentries");
 
-    // Try to delete the game
-    const deleteGameBtn = page.locator('#delete-game-btn');
-    await deleteGameBtn.click();
+		const submitBtn = page.locator('#game-form button[type="submit"]');
+		await submitBtn.click();
 
-    const deleteModal = page.locator('#delete-game-modal');
-    await expect(deleteModal).toBeVisible();
+		await expect(gameModal).not.toBeVisible();
+		await page.waitForTimeout(1000);
 
-    // Verify entries count is displayed
-    const entriesCountSpan = page.locator('#delete-entries-count');
-    await expect(entriesCountSpan).toHaveText('1');
+		// Add an entry to this game
+		const addEntryBtn = page.locator("#add-entry-btn");
+		await expect(addEntryBtn).toBeEnabled();
+		await addEntryBtn.click();
 
-    const entriesMessage = page.locator('#delete-entries-message');
-    await expect(entriesMessage).toBeVisible();
+		// Wait for new entry row to appear and verify it exists
+		await page.waitForTimeout(1000);
 
-    // Cancel deletion
-    const cancelBtn = page.locator('#cancel-delete-game-btn');
-    await cancelBtn.click();
-    
-    // Wait for modal to close
-    await page.waitForTimeout(500);
-    await expect(deleteModal).not.toBeVisible();
+		// Use the correct selectors for inline editing
+		const newEntryRow = page.locator(
+			'#entries-table-body tr[data-is-new="true"]',
+		);
+		await expect(newEntryRow).toBeVisible({ timeout: 10000 });
 
-    // Verify game still exists
-    const gameSelect = page.locator('#game-select');
-    const selectedOption = await gameSelect.inputValue();
-    expect(selectedOption).not.toBe('');
-  });
+		const readingInput = newEntryRow.locator('input[name="reading"]');
+		const wordInput = newEntryRow.locator('input[name="word"]');
 
-  test('編集時のコード重複検証', async () => {
-    // Create first game
-    const addGameBtn = page.locator('#add-game-btn');
-    await addGameBtn.click();
+		await readingInput.fill("てすと");
+		await wordInput.fill("テスト");
 
-    const gameModal = page.locator('#game-modal');
-    const nameInput = page.locator('#game-name');
-    const codeInput = page.locator('#game-code');
-    
-    await nameInput.fill('First Game');
-    await codeInput.fill('firstgame');
+		// Click outside to trigger save
+		await page.locator("body").click();
+		await page.waitForTimeout(1000);
 
-    const submitBtn = page.locator('#game-form button[type="submit"]');
-    await submitBtn.click();
-    await expect(gameModal).not.toBeVisible();
-    await page.waitForTimeout(1000);
+		// Try to delete the game
+		const deleteGameBtn = page.locator("#delete-game-btn");
+		await deleteGameBtn.click();
 
-    // Create second game
-    await addGameBtn.click();
-    await expect(gameModal).toBeVisible();
-    
-    await nameInput.fill('Second Game');
-    await codeInput.fill('secondgame');
-    await submitBtn.click();
-    await expect(gameModal).not.toBeVisible();
-    await page.waitForTimeout(1000);
+		const deleteModal = page.locator("#delete-game-modal");
+		await expect(deleteModal).toBeVisible();
 
-    // Try to edit second game with first game's code
-    const editGameBtn = page.locator('#edit-game-btn');
-    await editGameBtn.click();
-    await expect(gameModal).toBeVisible();
+		// Verify entries count is displayed
+		const entriesCountSpan = page.locator("#delete-entries-count");
+		await expect(entriesCountSpan).toHaveText("1");
 
-    await codeInput.fill('firstgame'); // Duplicate code
-    await submitBtn.click();
+		const entriesMessage = page.locator("#delete-entries-message");
+		await expect(entriesMessage).toBeVisible();
 
-    // Should show error toast (modal should remain open)
-    await expect(gameModal).toBeVisible();
-    
-    // Cancel the edit
-    const cancelBtn = page.locator('#cancel-game-btn');
-    await cancelBtn.click();
-    await expect(gameModal).not.toBeVisible();
-  });
+		// Cancel deletion
+		const cancelBtn = page.locator("#cancel-delete-game-btn");
+		await cancelBtn.click();
+
+		// Wait for modal to close
+		await page.waitForTimeout(500);
+		await expect(deleteModal).not.toBeVisible();
+
+		// Verify game still exists
+		const gameSelect = page.locator("#game-select");
+		const selectedOption = await gameSelect.inputValue();
+		expect(selectedOption).not.toBe("");
+	});
+
+	test("編集時のコード重複検証", async () => {
+		// Create first game
+		const addGameBtn = page.locator("#add-game-btn");
+		await addGameBtn.click();
+
+		const gameModal = page.locator("#game-modal");
+		const nameInput = page.locator("#game-name");
+		const codeInput = page.locator("#game-code");
+
+		await nameInput.fill("First Game");
+		await codeInput.fill("firstgame");
+
+		const submitBtn = page.locator('#game-form button[type="submit"]');
+		await submitBtn.click();
+		await expect(gameModal).not.toBeVisible();
+		await page.waitForTimeout(1000);
+
+		// Create second game
+		await addGameBtn.click();
+		await expect(gameModal).toBeVisible();
+
+		await nameInput.fill("Second Game");
+		await codeInput.fill("secondgame");
+		await submitBtn.click();
+		await expect(gameModal).not.toBeVisible();
+		await page.waitForTimeout(1000);
+
+		// Try to edit second game with first game's code
+		const editGameBtn = page.locator("#edit-game-btn");
+		await editGameBtn.click();
+		await expect(gameModal).toBeVisible();
+
+		await codeInput.fill("firstgame"); // Duplicate code
+		await submitBtn.click();
+
+		// Should show error toast (modal should remain open)
+		await expect(gameModal).toBeVisible();
+
+		// Cancel the edit
+		const cancelBtn = page.locator("#cancel-game-btn");
+		await cancelBtn.click();
+		await expect(gameModal).not.toBeVisible();
+	});
 });

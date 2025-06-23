@@ -1,16 +1,15 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DrizzleDatabaseWrapper = void 0;
 // Wrapper classes to provide legacy API compatibility with Drizzle ORM
-const drizzle_database_js_1 = require("./drizzle-database.js");
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DrizzleDatabaseWrapper = exports.DrizzleEntryWrapper = exports.DrizzleCategoryWrapper = exports.DrizzleGameWrapper = void 0;
 const adapters_js_1 = require("./adapters.js");
+const drizzle_database_js_1 = require("./drizzle-database.js");
 class DrizzleGameWrapper {
     constructor(drizzleDb) {
         this.drizzleDb = drizzleDb;
     }
     getAll() {
-        return this.drizzleDb.games.getAll()
-            .map(adapters_js_1.drizzleGameToLegacy);
+        return this.drizzleDb.games.getAll().map(adapters_js_1.drizzleGameToLegacy);
     }
     getById(id) {
         const result = this.drizzleDb.games.getById(id);
@@ -48,13 +47,13 @@ class DrizzleGameWrapper {
         return result ? (0, adapters_js_1.drizzleGameToLegacy)(result) : null;
     }
 }
+exports.DrizzleGameWrapper = DrizzleGameWrapper;
 class DrizzleCategoryWrapper {
     constructor(drizzleDb) {
         this.drizzleDb = drizzleDb;
     }
     getAll() {
-        return this.drizzleDb.categories.getAll()
-            .map(adapters_js_1.drizzleCategoryToLegacy);
+        return this.drizzleDb.categories.getAll().map(adapters_js_1.drizzleCategoryToLegacy);
     }
     getById(id) {
         const result = this.drizzleDb.categories.getById(id);
@@ -82,28 +81,30 @@ class DrizzleCategoryWrapper {
         return this.drizzleDb.categories.delete(id);
     }
 }
+exports.DrizzleCategoryWrapper = DrizzleCategoryWrapper;
 class DrizzleEntryWrapper {
     constructor(drizzleDb) {
         this.drizzleDb = drizzleDb;
     }
     getAll() {
-        return this.drizzleDb.entries.getAll()
-            .map(adapters_js_1.drizzleEntryToLegacy);
+        return this.drizzleDb.entries.getAll().map(adapters_js_1.drizzleEntryToLegacy);
     }
     getAllWithDetails() {
-        return this.drizzleDb.entries.getAllWithDetails()
+        return this.drizzleDb.entries
+            .getAllWithDetails()
             .map(adapters_js_1.drizzleEntryWithDetailsToLegacy);
     }
     getByGameId(gameId) {
-        return this.drizzleDb.entries.getByGameId(gameId)
-            .map(adapters_js_1.drizzleEntryToLegacy);
+        return this.drizzleDb.entries.getByGameId(gameId).map(adapters_js_1.drizzleEntryToLegacy);
     }
     getByGameIdUnsorted(gameId) {
-        return this.drizzleDb.entries.getByGameIdUnsorted(gameId)
+        return this.drizzleDb.entries
+            .getByGameIdUnsorted(gameId)
             .map(adapters_js_1.drizzleEntryToLegacy);
     }
     getByGameIdWithDetails(gameId) {
-        return this.drizzleDb.entries.getByGameIdWithDetails(gameId)
+        return this.drizzleDb.entries
+            .getByGameIdWithDetails(gameId)
             .map(adapters_js_1.drizzleEntryWithDetailsToLegacy);
     }
     getById(id) {
@@ -138,13 +139,15 @@ class DrizzleEntryWrapper {
         return this.drizzleDb.entries.delete(id);
     }
     search(query, gameId) {
-        return this.drizzleDb.entries.search(query, gameId)
+        return this.drizzleDb.entries
+            .search(query, gameId)
             .map(adapters_js_1.drizzleEntryWithDetailsToLegacy);
     }
     deleteByGameId(gameId) {
         return this.drizzleDb.entries.deleteByGameId(gameId);
     }
 }
+exports.DrizzleEntryWrapper = DrizzleEntryWrapper;
 class DrizzleDatabaseWrapper {
     constructor() {
         this.drizzleDb = drizzle_database_js_1.DrizzleDatabase.getInstance();

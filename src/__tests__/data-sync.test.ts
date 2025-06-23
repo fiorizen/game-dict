@@ -233,10 +233,14 @@ category_name,reading,word,description
 			}
 			// Expose private methods for testing
 			public testCountCsvGames() {
-				return (this as any).countCsvGames();
+				return (
+					this as DataSyncManager & { countCsvGames(): number }
+				).countCsvGames();
 			}
 			public testCountCsvEntries() {
-				return (this as any).countCsvEntries();
+				return (
+					this as DataSyncManager & { countCsvEntries(): number }
+				).countCsvEntries();
 			}
 		})();
 

@@ -35,18 +35,14 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DrizzleGameModel = void 0;
 const drizzle_orm_1 = require("drizzle-orm");
-const schema = __importStar(require("../schema.js"));
 const validation_js_1 = require("../../shared/validation.js");
+const schema = __importStar(require("../schema.js"));
 class DrizzleGameModel {
     constructor(db) {
         this.db = db;
     }
     getAll() {
-        return this.db
-            .select()
-            .from(schema.games)
-            .orderBy(schema.games.name)
-            .all();
+        return this.db.select().from(schema.games).orderBy(schema.games.name).all();
     }
     getById(id) {
         const results = this.db
@@ -171,7 +167,7 @@ class DrizzleGameModel {
                 .from(schema.entries)
                 .where((0, drizzle_orm_1.eq)(schema.entries.gameId, id))
                 .all();
-            const entryCount = entryCountResult[0].count;
+            const _entryCount = entryCountResult[0].count;
             // Delete related entries
             const deleteEntriesResult = this.db
                 .delete(schema.entries)
@@ -184,7 +180,7 @@ class DrizzleGameModel {
                 .run();
             return {
                 deletedGame: deleteGameResult.changes > 0,
-                deletedEntries: deleteEntriesResult.changes
+                deletedEntries: deleteEntriesResult.changes,
             };
         });
     }

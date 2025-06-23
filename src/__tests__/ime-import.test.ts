@@ -57,13 +57,16 @@ describe("IME Import Functionality", () => {
 		const aiueo = entries.find((e) => e.reading === "あいうえお");
 		expect(aiueo?.word).toBe("アイウエオ");
 
-		const category = db.categories.getById(aiueo!.category_id);
+		const category = db.categories.getById(aiueo?.category_id);
 		expect(category?.name).toBe("名詞");
 	});
 
 	it("should skip duplicate entries", async () => {
 		// Create initial entry
-		const category = db.categories.getAll().find((c) => c.name === "名詞")!;
+		const category = db.categories.getAll().find((c) => c.name === "名詞");
+		if (!category) {
+			throw new Error("名詞 category not found");
+		}
 		db.entries.create({
 			game_id: gameId,
 			category_id: category.id,
@@ -99,9 +102,9 @@ describe("IME Import Functionality", () => {
 		const categories = db.categories.getAll();
 		const newCategory = categories.find((c) => c.name === "新カテゴリ");
 		expect(newCategory).toBeDefined();
-		expect(newCategory!.google_ime_name).toBe("名詞");
-		expect(newCategory!.ms_ime_name).toBe("名詞");
-		expect(newCategory!.atok_name).toBe("名詞");
+		expect(newCategory?.google_ime_name).toBe("名詞");
+		expect(newCategory?.ms_ime_name).toBe("名詞");
+		expect(newCategory?.atok_name).toBe("名詞");
 	});
 
 	it("should reject file with invalid format lines", async () => {

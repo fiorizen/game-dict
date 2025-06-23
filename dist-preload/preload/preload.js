@@ -57,7 +57,7 @@ const api = {
         performUserChoice: (choice) => electron_1.ipcRenderer.invoke("dataSync:performUserChoice", choice),
         getConflictMessage: (status) => electron_1.ipcRenderer.invoke("dataSync:getConflictMessage", status),
         onShowDialog: (callback) => {
-            electron_1.ipcRenderer.on("show-data-sync-dialog", (event, status) => callback(status));
+            electron_1.ipcRenderer.on("show-data-sync-dialog", (_event, status) => callback(status));
         },
         removeAllListeners: () => {
             electron_1.ipcRenderer.removeAllListeners("show-data-sync-dialog");
@@ -71,7 +71,7 @@ const api = {
         getExitMessage: (status) => electron_1.ipcRenderer.invoke("exitSync:getExitMessage", status),
         markLastExportTime: () => electron_1.ipcRenderer.invoke("exitSync:markLastExportTime"),
         onShowDialog: (callback) => {
-            electron_1.ipcRenderer.on("show-exit-sync-dialog", (event, status) => callback(status));
+            electron_1.ipcRenderer.on("show-exit-sync-dialog", (_event, status) => callback(status));
         },
         removeAllListeners: () => {
             electron_1.ipcRenderer.removeAllListeners("show-exit-sync-dialog");

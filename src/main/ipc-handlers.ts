@@ -291,7 +291,7 @@ export class IPCHandlers {
 		ipcMain.handle("app:forceClose", () => {
 			try {
 				// Request main app instance to force close
-				const mainApp = (global as any).mainAppInstance;
+				const mainApp = global.mainAppInstance;
 				if (mainApp && typeof mainApp.requestForceClose === "function") {
 					mainApp.requestForceClose();
 				}

@@ -251,7 +251,7 @@ describe("CSV Export/Import Tests", () => {
 		// Add some test entries
 		db.entries.create({
 			game_id: game.id,
-			category_id: nounCategory!.id,
+			category_id: nounCategory?.id,
 			reading: "てすと",
 			word: "テスト",
 			description: "テスト用エントリ",
@@ -259,7 +259,7 @@ describe("CSV Export/Import Tests", () => {
 
 		db.entries.create({
 			game_id: game.id,
-			category_id: noPartsCategory!.id,
+			category_id: noPartsCategory?.id,
 			reading: "でーた",
 			word: "データ",
 			description: "データエントリ",
@@ -277,9 +277,12 @@ describe("CSV Export/Import Tests", () => {
 		expect(gameFile).toBeDefined();
 
 		// Verify file exists and has content
-		expect(fs.existsSync(gameFile!)).toBe(true);
+		if (!gameFile) {
+			throw new Error("Game file not found");
+		}
+		expect(fs.existsSync(gameFile)).toBe(true);
 
-		const csvContent = fs.readFileSync(gameFile!, "utf-8");
+		const csvContent = fs.readFileSync(gameFile, "utf-8");
 		expect(csvContent).toContain(
 			`# Game: ${testGameName} (Code: ${game.code})`,
 		);
@@ -327,17 +330,17 @@ category_name,reading,word,description
 		expect(importedGame).toBeDefined();
 
 		// Verify imported entries
-		const importedEntries = db.entries.getByGameId(importedGame!.id);
+		const importedEntries = db.entries.getByGameId(importedGame?.id);
 		expect(importedEntries.length).toBe(3);
 
 		const importEntry = importedEntries.find((e) => e.reading === "いんぽーと");
 		expect(importEntry).toBeDefined();
-		expect(importEntry!.word).toBe("インポート");
-		expect(importEntry!.description).toBe("インポートテスト");
+		expect(importEntry?.word).toBe("インポート");
+		expect(importEntry?.description).toBe("インポートテスト");
 
 		const personEntry = importedEntries.find((e) => e.reading === "てすとじん");
 		expect(personEntry).toBeDefined();
-		expect(personEntry!.word).toBe("テスト人");
+		expect(personEntry?.word).toBe("テスト人");
 	});
 
 	it("should handle round-trip conversion (export -> import)", async () => {
@@ -356,14 +359,14 @@ category_name,reading,word,description
 		const originalEntries = [
 			{
 				game_id: originalGame.id,
-				category_id: nounCategory!.id,
+				category_id: nounCategory?.id,
 				reading: "らうんど",
 				word: "ラウンド",
 				description: "ラウンドトリップテスト",
 			},
 			{
 				game_id: originalGame.id,
-				category_id: personCategory!.id,
+				category_id: personCategory?.id,
 				reading: "じんめい",
 				word: "人名",
 				description: "人名テスト",
@@ -391,7 +394,10 @@ category_name,reading,word,description
 		expect(db.entries.getByGameId(originalGame.id).length).toBe(0);
 
 		// Import back from CSV
-		await csvHandlers.importFromCsv(gameFile!);
+		if (!gameFile) {
+			throw new Error("Game file not found for import");
+		}
+		await csvHandlers.importFromCsv(gameFile);
 
 		// Verify round-trip
 		const restoredGames = db.games
@@ -405,13 +411,13 @@ category_name,reading,word,description
 
 		const roundEntry = restoredEntries.find((e) => e.reading === "らうんど");
 		expect(roundEntry).toBeDefined();
-		expect(roundEntry!.word).toBe("ラウンド");
-		expect(roundEntry!.description).toBe("ラウンドトリップテスト");
+		expect(roundEntry?.word).toBe("ラウンド");
+		expect(roundEntry?.description).toBe("ラウンドトリップテスト");
 
 		const nameEntry = restoredEntries.find((e) => e.reading === "じんめい");
 		expect(nameEntry).toBeDefined();
-		expect(nameEntry!.word).toBe("人名");
-		expect(nameEntry!.description).toBe("人名テスト");
+		expect(nameEntry?.word).toBe("人名");
+		expect(nameEntry?.description).toBe("人名テスト");
 	});
 
 	it("should handle empty games (no export)", async () => {
@@ -442,7 +448,7 @@ category_name,reading,word,description
 
 		db.entries.create({
 			game_id: specialGame.id,
-			category_id: nounCategory!.id,
+			category_id: nounCategory?.id,
 			reading: "すぺしゃる",
 			word: "スペシャル",
 			description: "特殊文字テスト",
@@ -456,10 +462,13 @@ category_name,reading,word,description
 			file.includes(`game-${specialGame.code}.csv`),
 		);
 		expect(specialGameFile).toBeDefined();
-		expect(fs.existsSync(specialGameFile!)).toBe(true);
+		if (!specialGameFile) {
+			throw new Error("Special game file not found");
+		}
+		expect(fs.existsSync(specialGameFile)).toBe(true);
 
 		// Content should preserve original game name in comment
-		const csvContent = fs.readFileSync(specialGameFile!, "utf-8");
+		const csvContent = fs.readFileSync(specialGameFile, "utf-8");
 		expect(csvContent).toContain(
 			`# Game: Special/Game:Test*Name (Code: ${specialGame.code})`,
 		);

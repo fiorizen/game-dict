@@ -1,84 +1,97 @@
-import { test, expect } from '@playwright/test';
-import { _electron as electron } from 'playwright';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { expect, test } from "@playwright/test";
+import {
+	type ElectronApplication,
+	_electron as electron,
+	type Page,
+} from "playwright";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-test.describe('Game Add Functionality', () => {
-  let electronApp: any;
-  let page: any;
+test.describe("Game Add Functionality", () => {
+	let electronApp: ElectronApplication;
+	let page: Page;
 
-  test.beforeAll(async () => {
-    electronApp = await electron.launch({
-      args: [path.join(__dirname, '../../dist/main/main.js')],
-      cwd: path.join(__dirname, '../..'),
-    });
-    
-    page = await electronApp.firstWindow();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
-  });
+	test.beforeAll(async () => {
+		electronApp = await electron.launch({
+			args: [path.join(__dirname, "../../dist/main/main.js")],
+			cwd: path.join(__dirname, "../.."),
+		});
 
-  test.afterAll(async () => {
-    if (electronApp) {
-      await electronApp.close();
-    }
-  });
+		page = await electronApp.firstWindow();
+		await page.waitForLoadState("domcontentloaded");
+		await page.waitForTimeout(1000);
+	});
 
-  test('ゲーム追加が完全に動作する', async () => {
-    // ゲーム追加ボタンをクリック
-    const addGameBtn = page.locator('#add-game-btn');
-    await addGameBtn.click();
-    
-    // モーダルが開くことを確認
-    const modal = page.locator('#game-modal');
-    await expect(modal).toBeVisible();
+	test.afterAll(async () => {
+		if (electronApp) {
+			await electronApp.close();
+		}
+	});
 
-    // ゲーム名を入力
-    const gameNameInput = page.locator('#game-name');
-    await gameNameInput.fill('ワーキングテストゲーム');
+	test("ゲーム追加が完全に動作する", async () => {
+		// ゲーム追加ボタンをクリック
+		const addGameBtn = page.locator("#add-game-btn");
+		await addGameBtn.click();
 
-    // ゲームコードを入力
-    const gameCodeInput = page.locator('#game-code');
-    await gameCodeInput.fill('workingtest');
+		// モーダルが開くことを確認
+		const modal = page.locator("#game-modal");
+		await expect(modal).toBeVisible();
 
-    // 保存ボタンをクリック
-    const saveBtn = page.locator('#game-form button[type="submit"]');
-    await saveBtn.click();
+		// ゲーム名を入力
+		const gameNameInput = page.locator("#game-name");
+		await gameNameInput.fill("ワーキングテストゲーム");
 
-    // モーダルが閉じることを確認
-    await expect(modal).not.toBeVisible();
+		// ゲームコードを入力
+		const gameCodeInput = page.locator("#game-code");
+		await gameCodeInput.fill("workingtest");
 
-    // ゲーム選択リストに反映されることを確認
-    await page.waitForTimeout(500);
-    const gameSelect = page.locator('#game-select');
-    await expect(gameSelect.locator('option').filter({ hasText: 'ワーキングテストゲーム' })).toHaveCount(1);
-  });
+		// 保存ボタンをクリック
+		const saveBtn = page.locator('#game-form button[type="submit"]');
+		await saveBtn.click();
 
-  test('複数のゲームを追加できる', async () => {
-    const gameData = [
-      { name: 'RPGゲーム', code: 'rpg' },
-      { name: 'アクションゲーム', code: 'action' },
-      { name: 'シミュレーションゲーム', code: 'simulation' }
-    ];
-    
-    for (const game of gameData) {
-      // ゲーム追加プロセス
-      await page.locator('#add-game-btn').click();
-      await page.locator('#game-name').fill(game.name);
-      await page.locator('#game-code').fill(game.code);
-      await page.locator('#game-form button[type="submit"]').click();
-      
-      // モーダルが閉じることを確認
-      await expect(page.locator('#game-modal')).not.toBeVisible();
-      await page.waitForTimeout(300);
-    }
+		// モーダルが閉じることを確認
+		await expect(modal).not.toBeVisible();
 
-    // UI上の選択リストに反映されていることを確認
-    for (const game of gameData) {
-      await expect(page.locator('#game-select').locator('option').filter({ hasText: game.name })).toHaveCount(1);
-    }
-  });
+		// ゲーム選択リストに反映されることを確認
+		await page.waitForTimeout(500);
+		const gameSelect = page.locator("#game-select");
+		await expect(
+			gameSelect
+				.locator("option")
+				.filter({ hasText: "ワーキングテストゲーム" }),
+		).toHaveCount(1);
+	});
+
+	test("複数のゲームを追加できる", async () => {
+		const gameData = [
+			{ name: "RPGゲーム", code: "rpg" },
+			{ name: "アクションゲーム", code: "action" },
+			{ name: "シミュレーションゲーム", code: "simulation" },
+		];
+
+		for (const game of gameData) {
+			// ゲーム追加プロセス
+			await page.locator("#add-game-btn").click();
+			await page.locator("#game-name").fill(game.name);
+			await page.locator("#game-code").fill(game.code);
+			await page.locator('#game-form button[type="submit"]').click();
+
+			// モーダルが閉じることを確認
+			await expect(page.locator("#game-modal")).not.toBeVisible();
+			await page.waitForTimeout(300);
+		}
+
+		// UI上の選択リストに反映されていることを確認
+		for (const game of gameData) {
+			await expect(
+				page
+					.locator("#game-select")
+					.locator("option")
+					.filter({ hasText: game.name }),
+			).toHaveCount(1);
+		}
+	});
 });

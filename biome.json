@@ -5,7 +5,13 @@
 		"useIgnoreFile": false
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!**/dist/**",
+			"!**/dist-preload/**",
+			"!**/node_modules/**"
+		]
 	},
 	"formatter": {
 		"enabled": true,

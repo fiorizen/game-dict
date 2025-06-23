@@ -9,8 +9,8 @@ let preventAutoSelection = false; // Flag to prevent auto-selection after game d
 const gameSelect = document.getElementById("game-select");
 const currentGameTitle = document.getElementById("current-game-title");
 const addGameBtn = document.getElementById("add-game-btn");
-const editGameBtn = document.getElementById("edit-game-btn");
-const deleteGameBtn = document.getElementById("delete-game-btn");
+const _editGameBtn = document.getElementById("edit-game-btn");
+const _deleteGameBtn = document.getElementById("delete-game-btn");
 const addEntryBtn = document.getElementById("add-entry-btn");
 const entriesTableContainer = document.getElementById(
 	"entries-table-container",
@@ -464,7 +464,7 @@ function addAutoSaveListeners(row) {
 	});
 
 	// Add focusout listener to the entire row to catch any remaining cases
-	row.addEventListener("focusout", (e) => {
+	row.addEventListener("focusout", (_e) => {
 		// Only handle if the new focus target is completely outside the row
 		setTimeout(() => {
 			const activeElement = document.activeElement;
@@ -713,8 +713,7 @@ async function attemptAutoSave(row) {
 	// Don't auto-save if focus is still in row, unless it's on action buttons
 	if (isStillInRow) {
 		// Allow auto-save if focus moved to action buttons (save/clear)
-		const isOnActionButton =
-			activeElement && activeElement.closest(".entry-actions-inline");
+		const isOnActionButton = activeElement?.closest(".entry-actions-inline");
 		if (!isOnActionButton) {
 			// User is still editing this row, don't auto-save
 			return;
@@ -787,7 +786,7 @@ async function attemptAutoSave(row) {
 // Entry management functions
 
 // Inline editing action functions
-async function saveNewEntry(button) {
+async function _saveNewEntry(button) {
 	const row = button.closest("tr");
 
 	// Check if already saving or navigating to prevent duplicate saves
@@ -844,14 +843,14 @@ async function saveNewEntry(button) {
 	}
 }
 
-async function editEntryInline(entryId) {
+async function _editEntryInline(entryId) {
 	const entry = currentEntries.find((e) => e.id === entryId);
 	if (!entry) return;
 
 	const row = document.querySelector(`tr[data-entry-id="${entryId}"]`);
 	if (!row) return;
 
-	const category = allCategories.find((c) => c.id === entry.category_id);
+	const _category = allCategories.find((c) => c.id === entry.category_id);
 	const categoryOptions = allCategories
 		.map(
 			(cat) =>
@@ -880,7 +879,7 @@ async function editEntryInline(entryId) {
 	addKeyboardNavigationListeners(row);
 }
 
-async function saveEditedEntry(button, entryId) {
+async function _saveEditedEntry(button, entryId) {
 	const row = button.closest("tr");
 	const formData = getRowFormData(row);
 
@@ -919,14 +918,16 @@ async function saveEditedEntry(button, entryId) {
 	}
 }
 
-function cancelEditEntry(button, entryId) {
+function _cancelEditEntry(_button, _entryId) {
 	// Re-render table to cancel editing
 	renderEntriesTable(currentEntries || []);
 }
 
-function clearNewEntry(button) {
+function _clearNewEntry(button) {
 	const row = button.closest("tr");
-	row.querySelectorAll("input").forEach((input) => (input.value = ""));
+	row.querySelectorAll("input").forEach((input) => {
+		input.value = "";
+	});
 	row.querySelector("select").selectedIndex = 1; // Select "名詞"
 
 	const readingInput = row.querySelector('input[name="reading"]');
@@ -978,7 +979,7 @@ function validateEntryDataSilent(data) {
 	return !!(data.reading && data.word && data.category);
 }
 
-async function deleteEntry(entryId) {
+async function _deleteEntry(entryId) {
 	if (!confirm("この単語を削除しますか？")) return;
 
 	try {
@@ -1116,11 +1117,7 @@ function showError(message) {
 // Data Sync Handlers
 function setupDataSyncHandlers() {
 	// Listen for data sync dialog request from main process
-	if (
-		window.electronAPI &&
-		window.electronAPI.dataSync &&
-		window.electronAPI.dataSync.onShowDialog
-	) {
+	if (window.electronAPI?.dataSync?.onShowDialog) {
 		window.electronAPI.dataSync.onShowDialog((status) => {
 			showDataSyncDialog(status);
 		});
@@ -1129,11 +1126,7 @@ function setupDataSyncHandlers() {
 	}
 
 	// Listen for exit sync dialog request from main process
-	if (
-		window.electronAPI &&
-		window.electronAPI.exitSync &&
-		window.electronAPI.exitSync.onShowDialog
-	) {
+	if (window.electronAPI?.exitSync?.onShowDialog) {
 		window.electronAPI.exitSync.onShowDialog((status) => {
 			showExitSyncDialog(status);
 		});
@@ -1317,11 +1310,7 @@ async function handleExitSyncChoice(action) {
 async function forceCloseApp() {
 	// Request main process to force close the app
 	try {
-		if (
-			window.electronAPI &&
-			window.electronAPI.app &&
-			window.electronAPI.app.forceClose
-		) {
+		if (window.electronAPI?.app?.forceClose) {
 			await window.electronAPI.app.forceClose();
 		} else {
 			// Fallback
@@ -1372,8 +1361,7 @@ async function onImportIme() {
 
 			if (importResult.errors && importResult.errors.length > 0) {
 				// Show validation errors
-				const errorMessage =
-					"ファイル形式に問題があります:\\n" + importResult.errors.join("\\n");
+				const errorMessage = `ファイル形式に問題があります:\\n${importResult.errors.join("\\n")}`;
 				showError(errorMessage);
 				return;
 			}

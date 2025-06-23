@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import Database from "better-sqlite3";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
 	type BetterSQLite3Database,
 	drizzle,
@@ -10,7 +10,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import * as schema from "./schema.js";
 
 export class DrizzleConnection {
-	private static instance: DrizzleConnection;
+	private static instance: DrizzleConnection | undefined;
 	private db: BetterSQLite3Database<typeof schema>;
 	private sqlite: Database.Database;
 	private dbPath: string;
@@ -46,7 +46,7 @@ export class DrizzleConnection {
 				// Ignore errors during close
 			}
 		}
-		DrizzleConnection.instance = undefined!;
+		DrizzleConnection.instance = undefined;
 	}
 
 	private getDatabasePath(): string {
@@ -199,7 +199,7 @@ export class DrizzleConnection {
 			name: string;
 			type: string;
 			notnull: number;
-			dflt_value: any;
+			dflt_value: string | number | null;
 			pk: number;
 		}>;
 
@@ -307,7 +307,7 @@ export class DrizzleConnection {
 				this.db.insert(schema.categories).values(category).run();
 			} catch (error) {
 				// If UNIQUE constraint failed, update existing category
-				if ((error as any).message?.includes("UNIQUE constraint failed")) {
+				if ((error as Error).message?.includes("UNIQUE constraint failed")) {
 					this.db
 						.update(schema.categories)
 						.set({

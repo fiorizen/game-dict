@@ -4,7 +4,7 @@ import { DrizzleEntryModel } from "./models/drizzle-entry.js";
 import { DrizzleGameModel } from "./models/drizzle-game.js";
 
 export class DrizzleDatabase {
-	private static instance: DrizzleDatabase;
+	private static instance: DrizzleDatabase | undefined;
 	private connection: DrizzleConnection;
 	public games: DrizzleGameModel;
 	public categories: DrizzleCategoryModel;
@@ -30,7 +30,7 @@ export class DrizzleDatabase {
 		if (DrizzleDatabase.instance) {
 			DrizzleConnection.resetInstance();
 		}
-		DrizzleDatabase.instance = undefined!;
+		DrizzleDatabase.instance = undefined;
 	}
 
 	public getDbPath(): string {

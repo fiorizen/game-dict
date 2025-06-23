@@ -1,7 +1,7 @@
 import { DrizzleConnection } from "./drizzle-connection.js";
-import { DrizzleGameModel } from "./models/drizzle-game.js";
 import { DrizzleCategoryModel } from "./models/drizzle-category.js";
 import { DrizzleEntryModel } from "./models/drizzle-entry.js";
+import { DrizzleGameModel } from "./models/drizzle-game.js";
 export declare class DrizzleDatabase {
     private static instance;
     private connection;

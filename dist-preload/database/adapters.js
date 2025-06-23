@@ -1,4 +1,5 @@
 "use strict";
+// Type adapters for converting between Drizzle schema and legacy types
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.drizzleGameToLegacy = drizzleGameToLegacy;
 exports.drizzleCategoryToLegacy = drizzleCategoryToLegacy;

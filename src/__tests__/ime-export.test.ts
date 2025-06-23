@@ -1,11 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	ERROR_PATTERNS,
-	TEST_DATA,
-	TestDatabaseHelper,
-} from "./helpers/index.js";
+import { TestDatabaseHelper } from "./helpers/index.js";
 
 describe("IME Export Functionality", () => {
 	let testHelper: TestDatabaseHelper;

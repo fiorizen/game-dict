@@ -2,14 +2,19 @@
 
 // New Drizzle implementation
 import { DrizzleDatabase } from "./drizzle-database.js";
-import { DrizzleDatabaseWrapper } from "./drizzle-wrapper.js";
+import {
+	type DrizzleCategoryWrapper,
+	DrizzleDatabaseWrapper,
+	type DrizzleEntryWrapper,
+	type DrizzleGameWrapper,
+} from "./drizzle-wrapper.js";
 
 export class Database {
-	private static instance: Database;
+	private static instance: Database | undefined;
 	private wrapper: DrizzleDatabaseWrapper;
-	public games: any;
-	public categories: any;
-	public entries: any;
+	public games: DrizzleGameWrapper;
+	public categories: DrizzleCategoryWrapper;
+	public entries: DrizzleEntryWrapper;
 
 	private constructor() {
 		this.wrapper = DrizzleDatabaseWrapper.getInstance();
@@ -33,7 +38,7 @@ export class Database {
 				// Ignore errors during close
 			}
 		}
-		Database.instance = undefined!;
+		Database.instance = undefined;
 		// Also reset the wrapper
 		DrizzleDatabaseWrapper.resetInstance();
 	}

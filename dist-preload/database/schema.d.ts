@@ -1,4 +1,4 @@
-import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 export declare const games: import("drizzle-orm/sqlite-core").SQLiteTableWithColumns<{
     name: "games";
     schema: undefined;

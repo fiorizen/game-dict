@@ -1,7 +1,10 @@
+import type { OpenDialogOptions, SaveDialogOptions } from "electron";
 import { contextBridge, ipcRenderer } from "electron";
 import type {
 	DataSyncChoice,
+	DataSyncStatus,
 	ExitSyncChoice,
+	ExitSyncStatus,
 } from "../main/data-sync-manager.js";
 import type {
 	CreateCategoryData,
@@ -82,9 +85,9 @@ const api = {
 
 	// File operations
 	files: {
-		showOpenDialog: (options: any) =>
+		showOpenDialog: (options: OpenDialogOptions) =>
 			ipcRenderer.invoke("files:showOpenDialog", options),
-		showSaveDialog: (options: any) =>
+		showSaveDialog: (options: SaveDialogOptions) =>
 			ipcRenderer.invoke("files:showSaveDialog", options),
 	},
 
@@ -94,10 +97,10 @@ const api = {
 		performAutoImport: () => ipcRenderer.invoke("dataSync:performAutoImport"),
 		performUserChoice: (choice: DataSyncChoice) =>
 			ipcRenderer.invoke("dataSync:performUserChoice", choice),
-		getConflictMessage: (status: any) =>
+		getConflictMessage: (status: DataSyncStatus) =>
 			ipcRenderer.invoke("dataSync:getConflictMessage", status),
-		onShowDialog: (callback: (status: any) => void) => {
-			ipcRenderer.on("show-data-sync-dialog", (event, status) =>
+		onShowDialog: (callback: (status: DataSyncStatus) => void) => {
+			ipcRenderer.on("show-data-sync-dialog", (_event, status) =>
 				callback(status),
 			);
 		},
@@ -112,11 +115,11 @@ const api = {
 		performAutoExport: () => ipcRenderer.invoke("exitSync:performAutoExport"),
 		performUserChoice: (choice: ExitSyncChoice) =>
 			ipcRenderer.invoke("exitSync:performUserChoice", choice),
-		getExitMessage: (status: any) =>
+		getExitMessage: (status: ExitSyncStatus) =>
 			ipcRenderer.invoke("exitSync:getExitMessage", status),
 		markLastExportTime: () => ipcRenderer.invoke("exitSync:markLastExportTime"),
-		onShowDialog: (callback: (status: any) => void) => {
-			ipcRenderer.on("show-exit-sync-dialog", (event, status) =>
+		onShowDialog: (callback: (status: ExitSyncStatus) => void) => {
+			ipcRenderer.on("show-exit-sync-dialog", (_event, status) =>
 				callback(status),
 			);
 		},

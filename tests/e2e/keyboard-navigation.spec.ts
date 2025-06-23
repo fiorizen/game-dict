@@ -1,23 +1,24 @@
-import { test, expect } from '@playwright/test';
-import { _electron as electron } from 'playwright';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import type { ElectronApplication, Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { _electron as electron } from "playwright";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // E2E Test for keyboard navigation functionality
-test.describe('Keyboard Navigation E2E Tests', () => {
-	let electronApp: any;
-	let page: any;
+test.describe("Keyboard Navigation E2E Tests", () => {
+	let electronApp: ElectronApplication;
+	let page: Page;
 
 	test.beforeAll(async () => {
 		electronApp = await electron.launch({
-			args: [path.join(__dirname, '../../dist/main/main.js')],
-			cwd: path.join(__dirname, '../..'),
+			args: [path.join(__dirname, "../../dist/main/main.js")],
+			cwd: path.join(__dirname, "../.."),
 		});
 		page = await electronApp.firstWindow();
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 	});
 
 	test.afterAll(async () => {
@@ -26,24 +27,28 @@ test.describe('Keyboard Navigation E2E Tests', () => {
 		}
 	});
 
-	test('キーボードナビゲーション関数が実装されている', async () => {
+	test("キーボードナビゲーション関数が実装されている", async () => {
 		// JavaScript関数が定義されているか確認
 		const functionsExist = await page.evaluate(() => {
-			return typeof addKeyboardNavigationListeners === 'function' &&
-			       typeof handleVerticalNavigation === 'function' &&
-			       typeof attemptNavigationSave === 'function';
+			return (
+				typeof addKeyboardNavigationListeners === "function" &&
+				typeof handleVerticalNavigation === "function" &&
+				typeof attemptNavigationSave === "function"
+			);
 		});
-		
+
 		expect(functionsExist).toBe(true);
 	});
 
-	test('バリデーション関数が実装されている', async () => {
+	test("バリデーション関数が実装されている", async () => {
 		// JavaScript関数が定義されているか確認
 		const functionsExist = await page.evaluate(() => {
-			return typeof showValidationError === 'function' &&
-			       typeof clearValidationErrors === 'function';
+			return (
+				typeof showValidationError === "function" &&
+				typeof clearValidationErrors === "function"
+			);
 		});
-		
+
 		expect(functionsExist).toBe(true);
 	});
 });

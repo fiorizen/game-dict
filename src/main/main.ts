@@ -1,27 +1,30 @@
-import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow } from "electron";
-import { DataSyncManager } from "./data-sync-manager.js";
+import {
+	DataSyncManager,
+	type DataSyncStatus,
+	type ExitSyncStatus,
+} from "./data-sync-manager.js";
 import { IPCHandlers } from "./ipc-handlers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-class GameDictApp {
+class GameDictApp implements MainAppInstance {
 	private ipcHandlers!: IPCHandlers;
 	private dataSyncManager!: DataSyncManager;
 	private mainWindow: BrowserWindow | null = null;
 
 	constructor() {
 		// Register this instance globally for IPC access
-		(global as any).mainAppInstance = this;
+		global.mainAppInstance = this;
 
 		this.setupApp();
 	}
 
 	private setupApp(): void {
 		// Setup global app reference for database path resolution
-		(global as any).app = app;
+		global.app = app;
 
 		app.whenReady().then(() => {
 			// Initialize IPC handlers and data sync manager after app is ready
@@ -146,7 +149,7 @@ class GameDictApp {
 	/**
 	 * データ同期確認ダイアログをレンダラープロセスに表示依頼
 	 */
-	private showDataSyncDialog(status: any): void {
+	private showDataSyncDialog(status: DataSyncStatus): void {
 		if (!this.mainWindow) return;
 
 		// レンダラープロセスにデータ同期ダイアログ表示を依頼
@@ -179,8 +182,6 @@ class GameDictApp {
 					console.log("終了時データ変更検出 - ユーザー確認が必要");
 					this.showExitSyncDialog(status);
 					break;
-
-				case "skip_export":
 				default:
 					// 何もしない
 					console.log("終了時CSV出力をスキップ（変更なし）");
@@ -196,7 +197,7 @@ class GameDictApp {
 	/**
 	 * 終了時データ同期確認ダイアログをレンダラープロセスに表示依頼
 	 */
-	private showExitSyncDialog(status: any): void {
+	private showExitSyncDialog(status: ExitSyncStatus): void {
 		if (!this.mainWindow) return;
 
 		// レンダラープロセスに終了時データ同期ダイアログ表示を依頼

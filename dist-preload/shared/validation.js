@@ -24,7 +24,10 @@ function validateGameCode(code) {
     // Check if code contains only alphanumeric characters
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
     if (!alphanumericRegex.test(code)) {
-        return { valid: false, error: "Game code must contain only letters and numbers" };
+        return {
+            valid: false,
+            error: "Game code must contain only letters and numbers",
+        };
     }
     return { valid: true };
 }

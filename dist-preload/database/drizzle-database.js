@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DrizzleDatabase = void 0;
 const drizzle_connection_js_1 = require("./drizzle-connection.js");
-const drizzle_game_js_1 = require("./models/drizzle-game.js");
 const drizzle_category_js_1 = require("./models/drizzle-category.js");
 const drizzle_entry_js_1 = require("./models/drizzle-entry.js");
+const drizzle_game_js_1 = require("./models/drizzle-game.js");
 class DrizzleDatabase {
     constructor() {
         this.connection = drizzle_connection_js_1.DrizzleConnection.getInstance();

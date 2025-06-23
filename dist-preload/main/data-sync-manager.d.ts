@@ -6,11 +6,11 @@ export interface DataSyncStatus {
     dbGameCount: number;
     dbEntryCount: number;
     hasConflict: boolean;
-    conflictType: 'csv_missing' | 'db_has_more_data' | 'mixed_data' | 'safe' | null;
-    recommendation: 'auto_import' | 'user_confirm' | 'skip_import';
+    conflictType: "csv_missing" | "db_has_more_data" | "mixed_data" | "safe" | null;
+    recommendation: "auto_import" | "user_confirm" | "skip_import";
 }
 export interface DataSyncChoice {
-    action: 'import_csv' | 'keep_db' | 'backup_and_import';
+    action: "import_csv" | "keep_db" | "backup_and_import";
     confirmed: boolean;
 }
 export interface ExitSyncStatus {
@@ -20,10 +20,10 @@ export interface ExitSyncStatus {
     dbEntryCount: number;
     csvGameCount: number;
     csvEntryCount: number;
-    recommendation: 'auto_export' | 'user_confirm' | 'skip_export';
+    recommendation: "auto_export" | "user_confirm" | "skip_export";
 }
 export interface ExitSyncChoice {
-    action: 'export_csv' | 'skip_export';
+    action: "export_csv" | "skip_export";
     confirmed: boolean;
 }
 export declare class DataSyncManager {
@@ -101,7 +101,7 @@ export declare class DataSyncManager {
         message: string;
         options: Array<{
             label: string;
-            action: DataSyncChoice['action'];
+            action: DataSyncChoice["action"];
             description: string;
         }>;
     };
@@ -113,7 +113,7 @@ export declare class DataSyncManager {
         message: string;
         options: Array<{
             label: string;
-            action: ExitSyncChoice['action'];
+            action: ExitSyncChoice["action"];
             description: string;
         }>;
     };

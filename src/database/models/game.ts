@@ -98,7 +98,7 @@ export class GameModel {
 		const countStmt = this.db.prepare(
 			"SELECT COUNT(*) as count FROM entries WHERE game_id = ?",
 		);
-		const entryCount = (countStmt.get(id) as { count: number }).count;
+		const _entryCount = (countStmt.get(id) as { count: number }).count;
 
 		// トランザクション内で関連エントリーとゲームを削除
 		const transaction = this.db.transaction(() => {

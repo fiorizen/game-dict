@@ -1,4 +1,5 @@
 "use strict";
+// Legacy implementation using DrizzleDatabaseWrapper for backward compatibility
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -15,11 +16,10 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DrizzleDatabase = exports.Database = void 0;
-// Legacy implementation using DrizzleDatabaseWrapper for backward compatibility
-const drizzle_wrapper_js_1 = require("./drizzle-wrapper.js");
 // New Drizzle implementation
 const drizzle_database_js_1 = require("./drizzle-database.js");
 Object.defineProperty(exports, "DrizzleDatabase", { enumerable: true, get: function () { return drizzle_database_js_1.DrizzleDatabase; } });
+const drizzle_wrapper_js_1 = require("./drizzle-wrapper.js");
 class Database {
     constructor() {
         this.wrapper = drizzle_wrapper_js_1.DrizzleDatabaseWrapper.getInstance();

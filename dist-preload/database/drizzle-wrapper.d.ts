@@ -1,6 +1,6 @@
+import type { Category, Entry, EntryWithDetails, Game, NewCategory, NewEntry, NewGame } from "../shared/types.js";
 import { DrizzleDatabase } from "./drizzle-database.js";
-import type { Game, Category, Entry, EntryWithDetails, NewGame, NewEntry, NewCategory } from "../shared/types.js";
-declare class DrizzleGameWrapper {
+export declare class DrizzleGameWrapper {
     private drizzleDb;
     constructor(drizzleDb: DrizzleDatabase);
     getAll(): Game[];
@@ -16,7 +16,7 @@ declare class DrizzleGameWrapper {
     getByName(name: string): Game | null;
     getByCode(code: string): Game | null;
 }
-declare class DrizzleCategoryWrapper {
+export declare class DrizzleCategoryWrapper {
     private drizzleDb;
     constructor(drizzleDb: DrizzleDatabase);
     getAll(): Category[];
@@ -25,7 +25,7 @@ declare class DrizzleCategoryWrapper {
     update(id: number, data: Partial<NewCategory>): Category | null;
     delete(id: number): boolean;
 }
-declare class DrizzleEntryWrapper {
+export declare class DrizzleEntryWrapper {
     private drizzleDb;
     constructor(drizzleDb: DrizzleDatabase);
     getAll(): Entry[];
@@ -52,7 +52,6 @@ export declare class DrizzleDatabaseWrapper {
     static resetInstance(): void;
     getDbPath(): string;
     close(): void;
-    getDatabase(): any;
+    getDatabase(): import("better-sqlite3").Database;
 }
-export {};
 //# sourceMappingURL=drizzle-wrapper.d.ts.map

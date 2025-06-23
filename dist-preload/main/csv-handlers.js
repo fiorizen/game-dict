@@ -1,14 +1,43 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CSVHandlers = void 0;
-// @ts-nocheck
-const node_fs_1 = __importDefault(require("node:fs"));
-const node_path_1 = __importDefault(require("node:path"));
-const sync_1 = require("csv-stringify/sync");
-const sync_2 = require("csv-parse/sync");
+const fs = __importStar(require("node:fs"));
+const path = __importStar(require("node:path"));
+const sync_1 = require("csv-parse/sync");
+const sync_2 = require("csv-stringify/sync");
 const index_js_1 = require("../database/index.js");
 const validation_js_1 = require("../shared/validation.js");
 class CSVHandlers {
@@ -21,16 +50,17 @@ class CSVHandlers {
     async exportToGitCsv(outputDir) {
         const games = this.db.games.getAll();
         const categories = this.db.categories.getAll();
+        // カテゴリルックアップ最適化: O(1)アクセスのためのMap作成
+        const categoryMap = new Map(categories.map((c) => [c.id, c]));
         // Use test directory if in test environment, otherwise use csv
-        const isTestEnvironment = process.env.NODE_ENV === 'test' ||
-            process.env.VITEST === 'true';
+        const isTestEnvironment = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
         const defaultDir = isTestEnvironment
-            ? node_path_1.default.join(process.cwd(), 'test-data', 'csv')
-            : node_path_1.default.join(process.cwd(), 'csv');
+            ? path.join(process.cwd(), "test-data", "csv")
+            : path.join(process.cwd(), "csv");
         const exportDir = outputDir || defaultDir;
         // Ensure export directory exists
-        if (!node_fs_1.default.existsSync(exportDir)) {
-            node_fs_1.default.mkdirSync(exportDir, { recursive: true });
+        if (!fs.existsSync(exportDir)) {
+            fs.mkdirSync(exportDir, { recursive: true });
         }
         const exportedFiles = [];
         // 1. Export games.csv
@@ -42,12 +72,12 @@ class CSVHandlers {
                 created_at: game.created_at,
                 updated_at: game.updated_at,
             }));
-            const gamesCsvString = (0, sync_1.stringify)(gamesData, {
+            const gamesCsvString = (0, sync_2.stringify)(gamesData, {
                 header: true,
                 columns: ["id", "name", "code", "created_at", "updated_at"],
             });
-            const gamesFilePath = node_path_1.default.join(exportDir, "games.csv");
-            node_fs_1.default.writeFileSync(gamesFilePath, gamesCsvString, "utf-8");
+            const gamesFilePath = path.join(exportDir, "games.csv");
+            fs.writeFileSync(gamesFilePath, gamesCsvString, "utf-8");
             exportedFiles.push(gamesFilePath);
         }
         // 2. Export categories.csv
@@ -55,16 +85,16 @@ class CSVHandlers {
             const categoriesData = categories.map((category) => ({
                 id: category.id,
                 name: category.name,
-                google_ime_name: category.google_ime_name,
-                ms_ime_name: category.ms_ime_name,
-                atok_name: category.atok_name,
+                google_ime_name: category.google_ime_name || "",
+                ms_ime_name: category.ms_ime_name || "",
+                atok_name: category.atok_name || "",
             }));
-            const categoriesCsvString = (0, sync_1.stringify)(categoriesData, {
+            const categoriesCsvString = (0, sync_2.stringify)(categoriesData, {
                 header: true,
                 columns: ["id", "name", "google_ime_name", "ms_ime_name", "atok_name"],
             });
-            const categoriesFilePath = node_path_1.default.join(exportDir, "categories.csv");
-            node_fs_1.default.writeFileSync(categoriesFilePath, categoriesCsvString, "utf-8");
+            const categoriesFilePath = path.join(exportDir, "categories.csv");
+            fs.writeFileSync(categoriesFilePath, categoriesCsvString, "utf-8");
             exportedFiles.push(categoriesFilePath);
         }
         // 3. Export game-{code}.csv for each game with entries
@@ -76,23 +106,23 @@ class CSVHandlers {
             }
             // Export structure: category_name, reading, word, description
             const csvData = entries.map((entry) => {
-                const category = categories.find((c) => c.id === entry.category_id);
+                const category = categoryMap.get(entry.category_id);
                 return {
-                    category_name: category?.name || "",
+                    category_name: category?.name ?? "",
                     reading: entry.reading,
                     word: entry.word,
-                    description: entry.description || "",
+                    description: entry.description ?? "",
                 };
             });
-            const csvString = (0, sync_1.stringify)(csvData, {
+            const csvString = (0, sync_2.stringify)(csvData, {
                 header: true,
                 columns: ["category_name", "reading", "word", "description"],
             });
             // Add game name as comment at the top
             const csvWithComment = `# Game: ${game.name} (Code: ${game.code})\n${csvString}`;
             // Fixed filename: game-{code}.csv
-            const filePath = node_path_1.default.join(exportDir, `game-${game.code}.csv`);
-            node_fs_1.default.writeFileSync(filePath, csvWithComment, "utf-8");
+            const filePath = path.join(exportDir, `game-${game.code}.csv`);
+            fs.writeFileSync(filePath, csvWithComment, "utf-8");
             exportedFiles.push(filePath);
         }
         return exportedFiles;
@@ -103,20 +133,27 @@ class CSVHandlers {
     async exportToImeCsv(gameId, format, outputPath) {
         const entries = this.db.entries.getByGameId(gameId);
         const categories = this.db.categories.getAll();
+        // カテゴリルックアップ最適化: O(1)アクセスのためのMap作成
+        const categoryMap = new Map(categories.map((c) => [c.id, c]));
         const csvData = entries.map((entry) => {
-            const category = categories.find((c) => c.id === entry.category_id);
+            const category = categoryMap.get(entry.category_id);
             let categoryName = "";
             // Map category to IME-specific format
-            switch (format) {
-                case "google":
-                    categoryName = category?.google_ime_name || "名詞";
-                    break;
-                case "ms":
-                    categoryName = category?.ms_ime_name || "名詞";
-                    break;
-                case "atok":
-                    categoryName = category?.atok_name || "名詞";
-                    break;
+            if (category) {
+                switch (format) {
+                    case "google":
+                        categoryName = category.google_ime_name ?? "名詞";
+                        break;
+                    case "ms":
+                        categoryName = category.ms_ime_name ?? "名詞";
+                        break;
+                    case "atok":
+                        categoryName = category.atok_name ?? "名詞";
+                        break;
+                }
+            }
+            else {
+                categoryName = "名詞";
             }
             return {
                 reading: entry.reading,
@@ -124,11 +161,11 @@ class CSVHandlers {
                 category: categoryName,
             };
         });
-        const csvString = (0, sync_1.stringify)(csvData, {
+        const csvString = (0, sync_2.stringify)(csvData, {
             header: false, // IME dictionaries typically don't have headers
             columns: ["reading", "word", "category"],
         });
-        node_fs_1.default.writeFileSync(outputPath, csvString, "utf-8");
+        fs.writeFileSync(outputPath, csvString, "utf-8");
     }
     /**
      * Export current game entries to Microsoft IME format (.txt with tab-separated values)
@@ -144,52 +181,54 @@ class CSVHandlers {
             throw new Error(`No entries found for game '${game.name}'. IME export requires at least one entry.`);
         }
         const categories = this.db.categories.getAll();
+        // カテゴリルックアップ最適化: O(1)アクセスのためのMap作成
+        const categoryMap = new Map(categories.map((c) => [c.id, c]));
         // Create export directory if it doesn't exist
-        const exportDir = node_path_1.default.join(process.cwd(), 'export');
-        if (!node_fs_1.default.existsSync(exportDir)) {
-            node_fs_1.default.mkdirSync(exportDir, { recursive: true });
+        const exportDir = path.join(process.cwd(), "export");
+        if (!fs.existsSync(exportDir)) {
+            fs.mkdirSync(exportDir, { recursive: true });
         }
         // Build tab-separated content: reading \t word \t category_name
         const lines = entries.map((entry) => {
-            const category = categories.find((c) => c.id === entry.category_id);
-            const categoryName = category?.ms_ime_name || "名詞";
+            const category = categoryMap.get(entry.category_id);
+            const categoryName = category?.ms_ime_name ?? "名詞";
             return `${entry.reading}\t${entry.word}\t${categoryName}`;
         });
-        const content = lines.join('\n') + '\n';
-        const filePath = node_path_1.default.join(exportDir, `${game.code}.txt`);
-        node_fs_1.default.writeFileSync(filePath, content, 'utf-8');
+        const content = `${lines.join("\n")}\n`;
+        const filePath = path.join(exportDir, `${game.code}.txt`);
+        fs.writeFileSync(filePath, content, "utf-8");
         return filePath;
     }
     /**
      * Import all CSV data from Git-managed directory (games.csv, categories.csv, game-*.csv)
      */
     async importFromGitCsvDirectory(inputDir) {
-        if (!node_fs_1.default.existsSync(inputDir)) {
+        if (!fs.existsSync(inputDir)) {
             throw new Error(`Directory not found: ${inputDir}`);
         }
-        const files = node_fs_1.default.readdirSync(inputDir);
+        const files = fs.readdirSync(inputDir);
         // 1. Import games.csv first
-        const gamesFile = files.find(f => f === 'games.csv');
+        const gamesFile = files.find((f) => f === "games.csv");
         if (gamesFile) {
-            await this.importGamesFromCsv(node_path_1.default.join(inputDir, gamesFile));
+            await this.importGamesFromCsv(path.join(inputDir, gamesFile));
         }
         // 2. Import categories.csv
-        const categoriesFile = files.find(f => f === 'categories.csv');
+        const categoriesFile = files.find((f) => f === "categories.csv");
         if (categoriesFile) {
-            await this.importCategoriesFromCsv(node_path_1.default.join(inputDir, categoriesFile));
+            await this.importCategoriesFromCsv(path.join(inputDir, categoriesFile));
         }
         // 3. Import game-*.csv files (both old format game-{id}.csv and new format game-{code}.csv)
-        const gameFiles = files.filter(f => f.startsWith('game-') && f.endsWith('.csv'));
+        const gameFiles = files.filter((f) => f.startsWith("game-") && f.endsWith(".csv"));
         for (const gameFile of gameFiles) {
-            await this.importFromCsv(node_path_1.default.join(inputDir, gameFile));
+            await this.importFromCsv(path.join(inputDir, gameFile));
         }
     }
     /**
      * Import games data from games.csv
      */
     async importGamesFromCsv(filePath) {
-        const csvContent = node_fs_1.default.readFileSync(filePath, "utf-8");
-        const records = (0, sync_2.parse)(csvContent, {
+        const csvContent = fs.readFileSync(filePath, "utf-8");
+        const records = (0, sync_1.parse)(csvContent, {
             columns: true,
             skip_empty_lines: true,
         });
@@ -209,8 +248,8 @@ class CSVHandlers {
      * Import categories data from categories.csv
      */
     async importCategoriesFromCsv(filePath) {
-        const csvContent = node_fs_1.default.readFileSync(filePath, "utf-8");
-        const records = (0, sync_2.parse)(csvContent, {
+        const csvContent = fs.readFileSync(filePath, "utf-8");
+        const records = (0, sync_1.parse)(csvContent, {
             columns: true,
             skip_empty_lines: true,
         });
@@ -230,11 +269,11 @@ class CSVHandlers {
      * Import CSV data into the database (single file)
      */
     async importFromCsv(filePath) {
-        const csvContent = node_fs_1.default.readFileSync(filePath, "utf-8");
+        const csvContent = fs.readFileSync(filePath, "utf-8");
         // Extract game name from comment line if present
         let gameNameFromComment = "";
-        const lines = csvContent.split('\n');
-        if (lines[0].startsWith('#')) {
+        const lines = csvContent.split("\n");
+        if (lines[0].startsWith("#")) {
             // Try new format first: # Game: name (Code: code)
             const newFormatMatch = lines[0].match(/# Game: (.+) \(Code: .+\)/);
             if (newFormatMatch) {
@@ -248,19 +287,19 @@ class CSVHandlers {
                 }
             }
         }
-        const records = (0, sync_2.parse)(csvContent, {
+        const records = (0, sync_1.parse)(csvContent, {
             columns: true,
             skip_empty_lines: true,
-            comment: '#', // Skip comment lines
+            comment: "#", // Skip comment lines
         });
         const gameCache = new Map();
         const categoryCache = new Map();
         // Determine game name: use comment or derive from filename
         let gameName = gameNameFromComment;
         if (!gameName) {
-            const filename = node_path_1.default.basename(filePath, '.csv');
+            const filename = path.basename(filePath, ".csv");
             // If filename is game-{ID}.csv, we need to ask user or use filename as is
-            gameName = filename.startsWith('game-') ? filename : filename;
+            gameName = filename.startsWith("game-") ? filename : filename;
         }
         // Ensure game exists
         let game = gameCache.get(gameName);
@@ -270,6 +309,9 @@ class CSVHandlers {
                 .filter((g) => g.name === gameName);
             if (existingGames.length > 0) {
                 game = existingGames[0];
+                if (game) {
+                    gameCache.set(gameName, game);
+                }
             }
             else {
                 // Generate a unique code from the game name
@@ -279,7 +321,7 @@ class CSVHandlers {
                 }
                 // Ensure uniqueness
                 const existingGames = this.db.games.getAll();
-                const existingCodes = existingGames.map(g => g.code);
+                const existingCodes = existingGames.map((g) => g.code);
                 let counter = 1;
                 let finalCode = gameCode;
                 while (existingCodes.includes(finalCode)) {
@@ -289,8 +331,14 @@ class CSVHandlers {
                     counter++;
                 }
                 game = this.db.games.create({ name: gameName, code: finalCode });
+                if (game) {
+                    gameCache.set(gameName, game);
+                }
             }
-            gameCache.set(gameName, game);
+        }
+        // Ensure game is defined before proceeding
+        if (!game) {
+            throw new Error(`Failed to create or find game: ${gameName}`);
         }
         for (const record of records) {
             // Ensure category exists
@@ -301,6 +349,9 @@ class CSVHandlers {
                     .filter((c) => c.name === record.category_name);
                 if (existingCategories.length > 0) {
                     category = existingCategories[0];
+                    if (category) {
+                        categoryCache.set(record.category_name, category);
+                    }
                 }
                 else {
                     // Create category with default IME mappings
@@ -310,8 +361,14 @@ class CSVHandlers {
                         ms_ime_name: "名詞",
                         atok_name: "名詞",
                     });
+                    if (category) {
+                        categoryCache.set(record.category_name, category);
+                    }
                 }
-                categoryCache.set(record.category_name, category);
+            }
+            // Ensure category is defined before proceeding
+            if (!category) {
+                throw new Error(`Failed to create or find category: ${record.category_name}`);
             }
             // Check if entry already exists
             const existingEntries = this.db.entries
@@ -335,7 +392,7 @@ class CSVHandlers {
      * Import entries from Microsoft IME text file
      */
     async importFromImeTxt(gameId, filePath) {
-        if (!node_fs_1.default.existsSync(filePath)) {
+        if (!fs.existsSync(filePath)) {
             throw new Error(`File not found: ${filePath}`);
         }
         const game = this.db.games.getById(gameId);
@@ -343,14 +400,14 @@ class CSVHandlers {
             throw new Error(`Game with ID ${gameId} not found`);
         }
         // Read and validate entire file first
-        const content = node_fs_1.default.readFileSync(filePath, 'utf-8');
-        const lines = content.split('\n').filter(line => line.trim());
+        const content = fs.readFileSync(filePath, "utf-8");
+        const lines = content.split("\n").filter((line) => line.trim());
         const errors = [];
         const validEntries = [];
         // Validate all lines first
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            const parts = line.split('\t');
+            const parts = line.split("\t");
             if (parts.length !== 3) {
                 errors.push(`Line ${i + 1}: Expected 3 tab-separated fields, got ${parts.length}`);
                 continue;
@@ -369,7 +426,7 @@ class CSVHandlers {
                 validEntries.push({
                     reading: reading.trim(),
                     word: word.trim(),
-                    categoryName: categoryName.trim()
+                    categoryName: categoryName.trim(),
                 });
             }
         }
@@ -378,7 +435,7 @@ class CSVHandlers {
             return {
                 imported: 0,
                 skipped: 0,
-                errors
+                errors,
             };
         }
         // All validations passed, proceed with import
@@ -394,6 +451,9 @@ class CSVHandlers {
                     .filter((c) => c.name === entry.categoryName);
                 if (existingCategories.length > 0) {
                     category = existingCategories[0];
+                    if (category) {
+                        categoryCache.set(entry.categoryName, category);
+                    }
                 }
                 else {
                     // Create new category with "名詞" as default
@@ -403,8 +463,14 @@ class CSVHandlers {
                         ms_ime_name: "名詞",
                         atok_name: "名詞",
                     });
+                    if (category) {
+                        categoryCache.set(entry.categoryName, category);
+                    }
                 }
-                categoryCache.set(entry.categoryName, category);
+            }
+            // Ensure category is defined before proceeding
+            if (!category) {
+                throw new Error(`Failed to create or find category: ${entry.categoryName}`);
             }
             // Check if entry already exists
             const existingEntries = this.db.entries
@@ -430,7 +496,7 @@ class CSVHandlers {
         return {
             imported: importedCount,
             skipped: skippedCount,
-            errors: []
+            errors: [],
         };
     }
     /**
@@ -446,10 +512,10 @@ class CSVHandlers {
             }
         }
         return {
-            gitCsv: node_path_1.default.join(process.cwd(), `${gameName}-${timestamp}.csv`),
-            googleCsv: node_path_1.default.join(process.cwd(), `${gameName}-google-${timestamp}.csv`),
-            msCsv: node_path_1.default.join(process.cwd(), `${gameName}-ms-${timestamp}.csv`),
-            atokCsv: node_path_1.default.join(process.cwd(), `${gameName}-atok-${timestamp}.csv`),
+            gitCsv: path.join(process.cwd(), `${gameName}-${timestamp}.csv`),
+            googleCsv: path.join(process.cwd(), `${gameName}-google-${timestamp}.csv`),
+            msCsv: path.join(process.cwd(), `${gameName}-ms-${timestamp}.csv`),
+            atokCsv: path.join(process.cwd(), `${gameName}-atok-${timestamp}.csv`),
         };
     }
 }

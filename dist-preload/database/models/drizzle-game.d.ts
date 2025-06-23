@@ -1,6 +1,6 @@
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import * as schema from "../schema.js";
 import type { Game, NewGame } from "../schema.js";
+import * as schema from "../schema.js";
 export declare class DrizzleGameModel {
     private db;
     constructor(db: BetterSQLite3Database<typeof schema>);

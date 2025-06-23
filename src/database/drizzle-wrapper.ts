@@ -20,7 +20,7 @@ import {
 } from "./adapters.js";
 import { DrizzleDatabase } from "./drizzle-database.js";
 
-class DrizzleGameWrapper {
+export class DrizzleGameWrapper {
 	private drizzleDb: DrizzleDatabase;
 
 	constructor(drizzleDb: DrizzleDatabase) {
@@ -76,7 +76,7 @@ class DrizzleGameWrapper {
 	}
 }
 
-class DrizzleCategoryWrapper {
+export class DrizzleCategoryWrapper {
 	private drizzleDb: DrizzleDatabase;
 
 	constructor(drizzleDb: DrizzleDatabase) {
@@ -99,7 +99,12 @@ class DrizzleCategoryWrapper {
 	}
 
 	public update(id: number, data: Partial<NewCategory>): Category | null {
-		const drizzleData: any = {};
+		const drizzleData: Partial<{
+			name: string;
+			googleImeName?: string;
+			msImeName?: string;
+			atokName?: string;
+		}> = {};
 		if (data.name) drizzleData.name = data.name;
 		if (data.google_ime_name !== undefined)
 			drizzleData.googleImeName = data.google_ime_name;
@@ -116,7 +121,7 @@ class DrizzleCategoryWrapper {
 	}
 }
 
-class DrizzleEntryWrapper {
+export class DrizzleEntryWrapper {
 	private drizzleDb: DrizzleDatabase;
 
 	constructor(drizzleDb: DrizzleDatabase) {
@@ -166,7 +171,13 @@ class DrizzleEntryWrapper {
 	}
 
 	public update(id: number, data: Partial<NewEntry>): Entry | null {
-		const drizzleData: any = {};
+		const drizzleData: Partial<{
+			gameId: number;
+			categoryId: number;
+			reading: string;
+			word: string;
+			description?: string;
+		}> = {};
 		if (data.game_id !== undefined) drizzleData.gameId = data.game_id;
 		if (data.category_id !== undefined)
 			drizzleData.categoryId = data.category_id;
@@ -195,7 +206,7 @@ class DrizzleEntryWrapper {
 }
 
 export class DrizzleDatabaseWrapper {
-	private static instance: DrizzleDatabaseWrapper;
+	private static instance: DrizzleDatabaseWrapper | undefined;
 	private drizzleDb: DrizzleDatabase;
 	public games: DrizzleGameWrapper;
 	public categories: DrizzleCategoryWrapper;
@@ -219,7 +230,7 @@ export class DrizzleDatabaseWrapper {
 		if (DrizzleDatabaseWrapper.instance) {
 			DrizzleDatabase.resetInstance();
 		}
-		DrizzleDatabaseWrapper.instance = undefined!;
+		DrizzleDatabaseWrapper.instance = undefined;
 	}
 
 	public getDbPath(): string {
@@ -230,7 +241,7 @@ export class DrizzleDatabaseWrapper {
 		this.drizzleDb.close();
 	}
 
-	public getDatabase(): any {
+	public getDatabase(): import("better-sqlite3").Database {
 		return this.drizzleDb.getConnection().getSqlite();
 	}
 }

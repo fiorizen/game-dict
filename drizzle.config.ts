@@ -5,7 +5,7 @@ export default {
 	out: "./migrations",
 	driver: "better-sqlite",
 	dbCredentials: {
-		url: "./test-data/game-dict.db"
+		url: "./test-data/game-dict.db",
 	},
 	verbose: true,
 	strict: true,

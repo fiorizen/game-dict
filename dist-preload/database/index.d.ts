@@ -1,10 +1,11 @@
 import { DrizzleDatabase } from "./drizzle-database.js";
+import { type DrizzleCategoryWrapper, type DrizzleEntryWrapper, type DrizzleGameWrapper } from "./drizzle-wrapper.js";
 export declare class Database {
     private static instance;
     private wrapper;
-    games: any;
-    categories: any;
-    entries: any;
+    games: DrizzleGameWrapper;
+    categories: DrizzleCategoryWrapper;
+    entries: DrizzleEntryWrapper;
     private constructor();
     static getInstance(): Database;
     static resetInstance(): void;

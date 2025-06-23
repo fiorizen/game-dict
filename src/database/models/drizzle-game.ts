@@ -168,7 +168,7 @@ export class DrizzleGameModel {
 				.where(eq(schema.entries.gameId, id))
 				.all();
 
-			const entryCount = entryCountResult[0].count;
+			const _entryCount = entryCountResult[0].count;
 
 			// Delete related entries
 			const deleteEntriesResult = this.db
