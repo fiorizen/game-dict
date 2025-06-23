@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow } from "electron";
+import { log } from "../shared/logger.js";
 import {
 	DataSyncManager,
 	type DataSyncStatus,
@@ -99,7 +100,7 @@ class GameDictApp implements MainAppInstance {
 	private async performDataSyncCheck(): Promise<void> {
 		// Skip data sync check in test environment
 		if (process.env.NODE_ENV === "test") {
-			console.log("Skipping data sync check in test environment");
+			log.debug("Skipping data sync check in test environment");
 			return;
 		}
 
@@ -110,19 +111,19 @@ class GameDictApp implements MainAppInstance {
 				case "auto_import":
 					// 安全な自動読み込み
 					if (status.csvFilesExist) {
-						console.log("起動時CSV自動読み込みを実行中...");
+						log.dataSync("起動時CSV自動読み込みを実行中...");
 						const result = await this.dataSyncManager.performAutoImport();
 						if (result.success) {
-							console.log("CSV自動読み込みが完了しました");
+							log.dataSync("CSV自動読み込みが完了しました");
 						} else {
-							console.error("CSV自動読み込みに失敗:", result.error);
+							log.error("CSV自動読み込みに失敗:", result.error);
 						}
 					}
 					break;
 
 				case "user_confirm":
 					// ユーザー確認が必要 - ウィンドウ表示後にダイアログを表示
-					console.log(
+					log.dataSync(
 						"データ競合検出 - ユーザー確認が必要:",
 						status.conflictType,
 					);
@@ -134,15 +135,15 @@ class GameDictApp implements MainAppInstance {
 
 				case "skip_import":
 					// 何もしない
-					console.log("CSV読み込みをスキップ（データなし）");
+					log.debug("CSV読み込みをスキップ（データなし）");
 					break;
 
 				default:
-					console.log("データ同期チェック完了（アクションなし）");
+					log.debug("データ同期チェック完了（アクションなし）");
 					break;
 			}
 		} catch (error) {
-			console.error("データ同期チェックエラー:", error);
+			log.error("データ同期チェックエラー:", error);
 		}
 	}
 
@@ -166,12 +167,12 @@ class GameDictApp implements MainAppInstance {
 			switch (status.recommendation) {
 				case "auto_export": {
 					// 自動エクスポート
-					console.log("終了時CSV自動エクスポートを実行中...");
+					log.dataSync("終了時CSV自動エクスポートを実行中...");
 					const result = await this.dataSyncManager.performAutoExport();
 					if (result.success) {
-						console.log("CSV自動エクスポートが完了しました");
+						log.dataSync("CSV自動エクスポートが完了しました");
 					} else {
-						console.error("CSV自動エクスポートに失敗:", result.error);
+						log.error("CSV自動エクスポートに失敗:", result.error);
 					}
 					this.forceClose();
 					break;
@@ -179,17 +180,17 @@ class GameDictApp implements MainAppInstance {
 
 				case "user_confirm":
 					// ユーザー確認が必要
-					console.log("終了時データ変更検出 - ユーザー確認が必要");
+					log.dataSync("終了時データ変更検出 - ユーザー確認が必要");
 					this.showExitSyncDialog(status);
 					break;
 				default:
 					// 何もしない
-					console.log("終了時CSV出力をスキップ（変更なし）");
+					log.debug("終了時CSV出力をスキップ（変更なし）");
 					this.forceClose();
 					break;
 			}
 		} catch (error) {
-			console.error("終了時データ同期チェックエラー:", error);
+			log.error("終了時データ同期チェックエラー:", error);
 			this.forceClose();
 		}
 	}

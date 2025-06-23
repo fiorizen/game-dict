@@ -7,6 +7,7 @@ import {
 	drizzle,
 } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { log } from "../shared/logger.js";
 import * as schema from "./schema.js";
 
 export class DrizzleConnection {
@@ -61,7 +62,7 @@ export class DrizzleConnection {
 				"test-data",
 				"game-dict-test.db",
 			);
-			console.log("Using test database:", testDbPath);
+			log.database("Using test database", testDbPath);
 			return testDbPath;
 		}
 
@@ -74,11 +75,11 @@ export class DrizzleConnection {
 			if (electronModule?.app) {
 				const userDataPath = electronModule.app.getPath("userData");
 				const prodDbPath = path.join(userDataPath, "game-dict.db");
-				console.log("Using production database:", prodDbPath);
+				log.database("Using production database", prodDbPath);
 				return prodDbPath;
 			}
 		} catch (error) {
-			console.warn("Failed to access Electron app:", error);
+			log.warn("Failed to access Electron app:", error);
 		}
 
 		// For testing environment, check if app is available in global
@@ -91,7 +92,7 @@ export class DrizzleConnection {
 			};
 			const userDataPath = globalWithApp.app.getPath("userData");
 			const prodDbPath = path.join(userDataPath, "game-dict.db");
-			console.log("Using production database:", prodDbPath);
+			log.database("Using production database", prodDbPath);
 			return prodDbPath;
 		}
 
@@ -107,14 +108,14 @@ export class DrizzleConnection {
 					"game-dict",
 				);
 				const prodDbPath = path.join(userDataPath, "game-dict.db");
-				console.log("Using production database (fallback):", prodDbPath);
+				log.database("Using production database (fallback)", prodDbPath);
 				return prodDbPath;
 			}
 		}
 
 		// Default fallback
 		const defaultDbPath = path.join(process.cwd(), "test-data", "game-dict.db");
-		console.log("Using default database:", defaultDbPath);
+		log.database("Using default database", defaultDbPath);
 		return defaultDbPath;
 	}
 
@@ -129,7 +130,7 @@ export class DrizzleConnection {
 				this.createTablesManually();
 			}
 		} catch (error) {
-			console.warn(
+			log.warn(
 				"Migration failed, falling back to manual table creation:",
 				error,
 			);
@@ -206,7 +207,7 @@ export class DrizzleConnection {
 		const codeColumnExists = tableInfo.some((column) => column.name === "code");
 
 		if (!codeColumnExists) {
-			console.log("Adding code column to games table...");
+			log.database("Adding code column to games table");
 
 			// Add code column (without NOT NULL constraint initially)
 			this.sqlite.exec("ALTER TABLE games ADD COLUMN code TEXT");
@@ -242,7 +243,7 @@ export class DrizzleConnection {
 				CREATE UNIQUE INDEX IF NOT EXISTS idx_games_code ON games(code);
 			`);
 
-			console.log("Code column migration completed.");
+			log.database("Code column migration completed");
 		}
 	}
 

@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
+import { log } from "../shared/logger.js";
 import { Database } from "../database/index.js";
 import type { Category, Entry, Game } from "../shared/types.js";
 import { generateGameCodeFromName } from "../shared/validation.js";
@@ -58,8 +59,9 @@ export class CSVHandlers {
 			});
 
 			const gamesFilePath = path.join(exportDir, "games.csv");
-			fs.writeFileSync(gamesFilePath, gamesCsvString, "utf-8");
+			await fs.promises.writeFile(gamesFilePath, gamesCsvString, "utf-8");
 			exportedFiles.push(gamesFilePath);
+			log.debug("Exported games.csv", gamesFilePath);
 		}
 
 		// 2. Export categories.csv
@@ -78,8 +80,9 @@ export class CSVHandlers {
 			});
 
 			const categoriesFilePath = path.join(exportDir, "categories.csv");
-			fs.writeFileSync(categoriesFilePath, categoriesCsvString, "utf-8");
+			await fs.promises.writeFile(categoriesFilePath, categoriesCsvString, "utf-8");
 			exportedFiles.push(categoriesFilePath);
+			log.debug("Exported categories.csv", categoriesFilePath);
 		}
 
 		// 3. Export game-{code}.csv for each game with entries
@@ -114,8 +117,9 @@ export class CSVHandlers {
 			// Fixed filename: game-{code}.csv
 			const filePath = path.join(exportDir, `game-${game.code}.csv`);
 
-			fs.writeFileSync(filePath, csvWithComment, "utf-8");
+			await fs.promises.writeFile(filePath, csvWithComment, "utf-8");
 			exportedFiles.push(filePath);
+			log.debug("Exported game entries CSV", filePath);
 		}
 
 		return exportedFiles;
@@ -170,7 +174,8 @@ export class CSVHandlers {
 			columns: ["reading", "word", "category"],
 		});
 
-		fs.writeFileSync(outputPath, csvString, "utf-8");
+		await fs.promises.writeFile(outputPath, csvString, "utf-8");
+		log.debug("Exported IME CSV", outputPath);
 	}
 
 	/**
@@ -215,7 +220,8 @@ export class CSVHandlers {
 		const content = `${lines.join("\n")}\n`;
 		const filePath = path.join(exportDir, `${game.code}.txt`);
 
-		fs.writeFileSync(filePath, content, "utf-8");
+		await fs.promises.writeFile(filePath, content, "utf-8");
+		log.debug("Exported Microsoft IME file", filePath);
 
 		return filePath;
 	}
@@ -255,7 +261,8 @@ export class CSVHandlers {
 	 * Import games data from games.csv
 	 */
 	private async importGamesFromCsv(filePath: string): Promise<void> {
-		const csvContent = fs.readFileSync(filePath, "utf-8");
+		log.debug("Importing games from CSV", filePath);
+		const csvContent = await fs.promises.readFile(filePath, "utf-8");
 		const records = parse(csvContent, {
 			columns: true,
 			skip_empty_lines: true,
@@ -290,7 +297,8 @@ export class CSVHandlers {
 	 * Import categories data from categories.csv
 	 */
 	private async importCategoriesFromCsv(filePath: string): Promise<void> {
-		const csvContent = fs.readFileSync(filePath, "utf-8");
+		log.debug("Importing categories from CSV", filePath);
+		const csvContent = await fs.promises.readFile(filePath, "utf-8");
 		const records = parse(csvContent, {
 			columns: true,
 			skip_empty_lines: true,
@@ -325,7 +333,8 @@ export class CSVHandlers {
 	 * Import CSV data into the database (single file)
 	 */
 	async importFromCsv(filePath: string): Promise<void> {
-		const csvContent = fs.readFileSync(filePath, "utf-8");
+		log.debug("Importing from CSV", filePath);
+		const csvContent = await fs.promises.readFile(filePath, "utf-8");
 
 		// Extract game name from comment line if present
 		let gameNameFromComment = "";
@@ -486,7 +495,8 @@ export class CSVHandlers {
 		}
 
 		// Read and validate entire file first
-		const content = fs.readFileSync(filePath, "utf-8");
+		log.debug("Importing from IME text file", filePath);
+		const content = await fs.promises.readFile(filePath, "utf-8");
 		const lines = content.split("\n").filter((line) => line.trim());
 
 		const errors: string[] = [];

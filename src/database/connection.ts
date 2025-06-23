@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
+import { log } from "../shared/logger.js";
 
 export class DatabaseConnection {
 	private static instance: DatabaseConnection | undefined;
@@ -51,7 +52,7 @@ export class DatabaseConnection {
 				"test-data",
 				"game-dict-test.db",
 			);
-			console.log("Using test database:", testDbPath);
+			log.database("Using test database", testDbPath);
 			return testDbPath;
 		}
 
@@ -67,7 +68,7 @@ export class DatabaseConnection {
 				};
 				const userDataPath = globalWithApp.app.getPath("userData");
 				const prodDbPath = path.join(userDataPath, "game-dict.db");
-				console.log("Using production database:", prodDbPath);
+				log.database("Using production database", prodDbPath);
 				return prodDbPath;
 			}
 
@@ -77,7 +78,7 @@ export class DatabaseConnection {
 					const { app } = require("electron");
 					const userDataPath = app.getPath("userData");
 					const prodDbPath = path.join(userDataPath, "game-dict.db");
-					console.log("Using production database:", prodDbPath);
+					log.database("Using production database", prodDbPath);
 					return prodDbPath;
 				} catch {
 					// Fallback should not happen in production
@@ -96,7 +97,7 @@ export class DatabaseConnection {
 			};
 			const userDataPath = globalWithApp.app.getPath("userData");
 			const prodDbPath = path.join(userDataPath, "game-dict.db");
-			console.log("Using production database:", prodDbPath);
+			log.database("Using production database", prodDbPath);
 			return prodDbPath;
 		}
 
@@ -106,7 +107,7 @@ export class DatabaseConnection {
 				const { app } = require("electron");
 				const userDataPath = app.getPath("userData");
 				const prodDbPath = path.join(userDataPath, "game-dict.db");
-				console.log("Using production database:", prodDbPath);
+				log.database("Using production database", prodDbPath);
 				return prodDbPath;
 			} catch {
 				// Fallback for non-Electron environment
@@ -115,14 +116,14 @@ export class DatabaseConnection {
 					"test-data",
 					"game-dict.db",
 				);
-				console.log("Using fallback database:", fallbackDbPath);
+				log.database("Using fallback database", fallbackDbPath);
 				return fallbackDbPath;
 			}
 		}
 
 		// Default fallback
 		const defaultDbPath = path.join(process.cwd(), "test-data", "game-dict.db");
-		console.log("Using default database:", defaultDbPath);
+		log.database("Using default database", defaultDbPath);
 		return defaultDbPath;
 	}
 
@@ -195,7 +196,7 @@ export class DatabaseConnection {
 		const codeColumnExists = tableInfo.some((column) => column.name === "code");
 
 		if (!codeColumnExists) {
-			console.log("Adding code column to games table...");
+			log.database("Adding code column to games table");
 
 			// Add code column (without NOT NULL constraint initially)
 			this.db.exec("ALTER TABLE games ADD COLUMN code TEXT");
@@ -231,7 +232,7 @@ export class DatabaseConnection {
 				CREATE UNIQUE INDEX IF NOT EXISTS idx_games_code ON games(code);
 			`);
 
-			console.log("Code column migration completed.");
+			log.database("Code column migration completed");
 		}
 	}
 
