@@ -71,6 +71,9 @@ function setupEventListeners() {
 	// Modal handling
 	setupModalHandlers();
 
+	// Keyboard shortcuts
+	setupKeyboardShortcuts();
+
 	// Form submission
 	gameForm.addEventListener("submit", onGameSubmit);
 }
@@ -101,6 +104,71 @@ function setupModalHandlers() {
 	document
 		.getElementById("confirm-delete-game-btn")
 		.addEventListener("click", onConfirmDeleteGame);
+}
+
+// Keyboard shortcuts setup
+function setupKeyboardShortcuts() {
+	document.addEventListener("keydown", (event) => {
+		// Skip if IME is composing
+		if (event.isComposing) return;
+
+		// Skip if inside modal or form input
+		const activeElement = document.activeElement;
+		const isInModal = activeElement?.closest(".modal");
+		const isInInput =
+			activeElement &&
+			(activeElement.tagName === "INPUT" ||
+				activeElement.tagName === "TEXTAREA" ||
+				activeElement.tagName === "SELECT" ||
+				activeElement.contentEditable === "true");
+
+		if (isInModal || isInInput) return;
+
+		// Command/Ctrl + N: Add new word
+		if ((event.metaKey || event.ctrlKey) && event.key === "n") {
+			event.preventDefault();
+
+			// Only work if a game is selected
+			if (!currentGame) {
+				showError("ゲームを選択してから単語を追加してください");
+				return;
+			}
+
+			// Trigger add entry button click
+			addEntryBtn.click();
+			return;
+		}
+
+		// Command/Ctrl + D: Delete selected/editing entry
+		if ((event.metaKey || event.ctrlKey) && event.key === "d") {
+			event.preventDefault();
+
+			// Find currently editing entry
+			const editingRow = document.querySelector("tr.editing");
+			if (editingRow) {
+				const entryId = parseInt(editingRow.dataset.entryId);
+				if (entryId) {
+					deleteEntry(entryId);
+					return;
+				}
+			}
+
+			// If no editing entry, find selected entry (first in table)
+			const firstEntryRow = document.querySelector(
+				"#entries-table-body tr:not(.new-entry)",
+			);
+			if (firstEntryRow) {
+				const entryId = parseInt(firstEntryRow.dataset.entryId);
+				if (entryId) {
+					deleteEntry(entryId);
+					return;
+				}
+			}
+
+			showError("削除する単語が見つかりません");
+			return;
+		}
+	});
 }
 
 // Data loading functions
@@ -977,6 +1045,11 @@ function validateEntryData(data, row) {
 function validateEntryDataSilent(data) {
 	// Silent validation for auto-save (no UI feedback)
 	return !!(data.reading && data.word && data.category);
+}
+
+// Public function for entry deletion (used by keyboard shortcuts and UI)
+function deleteEntry(entryId) {
+	_deleteEntry(entryId);
 }
 
 async function _deleteEntry(entryId) {
