@@ -14,6 +14,19 @@ export declare class CSVHandlers {
      */
     exportToMicrosoftIme(gameId: number): Promise<string>;
     /**
+     * Export all games entries to a single Microsoft IME format file (.txt with tab-separated values)
+     * with duplicate removal based on reading+word combination
+     */
+    exportAllGamesToMicrosoftIme(): Promise<{
+        filePath: string;
+        duplicatesFilePath: string;
+        stats: {
+            totalEntries: number;
+            uniqueEntries: number;
+            duplicatesRemoved: number;
+        };
+    }>;
+    /**
      * Import all CSV data from Git-managed directory (games.csv, categories.csv, game-*.csv)
      */
     importFromGitCsvDirectory(inputDir: string): Promise<void>;

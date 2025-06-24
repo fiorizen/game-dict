@@ -67,6 +67,9 @@ function setupEventListeners() {
 	document
 		.getElementById("export-ime-btn")
 		.addEventListener("click", onExportIme);
+	document
+		.getElementById("export-all-games-btn")
+		.addEventListener("click", onExportAllGames);
 
 	// Modal handling
 	setupModalHandlers();
@@ -1480,6 +1483,26 @@ async function onExportIme() {
 	} catch (error) {
 		console.error("IME export failed:", error);
 		showError(`IME辞書出力に失敗しました: ${error.message}`);
+	}
+}
+
+async function onExportAllGames() {
+	try {
+		const result = await window.electronAPI.ime.exportAllGamesToMicrosoftIme();
+
+		if (result.success) {
+			let message = `全ゲーム辞書を出力しました: ${result.filePath}`;
+			if (result.stats) {
+				message += `\n統計: 総エントリ ${result.stats.totalEntries}件, ユニーク ${result.stats.uniqueEntries}件, 重複除外 ${result.stats.duplicatesRemoved}件`;
+			}
+			if (result.duplicatesFilePath) {
+				message += `\n重複除外リスト: ${result.duplicatesFilePath}`;
+			}
+			showSuccess(message);
+		}
+	} catch (error) {
+		console.error("All games export failed:", error);
+		showError(`全ゲーム辞書出力に失敗しました: ${error.message}`);
 	}
 }
 

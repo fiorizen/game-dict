@@ -37,6 +37,7 @@ declare const api: {
     };
     ime: {
         exportToMicrosoftIme: (gameId: number) => Promise<any>;
+        exportAllGamesToMicrosoftIme: () => Promise<any>;
         importFromImeTxt: (gameId: number, filePath: string) => Promise<any>;
     };
     files: {

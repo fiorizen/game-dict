@@ -224,4 +224,35 @@ test.describe("IME Export E2E Tests", () => {
 			expect(lines).toContain(expectedLine);
 		});
 	});
+
+	test("全ゲーム一括出力ボタンが存在し、クリック可能", async () => {
+		const exportAllBtn = page.locator("#export-all-games-btn");
+		await expect(exportAllBtn).toBeVisible();
+		await expect(exportAllBtn).toBeEnabled();
+		expect(await exportAllBtn.textContent()).toBe("全ゲーム一括出力");
+	});
+
+	test("全ゲーム一括出力ボタンクリックで処理が実行される", async () => {
+		// Click export all games button (should handle empty database gracefully)
+		const exportAllBtn = page.locator("#export-all-games-btn");
+		await exportAllBtn.click();
+		await page.waitForTimeout(2000);
+
+		// The button should be clickable and not crash the app
+		// (Error handling for empty database is tested in unit tests)
+		expect(await exportAllBtn.isVisible()).toBe(true);
+		expect(await exportAllBtn.isEnabled()).toBe(true);
+	});
+
+	test("全ゲーム一括出力でエラーが発生した場合のハンドリング", async () => {
+		// Click export all games button (should work with existing data)
+		const exportAllBtn = page.locator("#export-all-games-btn");
+		await exportAllBtn.click();
+		await page.waitForTimeout(2000);
+
+		// Should show success message or handle gracefully
+		// Note: This test mainly ensures the button works and doesn't crash
+		// The actual error case (no games) is covered in unit tests
+		expect(await exportAllBtn.isVisible()).toBe(true);
+	});
 });

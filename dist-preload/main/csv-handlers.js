@@ -193,17 +193,108 @@ class CSVHandlers {
         if (!fs.existsSync(exportDir)) {
             fs.mkdirSync(exportDir, { recursive: true });
         }
-        // Build tab-separated content: reading \t word \t category_name
+        // Build tab-separated content: reading \t word \t category_name \t #game_name
         const lines = entries.map((entry) => {
             const category = categoryMap.get(entry.category_id);
             const categoryName = category?.ms_ime_name ?? "名詞";
-            return `${entry.reading}\t${entry.word}\t${categoryName}`;
+            return `${entry.reading}\t${entry.word}\t${categoryName}\t#${game.name}`;
         });
         const content = `${lines.join("\n")}\n`;
         const filePath = path.join(exportDir, `${game.code}.txt`);
         await fs.promises.writeFile(filePath, content, "utf-8");
         logger_js_1.log.debug("Exported Microsoft IME file", filePath);
         return filePath;
+    }
+    /**
+     * Export all games entries to a single Microsoft IME format file (.txt with tab-separated values)
+     * with duplicate removal based on reading+word combination
+     */
+    async exportAllGamesToMicrosoftIme() {
+        const games = this.db.games.getAll();
+        if (games.length === 0) {
+            throw new Error("No games found. Cannot export empty dictionary.");
+        }
+        const categories = this.db.categories.getAll();
+        // カテゴリルックアップ最適化: O(1)アクセスのためのMap作成
+        const categoryMap = new Map(categories.map((c) => [c.id, c]));
+        const allEntries = [];
+        let totalEntries = 0;
+        for (const game of games) {
+            const entries = this.db.entries.getByGameId(game.id);
+            totalEntries += entries.length;
+            // Build entries with metadata
+            for (const entry of entries) {
+                const category = categoryMap.get(entry.category_id);
+                const categoryName = category?.ms_ime_name ?? "名詞";
+                const line = `${entry.reading}\t${entry.word}\t${categoryName}\t#${game.name}`;
+                allEntries.push({
+                    entry,
+                    game,
+                    categoryName,
+                    line,
+                });
+            }
+        }
+        // Check if there are any entries to export
+        if (totalEntries === 0) {
+            throw new Error("No entries found in any game. IME export requires at least one entry.");
+        }
+        // Remove duplicates based on reading+word combination
+        // Keep the first occurrence (earliest by entry ID)
+        const seenCombinations = new Map();
+        const duplicateEntries = [];
+        // Sort by entry ID to ensure consistent "first occurrence" logic
+        allEntries.sort((a, b) => a.entry.id - b.entry.id);
+        for (const entryWithMeta of allEntries) {
+            const key = `${entryWithMeta.entry.reading}:${entryWithMeta.entry.word}`;
+            if (seenCombinations.has(key)) {
+                // This is a duplicate
+                duplicateEntries.push(entryWithMeta);
+            }
+            else {
+                // This is the first occurrence
+                seenCombinations.set(key, entryWithMeta);
+            }
+        }
+        // Create export directory if it doesn't exist
+        const exportDir = path.join(process.cwd(), "export");
+        if (!fs.existsSync(exportDir)) {
+            fs.mkdirSync(exportDir, { recursive: true });
+        }
+        // Export unique entries
+        const uniqueLines = Array.from(seenCombinations.values()).map((entryWithMeta) => entryWithMeta.line);
+        const content = `${uniqueLines.join("\n")}\n`;
+        const filePath = path.join(exportDir, "all-games.txt");
+        await fs.promises.writeFile(filePath, content, "utf-8");
+        logger_js_1.log.debug("Exported all games Microsoft IME file", filePath);
+        // Export duplicates to separate file
+        let duplicatesFilePath = "";
+        if (duplicateEntries.length > 0) {
+            const duplicatesContent = [
+                "# 重複により除外された辞書エントリ",
+                "# 形式: 読み方\t単語\t品詞\t#ゲーム名 (除外理由: 既存エントリとの重複)",
+                "",
+                ...duplicateEntries.map((entryWithMeta) => {
+                    const originalEntry = seenCombinations.get(`${entryWithMeta.entry.reading}:${entryWithMeta.entry.word}`);
+                    const originalGame = originalEntry?.game.name ?? "不明";
+                    return `${entryWithMeta.line} (重複元: #${originalGame})`;
+                }),
+            ].join("\n");
+            duplicatesFilePath = path.join(exportDir, "all-games-duplicates.txt");
+            await fs.promises.writeFile(duplicatesFilePath, duplicatesContent, "utf-8");
+            logger_js_1.log.debug("Exported duplicates file", duplicatesFilePath);
+        }
+        const stats = {
+            totalEntries,
+            uniqueEntries: seenCombinations.size,
+            duplicatesRemoved: duplicateEntries.length,
+        };
+        logger_js_1.log.info("Export stats", stats);
+        return {
+            filePath,
+            duplicatesFilePath,
+            stats,
+        };
     }
     /**
      * Import all CSV data from Git-managed directory (games.csv, categories.csv, game-*.csv)
