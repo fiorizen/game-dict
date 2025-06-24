@@ -80,14 +80,14 @@ describe("IME Export Functionality", () => {
 		// Should have 3 entries (2 noun + 1 person name)
 		expect(lines).toHaveLength(3);
 
-		// Verify format: reading \t word \t category_name (order may vary)
+		// Verify format: reading \t word \t category_name \t #game_name (order may vary)
 		// Note: All entries use "人名" category due to test helper defaults
 		const validLines = [
-			"てすと\tテスト\t名詞",
-			"げーむ\tゲーム\t名詞",
-			"たろう\t太郎\t人名",
-			"てすと\tテスト\t人名",
-			"げーむ\tゲーム\t人名",
+			`てすと\tテスト\t名詞\t#${game.name}`,
+			`げーむ\tゲーム\t名詞\t#${game.name}`,
+			`たろう\t太郎\t人名\t#${game.name}`,
+			`てすと\tテスト\t人名\t#${game.name}`,
+			`げーむ\tゲーム\t人名\t#${game.name}`,
 		];
 
 		// Check that each actual line is valid
@@ -149,10 +149,10 @@ describe("IME Export Functionality", () => {
 		expect(lines).toHaveLength(2);
 
 		// Verify category names are MS IME format (check content exists regardless of order)
-		// Note: Both categories now have msImeName = "名詞"
+		// Note: Both categories now have msImeName = "名詞", with 4th column for game name
 		const expectedLines = [
-			"めいし\t名詞\t名詞", // Uses ms_ime_name
-			"むかてごり\t無カテゴリ\t名詞", // Uses ms_ime_name or fallback
+			`めいし\t名詞\t名詞\t#${testGame.name}`, // Uses ms_ime_name
+			`むかてごり\t無カテゴリ\t名詞\t#${testGame.name}`, // Uses ms_ime_name or fallback
 		];
 
 		expectedLines.forEach((expectedLine) => {
@@ -165,5 +165,156 @@ describe("IME Export Functionality", () => {
 		await expect(csvHandlers.exportToMicrosoftIme(999999)).rejects.toThrow(
 			"Game with ID 999999 not found",
 		);
+	});
+
+	describe("All Games Export with Duplicate Removal", () => {
+		beforeEach(async () => {
+			// Create multiple games with overlapping entries for duplicate testing
+			const game2 = testHelper.createUniqueGame("Game 2");
+			const game3 = testHelper.createUniqueGame("Game 3");
+
+			// Create identical entries in different games (should be deduplicated)
+			testHelper.createTestEntry(game2.id, {
+				reading: "てすと",
+				word: "テスト",
+				description: "Game 2 test entry",
+			});
+
+			testHelper.createTestEntry(game3.id, {
+				reading: "てすと",
+				word: "テスト",
+				description: "Game 3 test entry",
+			});
+
+			// Create unique entries
+			testHelper.createTestEntry(game2.id, {
+				reading: "ゆにーく",
+				word: "ユニーク",
+				description: "Unique entry",
+			});
+
+			// Create another duplicate pair
+			testHelper.createTestEntry(game2.id, {
+				reading: "さぶじぇくと",
+				word: "被験者",
+				description: "Subject",
+			});
+
+			testHelper.createTestEntry(game3.id, {
+				reading: "さぶじぇくと",
+				word: "被験者",
+				description: "Subject duplicate",
+			});
+		});
+
+		it("should export all games with duplicate removal", async () => {
+			const csvHandlers = testHelper.getCSVHandlers();
+			const result = await csvHandlers.exportAllGamesToMicrosoftIme();
+
+			// Verify return structure
+			expect(result).toHaveProperty("filePath");
+			expect(result).toHaveProperty("duplicatesFilePath");
+			expect(result).toHaveProperty("stats");
+
+			// Verify main export file exists
+			const exportDir = path.join(process.cwd(), "export");
+			const expectedPath = path.join(exportDir, "all-games.txt");
+			expect(result.filePath).toBe(expectedPath);
+			expect(fs.existsSync(expectedPath)).toBe(true);
+
+			// Read and verify main content
+			const content = fs.readFileSync(expectedPath, "utf-8");
+			expect(content.endsWith("\n")).toBe(true);
+
+			const lines = content.trim().split("\n");
+
+			// Should have unique entries only
+			// Expected: てすと/テスト (1), げーむ/ゲーム (1), たろう/太郎 (1), ゆにーく/ユニーク (1), さぶじぇくと/被験者 (1)
+			expect(lines.length).toBeGreaterThan(0);
+
+			// Verify no duplicate reading+word combinations
+			const seenCombinations = new Set<string>();
+			for (const line of lines) {
+				const parts = line.split("\t");
+				expect(parts).toHaveLength(4); // reading, word, category, #game
+
+				const combination = `${parts[0]}:${parts[1]}`;
+				expect(seenCombinations.has(combination)).toBe(false);
+				seenCombinations.add(combination);
+			}
+
+			// Verify stats
+			expect(result.stats.uniqueEntries).toBe(lines.length);
+			expect(result.stats.totalEntries).toBeGreaterThan(
+				result.stats.uniqueEntries,
+			);
+			expect(result.stats.duplicatesRemoved).toBeGreaterThan(0);
+			expect(result.stats.totalEntries).toBe(
+				result.stats.uniqueEntries + result.stats.duplicatesRemoved,
+			);
+		});
+
+		it("should create duplicates file when duplicates exist", async () => {
+			const csvHandlers = testHelper.getCSVHandlers();
+			const result = await csvHandlers.exportAllGamesToMicrosoftIme();
+
+			// Verify duplicates file exists
+			const expectedDuplicatesPath = path.join(
+				process.cwd(),
+				"export",
+				"all-games-duplicates.txt",
+			);
+			expect(result.duplicatesFilePath).toBe(expectedDuplicatesPath);
+			expect(fs.existsSync(expectedDuplicatesPath)).toBe(true);
+
+			// Read and verify duplicates content
+			const duplicatesContent = fs.readFileSync(
+				expectedDuplicatesPath,
+				"utf-8",
+			);
+
+			// Should contain headers
+			expect(duplicatesContent).toContain("# 重複により除外された辞書エントリ");
+			expect(duplicatesContent).toContain("# 形式: 読み方");
+
+			// Should contain duplicate entries with original game reference
+			const lines = duplicatesContent
+				.split("\n")
+				.filter((line) => !line.startsWith("#") && line.trim());
+			expect(lines.length).toBeGreaterThan(0);
+
+			// Each duplicate line should contain original game reference
+			for (const line of lines) {
+				expect(line).toContain("重複元: #");
+			}
+		});
+
+		it("should handle export when no games exist", async () => {
+			// Clear all games
+			const db = testHelper.getDatabase();
+			const games = db.games.getAll();
+			for (const game of games) {
+				db.games.deleteWithRelatedEntries(game.id);
+			}
+
+			const csvHandlers = testHelper.getCSVHandlers();
+			await expect(csvHandlers.exportAllGamesToMicrosoftIme()).rejects.toThrow(
+				"No games found. Cannot export empty dictionary.",
+			);
+		});
+
+		it("should handle export when games have no entries", async () => {
+			// Clear all entries but keep games
+			const db = testHelper.getDatabase();
+			const entries = db.entries.getAll();
+			for (const entry of entries) {
+				db.entries.delete(entry.id);
+			}
+
+			const csvHandlers = testHelper.getCSVHandlers();
+			await expect(csvHandlers.exportAllGamesToMicrosoftIme()).rejects.toThrow(
+				"No entries found in any game. IME export requires at least one entry.",
+			);
+		});
 	});
 });

@@ -161,6 +161,17 @@ export class IPCHandlers {
 			}
 		});
 
+		ipcMain.handle("ime:exportAllGamesToMicrosoftIme", async () => {
+			try {
+				const result = await this.csvHandlers.exportAllGamesToMicrosoftIme();
+				return { success: true, ...result };
+			} catch (error) {
+				throw new Error(
+					`All games Microsoft IME export failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
+
 		ipcMain.handle(
 			"ime:importFromImeTxt",
 			async (_, gameId: number, filePath: string) => {
