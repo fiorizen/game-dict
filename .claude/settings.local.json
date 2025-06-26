@@ -83,7 +83,14 @@
 			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/simple-test.spec.ts --project=electron-headless)",
 			"Bash(NODE_ENV=test npx playwright test tests/e2e/simple-test.spec.ts --project=electron)",
 			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/word-filter.spec.ts --project=electron-headless)",
-			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/word-filter.spec.ts::22 --project=electron-headless)"
+			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/word-filter.spec.ts::22 --project=electron-headless)",
+			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/entry-editing.spec.ts --project=electron-headless)",
+			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/entry-editing.spec.ts::120 --project=electron-headless)",
+			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/entry-editing.spec.ts --project=electron-headless --workers=1)",
+			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/app.spec.ts --project=electron-headless)",
+			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/ui-functions.spec.ts --project=electron-headless --grep \"ゲーム追加\")",
+			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/entry-editing.spec.ts --project=electron-headless --workers=1 --timeout=30000)",
+			"Bash(git checkout:*)"
 		],
 		"deny": []
 	}

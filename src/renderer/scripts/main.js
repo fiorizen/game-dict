@@ -195,7 +195,17 @@ function setupKeyboardShortcuts() {
 				activeElement.tagName === "SELECT" ||
 				activeElement.contentEditable === "true");
 
-		if (isInModal || isInInput) return;
+		// Additional modal check: if any modal is visible, skip all shortcuts
+		const visibleModals = document.querySelectorAll(
+			'.modal[style*="block"], .modal:not([style*="none"])',
+		);
+		const hasVisibleModal = Array.from(visibleModals).some(
+			(modal) =>
+				modal.style.display !== "none" &&
+				window.getComputedStyle(modal).display !== "none",
+		);
+
+		if (isInModal || isInInput || hasVisibleModal) return;
 
 		// リファクタリング：Command+F でフィルター入力にフォーカス
 		if ((event.metaKey || event.ctrlKey) && event.key === "f") {
