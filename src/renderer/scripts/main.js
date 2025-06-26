@@ -18,8 +18,9 @@ const entriesTableContainer = document.getElementById(
 const entriesTableBody = document.getElementById("entries-table-body");
 const noEntriesMessage = document.getElementById("no-entries-message");
 
-// 仮実装：テストを通すためだけの最小限変数
+// リファクタリング：フィルター機能の変数
 const filterInput = document.getElementById("filter-input");
+let currentFilterQuery = "";
 
 // Modal elements
 const gameModal = document.getElementById("game-modal");
@@ -80,30 +81,8 @@ function setupEventListeners() {
 	// Keyboard shortcuts
 	setupKeyboardShortcuts();
 
-	// 仮実装：フィルター機能（テストを通すためだけ）
-	if (filterInput) {
-		filterInput.addEventListener("input", () => {
-			// ベタ書き：最小限の絞り込み実装（テストを通すためだけ）
-			const query = filterInput.value.trim();
-			const rows = document.querySelectorAll("#entries-table-body tr");
-			
-			rows.forEach(row => {
-				if (row.classList.contains("new-entry")) return; // 新規追加行は無視
-				
-				if (!query) {
-					row.style.display = "";
-				} else {
-					// 超シンプル：単語列のテキストにクエリが含まれるかチェック
-					const wordCell = row.cells[2]; // 単語列
-					if (wordCell && wordCell.textContent.includes(query)) {
-						row.style.display = "";
-					} else {
-						row.style.display = "none";
-					}
-				}
-			});
-		});
-	}
+	// リファクタリング：フィルター機能のセットアップ
+	setupFilterHandlers();
 
 	// Form submission
 	gameForm.addEventListener("submit", onGameSubmit);
@@ -137,6 +116,69 @@ function setupModalHandlers() {
 		.addEventListener("click", onConfirmDeleteGame);
 }
 
+// リファクタリング：フィルター機能のイベントハンドラー
+function setupFilterHandlers() {
+	if (!filterInput) return;
+
+	filterInput.addEventListener("input", () => {
+		currentFilterQuery = filterInput.value.trim();
+		applyWordFilter();
+	});
+}
+
+// リファクタリング：フィルター適用ロジックを関数として抽出
+function applyWordFilter() {
+	const rows = document.querySelectorAll("#entries-table-body tr");
+
+	rows.forEach((row) => {
+		if (row.classList.contains("new-entry")) return; // 新規追加行は無視
+
+		if (!currentFilterQuery) {
+			row.style.display = "";
+		} else {
+			// 三角測量：複数フィールドでの検索（将来の拡張に備える）
+			if (matchesFilterQuery(row, currentFilterQuery)) {
+				row.style.display = "";
+			} else {
+				row.style.display = "none";
+			}
+		}
+	});
+}
+
+// リファクタリング：マッチング条件を関数として抽出（三角測量で一般化）
+function matchesFilterQuery(row, query) {
+	if (!query) return true;
+
+	const lowerQuery = query.toLowerCase();
+
+	// 現在は単語列のみ検索（仮実装を保持）
+	// 将来の三角測量で他の列も追加予定
+	const wordCell = row.cells[2]; // 単語列
+	if (wordCell?.textContent.toLowerCase().includes(lowerQuery)) {
+		return true;
+	}
+
+	return false;
+}
+
+// リファクタリング：フィルター入力にフォーカスする関数
+function focusFilterInput() {
+	if (filterInput) {
+		filterInput.focus();
+		filterInput.select(); // 全選択でユーザビリティ向上
+	}
+}
+
+// リファクタリング：フィルターをクリアする関数
+function clearFilter() {
+	if (filterInput) {
+		filterInput.value = "";
+		currentFilterQuery = "";
+		applyWordFilter();
+	}
+}
+
 // Keyboard shortcuts setup
 function setupKeyboardShortcuts() {
 	document.addEventListener("keydown", (event) => {
@@ -155,12 +197,10 @@ function setupKeyboardShortcuts() {
 
 		if (isInModal || isInInput) return;
 
-		// 仮実装：Command+F でフィルター入力にフォーカス（テストを通すためだけ）
+		// リファクタリング：Command+F でフィルター入力にフォーカス
 		if ((event.metaKey || event.ctrlKey) && event.key === "f") {
 			event.preventDefault();
-			if (filterInput) {
-				filterInput.focus();
-			}
+			focusFilterInput();
 			return;
 		}
 
@@ -287,11 +327,9 @@ function populateCategorySelects() {
 
 // Event handlers
 async function onGameChange() {
-	// 仮実装：ゲーム切り替えでフィルターリセット（テストを通すためだけ）
-	if (filterInput) {
-		filterInput.value = "";
-	}
-	
+	// リファクタリング：ゲーム切り替えでフィルターリセット
+	clearFilter();
+
 	const gameId = parseInt(gameSelect.value);
 	if (gameId) {
 		currentGame = gameId;

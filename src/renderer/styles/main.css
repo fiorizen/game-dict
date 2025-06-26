@@ -91,6 +91,28 @@ body {
 	gap: 0.5rem;
 }
 
+/* リファクタリング：フィルターセクション */
+.filter-section {
+	background: white;
+	padding: 1rem 2rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+#filter-input {
+	width: 100%;
+	max-width: 400px;
+	padding: 0.5rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 0.9rem;
+}
+
+#filter-input:focus {
+	outline: none;
+	border-color: #3498db;
+	box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
 .entries-container {
 	flex: 1;
 	overflow-y: auto;

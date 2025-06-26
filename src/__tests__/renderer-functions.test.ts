@@ -35,23 +35,33 @@ describe("Renderer JavaScript Functions Tests", () => {
 
 	describe("グローバル関数の公開確認", () => {
 		it("editEntryInline関数がグローバルスコープに公開されている", () => {
-			expect(mainJsContent).toContain("globalThis.editEntryInline = _editEntryInline");
+			expect(mainJsContent).toContain(
+				"globalThis.editEntryInline = _editEntryInline",
+			);
 		});
 
 		it("saveNewEntry関数がグローバルスコープに公開されている", () => {
-			expect(mainJsContent).toContain("globalThis.saveNewEntry = _saveNewEntry");
+			expect(mainJsContent).toContain(
+				"globalThis.saveNewEntry = _saveNewEntry",
+			);
 		});
 
 		it("saveEditedEntry関数がグローバルスコープに公開されている", () => {
-			expect(mainJsContent).toContain("globalThis.saveEditedEntry = _saveEditedEntry");
+			expect(mainJsContent).toContain(
+				"globalThis.saveEditedEntry = _saveEditedEntry",
+			);
 		});
 
 		it("clearNewEntry関数がグローバルスコープに公開されている", () => {
-			expect(mainJsContent).toContain("globalThis.clearNewEntry = _clearNewEntry");
+			expect(mainJsContent).toContain(
+				"globalThis.clearNewEntry = _clearNewEntry",
+			);
 		});
 
 		it("cancelEditEntry関数がグローバルスコープに公開されている", () => {
-			expect(mainJsContent).toContain("globalThis.cancelEditEntry = _cancelEditEntry");
+			expect(mainJsContent).toContain(
+				"globalThis.cancelEditEntry = _cancelEditEntry",
+			);
 		});
 	});
 
@@ -72,8 +82,12 @@ describe("Renderer JavaScript Functions Tests", () => {
 
 			// Check that each function is either defined directly or has a global assignment
 			for (const functionName of functionCalls) {
-				const hasDirectDefinition = mainJsContent.includes(`function ${functionName}`);
-				const hasGlobalAssignment = mainJsContent.includes(`globalThis.${functionName} =`);
+				const hasDirectDefinition = mainJsContent.includes(
+					`function ${functionName}`,
+				);
+				const hasGlobalAssignment = mainJsContent.includes(
+					`globalThis.${functionName} =`,
+				);
 
 				expect(hasDirectDefinition || hasGlobalAssignment).toBe(true);
 			}
@@ -90,7 +104,9 @@ describe("Renderer JavaScript Functions Tests", () => {
 			];
 
 			for (const functionName of requiredFunctions) {
-				const hasGlobalAssignment = mainJsContent.includes(`globalThis.${functionName} =`);
+				const hasGlobalAssignment = mainJsContent.includes(
+					`globalThis.${functionName} =`,
+				);
 				expect(hasGlobalAssignment).toBe(true);
 			}
 		});
@@ -98,13 +114,17 @@ describe("Renderer JavaScript Functions Tests", () => {
 
 	describe("関数シグネチャの整合性確認", () => {
 		it("_editEntryInline関数が正しいパラメータを受け取る", () => {
-			const functionMatch = mainJsContent.match(/function _editEntryInline\(([^)]*)\)/);
+			const functionMatch = mainJsContent.match(
+				/function _editEntryInline\(([^)]*)\)/,
+			);
 			expect(functionMatch).not.toBeNull();
 			expect(functionMatch?.[1]).toContain("entryId");
 		});
 
 		it("_saveEditedEntry関数が正しいパラメータを受け取る", () => {
-			const functionMatch = mainJsContent.match(/function _saveEditedEntry\(([^)]*)\)/);
+			const functionMatch = mainJsContent.match(
+				/function _saveEditedEntry\(([^)]*)\)/,
+			);
 			expect(functionMatch).not.toBeNull();
 			const params = functionMatch?.[1];
 			expect(params).toContain("button");
@@ -112,11 +132,14 @@ describe("Renderer JavaScript Functions Tests", () => {
 		});
 
 		it("_cancelEditEntry関数が正しいパラメータを受け取る", () => {
-			const functionMatch = mainJsContent.match(/function _cancelEditEntry\(([^)]*)\)/);
+			const functionMatch = mainJsContent.match(
+				/function _cancelEditEntry\(([^)]*)\)/,
+			);
 			expect(functionMatch).not.toBeNull();
 			const params = functionMatch?.[1];
 			expect(params).toContain("button") || expect(params).toContain("_button");
-			expect(params).toContain("entryId") || expect(params).toContain("_entryId");
+			expect(params).toContain("entryId") ||
+				expect(params).toContain("_entryId");
 		});
 	});
 

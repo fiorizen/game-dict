@@ -43,7 +43,7 @@ test.describe("Entry Editing E2E Tests", () => {
 				if (gameModal) {
 					gameModal.style.display = "none";
 				}
-				
+
 				// Also clear any other modal states
 				const deleteGameModal = document.getElementById("delete-game-modal");
 				if (deleteGameModal) {
@@ -51,7 +51,7 @@ test.describe("Entry Editing E2E Tests", () => {
 				}
 			});
 			await page.waitForTimeout(100);
-		} catch (error) {
+		} catch (_error) {
 			// Ignore errors for modal cleanup
 		}
 	}
@@ -70,7 +70,7 @@ test.describe("Entry Editing E2E Tests", () => {
 
 		const saveBtn = page.locator('#game-form button[type="submit"]');
 		await saveBtn.click();
-		
+
 		// Wait for modal to close
 		const modal = page.locator("#game-modal");
 		await expect(modal).not.toBeVisible();
@@ -100,7 +100,9 @@ test.describe("Entry Editing E2E Tests", () => {
 		const categorySelect = page.locator("tr.new-entry select[name='category']");
 		await categorySelect.selectOption({ index: 1 }); // Select first available category
 
-		const descriptionInput = page.locator("tr.new-entry input[name='description']");
+		const descriptionInput = page.locator(
+			"tr.new-entry input[name='description']",
+		);
 		await descriptionInput.fill("テスト用の単語");
 
 		const saveBtn = page.locator("tr.new-entry button:has-text('保存')");
