@@ -18,6 +18,9 @@ const entriesTableContainer = document.getElementById(
 const entriesTableBody = document.getElementById("entries-table-body");
 const noEntriesMessage = document.getElementById("no-entries-message");
 
+// 仮実装：テストを通すためだけの最小限変数
+const filterInput = document.getElementById("filter-input");
+
 // Modal elements
 const gameModal = document.getElementById("game-modal");
 const gameForm = document.getElementById("game-form");
@@ -77,6 +80,31 @@ function setupEventListeners() {
 	// Keyboard shortcuts
 	setupKeyboardShortcuts();
 
+	// 仮実装：フィルター機能（テストを通すためだけ）
+	if (filterInput) {
+		filterInput.addEventListener("input", () => {
+			// ベタ書き：最小限の絞り込み実装（テストを通すためだけ）
+			const query = filterInput.value.trim();
+			const rows = document.querySelectorAll("#entries-table-body tr");
+			
+			rows.forEach(row => {
+				if (row.classList.contains("new-entry")) return; // 新規追加行は無視
+				
+				if (!query) {
+					row.style.display = "";
+				} else {
+					// 超シンプル：単語列のテキストにクエリが含まれるかチェック
+					const wordCell = row.cells[2]; // 単語列
+					if (wordCell && wordCell.textContent.includes(query)) {
+						row.style.display = "";
+					} else {
+						row.style.display = "none";
+					}
+				}
+			});
+		});
+	}
+
 	// Form submission
 	gameForm.addEventListener("submit", onGameSubmit);
 }
@@ -126,6 +154,15 @@ function setupKeyboardShortcuts() {
 				activeElement.contentEditable === "true");
 
 		if (isInModal || isInInput) return;
+
+		// 仮実装：Command+F でフィルター入力にフォーカス（テストを通すためだけ）
+		if ((event.metaKey || event.ctrlKey) && event.key === "f") {
+			event.preventDefault();
+			if (filterInput) {
+				filterInput.focus();
+			}
+			return;
+		}
 
 		// Command/Ctrl + N: Add new word
 		if ((event.metaKey || event.ctrlKey) && event.key === "n") {
@@ -250,6 +287,11 @@ function populateCategorySelects() {
 
 // Event handlers
 async function onGameChange() {
+	// 仮実装：ゲーム切り替えでフィルターリセット（テストを通すためだけ）
+	if (filterInput) {
+		filterInput.value = "";
+	}
+	
 	const gameId = parseInt(gameSelect.value);
 	if (gameId) {
 		currentGame = gameId;
