@@ -1650,3 +1650,10 @@ async function onConfirmDeleteGame() {
 		modal.style.display = "none";
 	}
 }
+
+// Global functions for HTML onclick handlers
+globalThis.editEntryInline = _editEntryInline;
+globalThis.saveNewEntry = _saveNewEntry;
+globalThis.saveEditedEntry = _saveEditedEntry;
+globalThis.clearNewEntry = _clearNewEntry;
+globalThis.cancelEditEntry = _cancelEditEntry;
