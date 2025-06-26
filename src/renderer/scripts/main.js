@@ -154,7 +154,7 @@ function matchesFilterQuery(row, query) {
 
 	// 現在は単語列のみ検索（仮実装を保持）
 	// 将来の三角測量で他の列も追加予定
-	const wordCell = row.cells[2]; // 単語列
+	const wordCell = row.cells[1]; // 単語列（列順序修正：読み[0]→単語[1]→カテゴリ[2]）
 	if (wordCell?.textContent.toLowerCase().includes(lowerQuery)) {
 		return true;
 	}
