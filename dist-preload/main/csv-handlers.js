@@ -132,6 +132,54 @@ class CSVHandlers {
         return exportedFiles;
     }
     /**
+     * Get appropriate IME category name with intelligent fallback
+     * @param category Category object or undefined
+     * @param format IME format (google/ms/atok)
+     * @returns string IME category name
+     */
+    getCategoryImeName(category, format) {
+        if (!category)
+            return "名詞";
+        // First try to get the defined IME mapping
+        let imeName = null;
+        switch (format) {
+            case "google":
+                imeName = category.google_ime_name;
+                break;
+            case "ms":
+                imeName = category.ms_ime_name;
+                break;
+            case "atok":
+                imeName = category.atok_name;
+                break;
+        }
+        // If IME mapping exists, use it
+        if (imeName)
+            return imeName;
+        // Intelligent fallback based on category name
+        // Categories not defined in categories.csv should fallback to 名詞
+        const categoryName = category.name;
+        // Known specific mappings for common categories
+        if (categoryName === "固有名詞")
+            return "名詞";
+        if (categoryName === "地名")
+            return "名詞";
+        if (categoryName === "会社名")
+            return "名詞";
+        if (categoryName === "組織名")
+            return "名詞";
+        if (categoryName === "ブランド名")
+            return "名詞";
+        if (categoryName === "作品名")
+            return "名詞";
+        if (categoryName === "技術用語")
+            return "名詞";
+        if (categoryName === "専門用語")
+            return "名詞";
+        // Default fallback
+        return "名詞";
+    }
+    /**
      * Export entries for a specific game to IME dictionary CSV format
      */
     async exportToImeCsv(gameId, format, outputPath) {
@@ -141,24 +189,7 @@ class CSVHandlers {
         const categoryMap = new Map(categories.map((c) => [c.id, c]));
         const csvData = entries.map((entry) => {
             const category = categoryMap.get(entry.category_id);
-            let categoryName = "";
-            // Map category to IME-specific format
-            if (category) {
-                switch (format) {
-                    case "google":
-                        categoryName = category.google_ime_name ?? "名詞";
-                        break;
-                    case "ms":
-                        categoryName = category.ms_ime_name ?? "名詞";
-                        break;
-                    case "atok":
-                        categoryName = category.atok_name ?? "名詞";
-                        break;
-                }
-            }
-            else {
-                categoryName = "名詞";
-            }
+            const categoryName = this.getCategoryImeName(category, format);
             return {
                 reading: entry.reading,
                 word: entry.word,
@@ -196,7 +227,7 @@ class CSVHandlers {
         // Build tab-separated content: reading \t word \t category_name \t #game_name
         const lines = entries.map((entry) => {
             const category = categoryMap.get(entry.category_id);
-            const categoryName = category?.ms_ime_name ?? "名詞";
+            const categoryName = this.getCategoryImeName(category, "ms");
             return `${entry.reading}\t${entry.word}\t${categoryName}\t#${game.name}`;
         });
         const content = `${lines.join("\n")}\n`;
@@ -225,7 +256,7 @@ class CSVHandlers {
             // Build entries with metadata
             for (const entry of entries) {
                 const category = categoryMap.get(entry.category_id);
-                const categoryName = category?.ms_ime_name ?? "名詞";
+                const categoryName = this.getCategoryImeName(category, "ms");
                 const line = `${entry.reading}\t${entry.word}\t${categoryName}\t#${game.name}`;
                 allEntries.push({
                     entry,
@@ -509,11 +540,11 @@ class CSVHandlers {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             const parts = line.split("\t");
-            if (parts.length !== 3) {
-                errors.push(`Line ${i + 1}: Expected 3 tab-separated fields, got ${parts.length}`);
+            if (parts.length !== 3 && parts.length !== 4) {
+                errors.push(`Line ${i + 1}: Expected 3 or 4 tab-separated fields, got ${parts.length}`);
                 continue;
             }
-            const [reading, word, categoryName] = parts;
+            const [reading, word, categoryName, description] = parts;
             if (!reading.trim()) {
                 errors.push(`Line ${i + 1}: Reading field is empty`);
             }
@@ -528,6 +559,7 @@ class CSVHandlers {
                     reading: reading.trim(),
                     word: word.trim(),
                     categoryName: categoryName.trim(),
+                    description: description?.trim() ? description.trim() : null,
                 });
             }
         }
@@ -586,7 +618,7 @@ class CSVHandlers {
                     category_id: category.id,
                     reading: entry.reading,
                     word: entry.word,
-                    description: undefined,
+                    description: entry.description || undefined,
                 });
                 importedCount++;
             }

@@ -6,6 +6,13 @@ export declare class CSVHandlers {
      */
     exportToGitCsv(outputDir?: string): Promise<string[]>;
     /**
+     * Get appropriate IME category name with intelligent fallback
+     * @param category Category object or undefined
+     * @param format IME format (google/ms/atok)
+     * @returns string IME category name
+     */
+    private getCategoryImeName;
+    /**
      * Export entries for a specific game to IME dictionary CSV format
      */
     exportToImeCsv(gameId: number, format: "google" | "ms" | "atok", outputPath: string): Promise<void>;

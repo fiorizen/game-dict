@@ -152,9 +152,16 @@ function matchesFilterQuery(row, query) {
 
 	const lowerQuery = query.toLowerCase();
 
-	// 現在は単語列のみ検索（仮実装を保持）
-	// 将来の三角測量で他の列も追加予定
-	const wordCell = row.cells[1]; // 単語列（列順序修正：読み[0]→単語[1]→カテゴリ[2]）
+	// 読み列と単語列の両方を検索対象に（三角測量で一般化）
+	const readingCell = row.cells[0]; // 読み列
+	const wordCell = row.cells[1]; // 単語列
+
+	// 読みでマッチ
+	if (readingCell?.textContent.toLowerCase().includes(lowerQuery)) {
+		return true;
+	}
+
+	// 単語でマッチ
 	if (wordCell?.textContent.toLowerCase().includes(lowerQuery)) {
 		return true;
 	}
@@ -514,6 +521,9 @@ function renderEntriesTable(entries) {
 	// Always add new entry row at the bottom when game is selected
 	const newRow = createNewEntryRow();
 	entriesTableBody.appendChild(newRow);
+
+	// Apply current filter to maintain filtering state after table re-rendering
+	applyWordFilter();
 }
 
 function createEntryRow(entry) {
@@ -521,7 +531,7 @@ function createEntryRow(entry) {
 	row.dataset.entryId = entry.id;
 
 	const category = allCategories.find((c) => c.id === entry.category_id);
-	const categoryName = category ? category.name : "Unknown";
+	const categoryName = category ? category.name : "名詞";
 
 	row.innerHTML = `
 		<td><span class="entry-value">${escapeHtml(entry.reading)}</span></td>

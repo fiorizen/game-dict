@@ -317,4 +317,116 @@ describe("IME Export Functionality", () => {
 			);
 		});
 	});
+
+	describe("Category Fallback Functionality", () => {
+		it("should fallback undefined categories to 名詞 during IME export", async () => {
+			// Create a category not defined in categories.csv
+			const db = testHelper.getDatabase();
+			const undefinedCategory = db.categories.create({
+				name: "固有名詞",
+				google_ime_name: null, // Not defined in categories.csv
+				ms_ime_name: null, // Not defined in categories.csv
+				atok_name: null, // Not defined in categories.csv
+			});
+
+			if (!undefinedCategory) {
+				throw new Error("Failed to create undefined category");
+			}
+
+			// Create entry with undefined category
+			testHelper.createTestEntry(testGameId, {
+				category_id: undefinedCategory.id,
+				reading: "ふぃくしょん",
+				word: "フィクション",
+				description: "架空の作品名",
+			});
+
+			// Test Microsoft IME export
+			const csvHandlers = testHelper.getCSVHandlers();
+			const filePath = await csvHandlers.exportToMicrosoftIme(testGameId);
+
+			// Verify file exists
+			expect(fs.existsSync(filePath)).toBe(true);
+
+			// Read and verify content
+			const content = fs.readFileSync(filePath, "utf-8");
+			const lines = content.trim().split("\n");
+
+			// Find the entry with undefined category
+			const undefinedCategoryLine = lines.find(
+				(line) =>
+					line.includes("ふぃくしょん") && line.includes("フィクション"),
+			);
+
+			expect(undefinedCategoryLine).toBeDefined();
+
+			// Should fallback to 名詞
+			if (undefinedCategoryLine) {
+				const parts = undefinedCategoryLine.split("\t");
+				expect(parts[2]).toBe("名詞"); // Category should be fallback to 名詞
+			}
+		});
+
+		it("should fallback multiple undefined category types to 名詞", async () => {
+			const db = testHelper.getDatabase();
+
+			// Create multiple undefined categories
+			const categories = [
+				{ name: "地名", reading: "とうきょう", word: "東京" },
+				{ name: "会社名", reading: "かいしゃ", word: "会社" },
+				{ name: "技術用語", reading: "ぷろぐらむ", word: "プログラム" },
+				{ name: "専門用語", reading: "せんもん", word: "専門" },
+			];
+
+			for (const cat of categories) {
+				const undefinedCategory = db.categories.create({
+					name: cat.name,
+					google_ime_name: null,
+					ms_ime_name: null,
+					atok_name: null,
+				});
+
+				if (undefinedCategory) {
+					testHelper.createTestEntry(testGameId, {
+						category_id: undefinedCategory.id,
+						reading: cat.reading,
+						word: cat.word,
+						description: `Test ${cat.name}`,
+					});
+				}
+			}
+
+			// Test CSV IME export for all formats
+			const csvHandlers = testHelper.getCSVHandlers();
+			const exportDir = path.join(process.cwd(), "export");
+
+			// Ensure export directory exists
+			if (!fs.existsSync(exportDir)) {
+				fs.mkdirSync(exportDir, { recursive: true });
+			}
+
+			for (const format of ["google", "ms", "atok"] as const) {
+				const filePath = path.join(exportDir, `test-${format}.csv`);
+				await csvHandlers.exportToImeCsv(testGameId, format, filePath);
+
+				expect(fs.existsSync(filePath)).toBe(true);
+
+				const content = fs.readFileSync(filePath, "utf-8");
+				const lines = content.trim().split("\n");
+
+				// Skip header line
+				const dataLines = lines.slice(1);
+
+				// All undefined categories should fallback to 名詞
+				for (const line of dataLines) {
+					const parts = line.split(",");
+					if (parts.length >= 3) {
+						const categoryName = parts[2].replace(/"/g, ""); // Remove CSV quotes
+						// Should be either defined category or fallback to 名詞
+						expect(["名詞", "人名", "品詞なし"]).toContain(categoryName);
+					}
+				}
+			}
+		});
+	});
 });
