@@ -50,6 +50,7 @@ declare const api: {
         performUserChoice: (choice: DataSyncChoice) => Promise<any>;
         getConflictMessage: (status: DataSyncStatus) => Promise<any>;
         onShowDialog: (callback: (status: DataSyncStatus) => void) => void;
+        onCsvImportCompleted: (callback: () => void) => void;
         removeAllListeners: () => void;
     };
     exitSync: {

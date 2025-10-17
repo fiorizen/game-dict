@@ -60,8 +60,12 @@ const api = {
         onShowDialog: (callback) => {
             electron_1.ipcRenderer.on("show-data-sync-dialog", (_event, status) => callback(status));
         },
+        onCsvImportCompleted: (callback) => {
+            electron_1.ipcRenderer.on("csv-import-completed", (_event) => callback());
+        },
         removeAllListeners: () => {
             electron_1.ipcRenderer.removeAllListeners("show-data-sync-dialog");
+            electron_1.ipcRenderer.removeAllListeners("csv-import-completed");
         },
     },
     // Exit sync operations

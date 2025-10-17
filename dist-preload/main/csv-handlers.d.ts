@@ -39,10 +39,12 @@ export declare class CSVHandlers {
     importFromGitCsvDirectory(inputDir: string): Promise<void>;
     /**
      * Import games data from games.csv
+     * CSVが権威あるデータソースのため、既存データを全削除してから再構築
      */
     private importGamesFromCsv;
     /**
      * Import categories data from categories.csv
+     * CSVが権威あるデータソースのため、既存データを全削除してから再構築
      */
     private importCategoriesFromCsv;
     /**
