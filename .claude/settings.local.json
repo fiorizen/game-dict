@@ -90,8 +90,12 @@
 			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/app.spec.ts --project=electron-headless)",
 			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/ui-functions.spec.ts --project=electron-headless --grep \"ゲーム追加\")",
 			"Bash(NODE_ENV=test HEADLESS=true npx playwright test tests/e2e/entry-editing.spec.ts --project=electron-headless --workers=1 --timeout=30000)",
-			"Bash(git checkout:*)"
+			"Bash(git checkout:*)",
+			"WebFetch(domain:docs.claude.com)",
+			"Bash(claude --version)",
+			"Bash(npm show:*)"
 		],
-		"deny": []
+		"deny": [],
+		"defaultMode": "acceptEdits"
 	}
 }
