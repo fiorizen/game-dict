@@ -2,11 +2,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow } from "electron";
 import { log } from "../shared/logger.js";
-import {
-	DataSyncManager,
-	type DataSyncStatus,
-	type ExitSyncStatus,
-} from "./data-sync-manager.js";
+import { DataSyncManager, type ExitSyncStatus } from "./data-sync-manager.js";
 import { IPCHandlers } from "./ipc-handlers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -101,66 +97,36 @@ class GameDictApp implements MainAppInstance {
 	}
 
 	/**
-	 * アプリ起動時のデータ同期チェックを実行
+	 * アプリ起動時のCSV自動読み込みを実行
+	 * 設計思想: CSVが権威あるデータソース、SQLiteは一時キャッシュ
 	 */
 	private async performDataSyncCheck(): Promise<void> {
 		// Skip data sync check in test environment
 		if (process.env.NODE_ENV === "test") {
-			log.debug("Skipping data sync check in test environment");
+			log.debug("Skipping CSV auto-import in test environment");
 			return;
 		}
 
 		try {
+			// CSVファイルの存在確認
 			const status = this.dataSyncManager.analyzeDataStatus();
 
-			switch (status.recommendation) {
-				case "auto_import":
-					// 安全な自動読み込み
-					if (status.csvFilesExist) {
-						log.dataSync("起動時CSV自動読み込みを実行中...");
-						const result = await this.dataSyncManager.performAutoImport();
-						if (result.success) {
-							log.dataSync("CSV自動読み込みが完了しました");
-						} else {
-							log.error("CSV自動読み込みに失敗:", result.error);
-						}
-					}
-					break;
-
-				case "user_confirm":
-					// ユーザー確認が必要 - ウィンドウ表示後にダイアログを表示
-					log.dataSync(
-						"データ競合検出 - ユーザー確認が必要:",
-						status.conflictType,
-					);
-					// ウィンドウが表示された後にダイアログを表示するため、イベントを送信
-					this.mainWindow?.webContents.once("did-finish-load", () => {
-						this.showDataSyncDialog(status);
-					});
-					break;
-
-				case "skip_import":
-					// 何もしない
-					log.debug("CSV読み込みをスキップ（データなし）");
-					break;
-
-				default:
-					log.debug("データ同期チェック完了（アクションなし）");
-					break;
+			if (status.csvFilesExist) {
+				log.dataSync("起動時CSV自動読み込みを実行中...");
+				const result = await this.dataSyncManager.performAutoImport();
+				if (result.success) {
+					log.dataSync("CSV自動読み込みが完了しました");
+					// CSV読み込み完了をレンダラープロセスに通知
+					this.mainWindow?.webContents.send("csv-import-completed");
+				} else {
+					log.error("CSV自動読み込みに失敗:", result.error);
+				}
+			} else {
+				log.debug("CSVファイルが見つからないため読み込みをスキップ");
 			}
 		} catch (error) {
-			log.error("データ同期チェックエラー:", error);
+			log.error("CSV自動読み込みエラー:", error);
 		}
-	}
-
-	/**
-	 * データ同期確認ダイアログをレンダラープロセスに表示依頼
-	 */
-	private showDataSyncDialog(status: DataSyncStatus): void {
-		if (!this.mainWindow) return;
-
-		// レンダラープロセスにデータ同期ダイアログ表示を依頼
-		this.mainWindow.webContents.send("show-data-sync-dialog", status);
 	}
 
 	/**

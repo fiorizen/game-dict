@@ -409,6 +409,12 @@ export class CSVHandlers {
 
 		const files = fs.readdirSync(inputDir);
 
+		// 0. 全エントリを削除（外部キー制約のため最初に削除）
+		const deleteEntriesStmt = this.db
+			.getDatabase()
+			.prepare("DELETE FROM entries");
+		deleteEntriesStmt.run();
+
 		// 1. Import games.csv first
 		const gamesFile = files.find((f) => f === "games.csv");
 		if (gamesFile) {
@@ -432,6 +438,7 @@ export class CSVHandlers {
 
 	/**
 	 * Import games data from games.csv
+	 * CSVが権威あるデータソースのため、既存データを全削除してから再構築
 	 */
 	private async importGamesFromCsv(filePath: string): Promise<void> {
 		log.debug("Importing games from CSV", filePath);
@@ -447,27 +454,30 @@ export class CSVHandlers {
 			updated_at?: string;
 		}>;
 
+		// 既存ゲームを全削除（CSVが権威あるデータソース）
+		const deleteStmt = this.db.getDatabase().prepare("DELETE FROM games");
+		deleteStmt.run();
+
+		// CSVからゲームを再構築
+		const insertStmt = this.db.getDatabase().prepare(`
+			INSERT INTO games (id, name, code, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?)
+		`);
+
 		for (const record of records) {
-			const existingGame = this.db.games.getById(parseInt(record.id));
-			if (!existingGame) {
-				// Create new game with specific ID (Note: this may require custom SQL)
-				const stmt = this.db.getDatabase().prepare(`
-					INSERT INTO games (id, name, code, created_at, updated_at)
-					VALUES (?, ?, ?, ?, ?)
-				`);
-				stmt.run(
-					parseInt(record.id),
-					record.name,
-					record.code,
-					record.created_at || new Date().toISOString(),
-					record.updated_at || new Date().toISOString(),
-				);
-			}
+			insertStmt.run(
+				parseInt(record.id),
+				record.name,
+				record.code,
+				record.created_at || new Date().toISOString(),
+				record.updated_at || new Date().toISOString(),
+			);
 		}
 	}
 
 	/**
 	 * Import categories data from categories.csv
+	 * CSVが権威あるデータソースのため、既存データを全削除してから再構築
 	 */
 	private async importCategoriesFromCsv(filePath: string): Promise<void> {
 		log.debug("Importing categories from CSV", filePath);
@@ -483,22 +493,24 @@ export class CSVHandlers {
 			atok_name: string;
 		}>;
 
+		// 既存カテゴリを全削除（CSVが権威あるデータソース）
+		const deleteStmt = this.db.getDatabase().prepare("DELETE FROM categories");
+		deleteStmt.run();
+
+		// CSVからカテゴリを再構築
+		const insertStmt = this.db.getDatabase().prepare(`
+			INSERT INTO categories (id, name, google_ime_name, ms_ime_name, atok_name)
+			VALUES (?, ?, ?, ?, ?)
+		`);
+
 		for (const record of records) {
-			const existingCategory = this.db.categories.getById(parseInt(record.id));
-			if (!existingCategory) {
-				// Create new category with specific ID
-				const stmt = this.db.getDatabase().prepare(`
-					INSERT INTO categories (id, name, google_ime_name, ms_ime_name, atok_name)
-					VALUES (?, ?, ?, ?, ?)
-				`);
-				stmt.run(
-					parseInt(record.id),
-					record.name,
-					record.google_ime_name,
-					record.ms_ime_name,
-					record.atok_name,
-				);
-			}
+			insertStmt.run(
+				parseInt(record.id),
+				record.name,
+				record.google_ime_name,
+				record.ms_ime_name,
+				record.atok_name,
+			);
 		}
 	}
 

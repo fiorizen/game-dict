@@ -1290,6 +1290,24 @@ function showError(message) {
 	showToast(message, "error");
 }
 
+// CSV Import completion handler
+async function refreshDataAfterCsvImport() {
+	try {
+		// Reload games and categories
+		await loadGames();
+		await loadCategories();
+
+		// If a game was selected before, try to reload its entries
+		if (currentGame) {
+			await loadEntries(currentGame);
+		}
+
+		console.log("Data refresh after CSV import completed");
+	} catch (error) {
+		console.error("Failed to refresh data after CSV import:", error);
+	}
+}
+
 // Data Sync Handlers
 function setupDataSyncHandlers() {
 	// Listen for data sync dialog request from main process
@@ -1299,6 +1317,16 @@ function setupDataSyncHandlers() {
 		});
 	} else {
 		console.warn("Data sync IPC listener not available");
+	}
+
+	// Listen for CSV import completion notification
+	if (window.electronAPI?.dataSync?.onCsvImportCompleted) {
+		window.electronAPI.dataSync.onCsvImportCompleted(async () => {
+			console.log("CSV import completed, refreshing data...");
+			await refreshDataAfterCsvImport();
+		});
+	} else {
+		console.warn("CSV import completion listener not available");
 	}
 
 	// Listen for exit sync dialog request from main process

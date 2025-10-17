@@ -106,8 +106,12 @@ const api = {
 				callback(status),
 			);
 		},
+		onCsvImportCompleted: (callback: () => void) => {
+			ipcRenderer.on("csv-import-completed", (_event) => callback());
+		},
 		removeAllListeners: () => {
 			ipcRenderer.removeAllListeners("show-data-sync-dialog");
+			ipcRenderer.removeAllListeners("csv-import-completed");
 		},
 	},
 
