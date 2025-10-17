@@ -171,6 +171,17 @@ function matchesFilterQuery(row, query) {
 
 // リファクタリング：フィルター入力にフォーカスする関数
 function focusFilterInput() {
+	// 現在編集中のエントリがあれば、フォーカス移動前に自動保存を試行
+	const editingNewRow = document.querySelector("tr.new-entry");
+	if (editingNewRow) {
+		attemptAutoSave(editingNewRow);
+	}
+
+	const editingExistingRow = document.querySelector("tr.editing");
+	if (editingExistingRow) {
+		attemptNavigationSave(editingExistingRow);
+	}
+
 	if (filterInput) {
 		filterInput.focus();
 		filterInput.select(); // 全選択でユーザビリティ向上
@@ -186,21 +197,56 @@ function clearFilter() {
 	}
 }
 
+// フォーカス解除関数（Cmd+E）
+function clearCurrentFocus() {
+	const activeElement = document.activeElement;
+
+	// body以外にフォーカスがある場合のみ処理
+	if (activeElement && activeElement !== document.body) {
+		activeElement.blur();
+
+		// エントリ編集中の場合は自動保存を試行
+		const editingRow = activeElement.closest("tr.new-entry, tr.editing");
+		if (editingRow) {
+			if (editingRow.classList.contains("new-entry")) {
+				attemptAutoSave(editingRow);
+			} else if (editingRow.classList.contains("editing")) {
+				// 編集中の行については、ナビゲーション保存を試行
+				attemptNavigationSave(editingRow);
+			}
+		}
+	}
+}
+
+// ワード追加ショートカット処理（Cmd+N）
+function handleAddEntryShortcut() {
+	// 現在編集中の新規エントリ行があれば自動保存を試行
+	const editingNewRow = document.querySelector("tr.new-entry");
+	if (editingNewRow) {
+		attemptAutoSave(editingNewRow);
+	}
+
+	// 編集中の既存エントリがあれば保存を試行
+	const editingExistingRow = document.querySelector("tr.editing");
+	if (editingExistingRow) {
+		attemptNavigationSave(editingExistingRow);
+	}
+
+	// 検索フィルターをクリア（新規追加にフォーカスするため）
+	clearFilter();
+
+	// 新規エントリ追加を実行
+	addEntryBtn.click();
+}
+
 // Keyboard shortcuts setup
 function setupKeyboardShortcuts() {
 	document.addEventListener("keydown", (event) => {
 		// Skip if IME is composing
 		if (event.isComposing) return;
 
-		// Skip if inside modal or form input
 		const activeElement = document.activeElement;
 		const isInModal = activeElement?.closest(".modal");
-		const isInInput =
-			activeElement &&
-			(activeElement.tagName === "INPUT" ||
-				activeElement.tagName === "TEXTAREA" ||
-				activeElement.tagName === "SELECT" ||
-				activeElement.contentEditable === "true");
 
 		// Additional modal check: if any modal is visible, skip all shortcuts
 		const visibleModals = document.querySelectorAll(
@@ -212,16 +258,19 @@ function setupKeyboardShortcuts() {
 				window.getComputedStyle(modal).display !== "none",
 		);
 
-		if (isInModal || isInInput || hasVisibleModal) return;
+		// Skip all shortcuts if inside modal or modal is visible
+		if (isInModal || hasVisibleModal) return;
 
-		// リファクタリング：Command+F でフィルター入力にフォーカス
+		// Global shortcuts (work everywhere, including input fields)
+
+		// Command+F: Focus filter input (works everywhere)
 		if ((event.metaKey || event.ctrlKey) && event.key === "f") {
 			event.preventDefault();
 			focusFilterInput();
 			return;
 		}
 
-		// Command/Ctrl + N: Add new word
+		// Command/Ctrl + N: Add new word (works everywhere)
 		if ((event.metaKey || event.ctrlKey) && event.key === "n") {
 			event.preventDefault();
 
@@ -231,12 +280,30 @@ function setupKeyboardShortcuts() {
 				return;
 			}
 
-			// Trigger add entry button click
-			addEntryBtn.click();
+			// Trigger add entry with autosave support
+			handleAddEntryShortcut();
 			return;
 		}
 
-		// Command/Ctrl + D: Delete selected/editing entry
+		// Command/Ctrl + E: Clear focus (works everywhere)
+		if ((event.metaKey || event.ctrlKey) && event.key === "e") {
+			event.preventDefault();
+			clearCurrentFocus();
+			return;
+		}
+
+		// Context-dependent shortcuts (only work outside input fields)
+		const isInInput =
+			activeElement &&
+			(activeElement.tagName === "INPUT" ||
+				activeElement.tagName === "TEXTAREA" ||
+				activeElement.tagName === "SELECT" ||
+				activeElement.contentEditable === "true");
+
+		// Skip context-dependent shortcuts if in input field
+		if (isInInput) return;
+
+		// Command/Ctrl + D: Delete selected/editing entry (context-dependent)
 		if ((event.metaKey || event.ctrlKey) && event.key === "d") {
 			event.preventDefault();
 
