@@ -13,6 +13,7 @@ class GameStateManager {
 		this.allCategories = [];
 		this.shouldSortEntries = true;
 		this.preventAutoSelection = false;
+		this.lastSelectedCategoryId = null; // 最後に選択されたカテゴリID（起動中のみ保持）
 
 		// パフォーマンス最適化用
 		this.categoryLookup = new CategoryLookup();
@@ -129,6 +130,15 @@ class GameStateManager {
 
 	getPreventAutoSelection() {
 		return this.preventAutoSelection;
+	}
+
+	// 最後に選択されたカテゴリID
+	setLastSelectedCategoryId(categoryId) {
+		this.lastSelectedCategoryId = categoryId;
+	}
+
+	getLastSelectedCategoryId() {
+		return this.lastSelectedCategoryId;
 	}
 
 	// 状態リセット

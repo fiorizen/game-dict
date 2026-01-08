@@ -4,6 +4,7 @@ let currentEntries = [];
 let allCategories = [];
 let shouldSortEntries = true; // Track if entries should be sorted (false after adding new entry)
 let preventAutoSelection = false; // Flag to prevent auto-selection after game deletion
+let lastSelectedCategoryId = null; // 最後に選択されたカテゴリID（起動中のみ保持）
 
 // DOM elements
 const gameSelect = document.getElementById("game-select");
@@ -619,10 +620,19 @@ function createNewEntryRow() {
 	row.className = "new-entry";
 	row.dataset.isNew = "true";
 
+	// 最後に選択されたカテゴリID、なければ「名詞」をデフォルトに
+	const defaultCategoryId =
+		lastSelectedCategoryId || allCategories.find((c) => c.name === "名詞")?.id;
+	console.log(
+		"[DEBUG main.js] 最後に選択されたカテゴリID:",
+		lastSelectedCategoryId,
+	);
+	console.log("[DEBUG main.js] デフォルトカテゴリID:", defaultCategoryId);
+
 	const categoryOptions = allCategories
 		.map(
 			(cat) =>
-				`<option value="${cat.id}" ${cat.name === "名詞" ? "selected" : ""}>${escapeHtml(cat.name)}</option>`,
+				`<option value="${cat.id}" ${cat.id === defaultCategoryId ? "selected" : ""}>${escapeHtml(cat.name)}</option>`,
 		)
 		.join("");
 
@@ -843,6 +853,13 @@ async function attemptNavigationSave(row) {
 
 			await window.electronAPI.entries.create(data);
 
+			// 最後に選択されたカテゴリを記憶
+			lastSelectedCategoryId = parseInt(formData.category);
+			console.log(
+				"[DEBUG main.js] カテゴリIDを記憶しました:",
+				lastSelectedCategoryId,
+			);
+
 			// Disable sorting for the reload to keep new entry at bottom
 			shouldSortEntries = false;
 
@@ -995,6 +1012,13 @@ async function attemptAutoSave(row) {
 
 		await window.electronAPI.entries.create(data);
 
+		// 最後に選択されたカテゴリを記憶
+		lastSelectedCategoryId = parseInt(formData.category);
+		console.log(
+			"[DEBUG main.js] カテゴリIDを記憶しました (auto-save):",
+			lastSelectedCategoryId,
+		);
+
 		// Mark the row as saved
 		row.classList.remove("new-entry");
 		row.classList.add("auto-saved");
@@ -1060,6 +1084,13 @@ async function _saveNewEntry(button) {
 		};
 
 		await window.electronAPI.entries.create(data);
+
+		// 最後に選択されたカテゴリを記憶
+		lastSelectedCategoryId = parseInt(formData.category);
+		console.log(
+			"[DEBUG main.js] カテゴリIDを記憶しました (Enter key):",
+			lastSelectedCategoryId,
+		);
 
 		// Disable sorting for the reload to keep new entry at bottom
 		shouldSortEntries = false;

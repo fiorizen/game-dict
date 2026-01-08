@@ -2,6 +2,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow } from "electron";
 import { log } from "../shared/logger.js";
+import { AutoSaveManager } from "./auto-save-manager.js";
 import { DataSyncManager, type ExitSyncStatus } from "./data-sync-manager.js";
 import { IPCHandlers } from "./ipc-handlers.js";
 
@@ -10,6 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 class GameDictApp implements MainAppInstance {
 	private ipcHandlers!: IPCHandlers;
 	private dataSyncManager!: DataSyncManager;
+	private autoSaveManager!: AutoSaveManager;
 	private mainWindow: BrowserWindow | null = null;
 
 	constructor() {
@@ -27,6 +29,7 @@ class GameDictApp implements MainAppInstance {
 			// Initialize IPC handlers and data sync manager after app is ready
 			this.ipcHandlers = new IPCHandlers();
 			this.dataSyncManager = new DataSyncManager();
+			this.autoSaveManager = new AutoSaveManager();
 
 			this.createMainWindow();
 		});
@@ -194,6 +197,20 @@ class GameDictApp implements MainAppInstance {
 	 */
 	requestForceClose(): void {
 		this.forceClose();
+	}
+
+	/**
+	 * メインウィンドウを取得
+	 */
+	getMainWindow(): BrowserWindow | null {
+		return this.mainWindow;
+	}
+
+	/**
+	 * 自動保存マネージャーを取得
+	 */
+	getAutoSaveManager(): AutoSaveManager {
+		return this.autoSaveManager;
 	}
 }
 

@@ -14,6 +14,12 @@
                 <button id="export-git-csv-btn" class="btn btn-primary">Git管理用CSV出力</button>
                 <button id="import-csv-btn" class="btn btn-secondary">CSV取込</button>
             </div>
+            <!-- Auto-save status display -->
+            <div id="auto-save-status" class="auto-save-status">
+                <span id="auto-save-badge" class="badge badge-success">自動保存: 有効</span>
+                <span id="auto-save-last-time" class="auto-save-info">-</span>
+                <span id="auto-save-next-time" class="auto-save-info">-</span>
+            </div>
         </header>
         
         <main class="app-main">
@@ -29,8 +35,19 @@
                         <button id="delete-game-btn" class="btn btn-small btn-danger" disabled>削除</button>
                     </div>
                 </div>
-                
-                
+
+                <!-- Auto-save settings -->
+                <div class="auto-save-settings">
+                    <h3>自動保存設定</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="auto-save-toggle" checked>
+                            <span>自動保存を有効にする</span>
+                        </label>
+                        <div class="setting-help">5分ごとにCSVファイルを自動保存します</div>
+                    </div>
+                </div>
+
             </div>
             
             <div class="content-area">
@@ -154,9 +171,29 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- Auto-save Size Decrease Warning Modal -->
+        <div id="auto-save-warning-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>自動保存スキップ</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="warning-message">
+                        <p><strong>データサイズが減少しているため、自動保存をスキップしました。</strong></p>
+                        <p id="auto-save-warning-message"></p>
+                        <div id="auto-save-size-changes"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" id="acknowledge-auto-save-btn">確認済み</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-    
+
     <script src="./scripts/main.js"></script>
+    <script src="./scripts/autoSave.js" type="module"></script>
 </body>
 </html>

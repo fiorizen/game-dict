@@ -138,6 +138,33 @@ const api = {
 	app: {
 		forceClose: () => ipcRenderer.invoke("app:forceClose"),
 	},
+
+	// Auto-save operations
+	autoSave: {
+		start: () => ipcRenderer.invoke("autoSave:start"),
+		stop: () => ipcRenderer.invoke("autoSave:stop"),
+		getStatus: () => ipcRenderer.invoke("autoSave:getStatus"),
+		acknowledgeSkip: () => ipcRenderer.invoke("autoSave:acknowledgeSkip"),
+		onResult: (
+			callback: (result: {
+				success: boolean;
+				timestamp: string;
+				skipped: boolean;
+				reason?: string;
+				sizeChanges?: Array<{
+					filePath: string;
+					oldSize: number;
+					newSize: number;
+					decreased: boolean;
+				}>;
+			}) => void,
+		) => {
+			ipcRenderer.on("auto-save-result", (_event, result) => callback(result));
+		},
+		removeAllListeners: () => {
+			ipcRenderer.removeAllListeners("auto-save-result");
+		},
+	},
 };
 
 // Expose API to renderer process

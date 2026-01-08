@@ -65,6 +65,25 @@ declare const api: {
     app: {
         forceClose: () => Promise<any>;
     };
+    autoSave: {
+        start: () => Promise<any>;
+        stop: () => Promise<any>;
+        getStatus: () => Promise<any>;
+        acknowledgeSkip: () => Promise<any>;
+        onResult: (callback: (result: {
+            success: boolean;
+            timestamp: string;
+            skipped: boolean;
+            reason?: string;
+            sizeChanges?: Array<{
+                filePath: string;
+                oldSize: number;
+                newSize: number;
+                decreased: boolean;
+            }>;
+        }) => void) => void;
+        removeAllListeners: () => void;
+    };
 };
 export type ElectronAPI = typeof api;
 export {};

@@ -64,6 +64,11 @@ export async function saveNewEntry(formData) {
 		// 状態とUIを更新
 		gameState.addEntry(newEntry);
 		gameState.setShouldSortEntries(false); // 新規追加後はソートしない
+		gameState.setLastSelectedCategoryId(parseInt(formData.category_id)); // 最後に選択されたカテゴリを記憶
+		console.log(
+			"[DEBUG] カテゴリIDを記憶しました:",
+			parseInt(formData.category_id),
+		);
 		addEntryToTable(newEntry);
 
 		showSuccess(`「${newEntry.word}」を追加しました`);

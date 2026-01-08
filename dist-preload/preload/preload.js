@@ -86,6 +86,19 @@ const api = {
     app: {
         forceClose: () => electron_1.ipcRenderer.invoke("app:forceClose"),
     },
+    // Auto-save operations
+    autoSave: {
+        start: () => electron_1.ipcRenderer.invoke("autoSave:start"),
+        stop: () => electron_1.ipcRenderer.invoke("autoSave:stop"),
+        getStatus: () => electron_1.ipcRenderer.invoke("autoSave:getStatus"),
+        acknowledgeSkip: () => electron_1.ipcRenderer.invoke("autoSave:acknowledgeSkip"),
+        onResult: (callback) => {
+            electron_1.ipcRenderer.on("auto-save-result", (_event, result) => callback(result));
+        },
+        removeAllListeners: () => {
+            electron_1.ipcRenderer.removeAllListeners("auto-save-result");
+        },
+    },
 };
 // Expose API to renderer process
 electron_1.contextBridge.exposeInMainWorld("electronAPI", api);

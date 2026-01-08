@@ -313,5 +313,69 @@ export class IPCHandlers {
 				);
 			}
 		});
+
+		// Auto-save handlers
+		ipcMain.handle("autoSave:start", () => {
+			try {
+				const mainApp = global.mainAppInstance;
+				if (!mainApp) {
+					throw new Error("Main app instance not available");
+				}
+				const manager = mainApp.getAutoSaveManager();
+				manager.start();
+				return { success: true };
+			} catch (error) {
+				throw new Error(
+					`Auto-save start failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
+
+		ipcMain.handle("autoSave:stop", () => {
+			try {
+				const mainApp = global.mainAppInstance;
+				if (!mainApp) {
+					throw new Error("Main app instance not available");
+				}
+				const manager = mainApp.getAutoSaveManager();
+				manager.stop();
+				return { success: true };
+			} catch (error) {
+				throw new Error(
+					`Auto-save stop failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
+
+		ipcMain.handle("autoSave:getStatus", () => {
+			try {
+				const mainApp = global.mainAppInstance;
+				if (!mainApp) {
+					throw new Error("Main app instance not available");
+				}
+				const manager = mainApp.getAutoSaveManager();
+				return manager.getStatus();
+			} catch (error) {
+				throw new Error(
+					`Get auto-save status failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
+
+		ipcMain.handle("autoSave:acknowledgeSkip", () => {
+			try {
+				const mainApp = global.mainAppInstance;
+				if (!mainApp) {
+					throw new Error("Main app instance not available");
+				}
+				const manager = mainApp.getAutoSaveManager();
+				manager.acknowledgeSkip();
+				return { success: true };
+			} catch (error) {
+				throw new Error(
+					`Acknowledge skip failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
 	}
 }

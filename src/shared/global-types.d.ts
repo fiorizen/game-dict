@@ -4,6 +4,18 @@
 
 interface MainAppInstance {
 	requestForceClose(): void;
+	getMainWindow(): Electron.BrowserWindow | null;
+	getAutoSaveManager(): {
+		start(): void;
+		stop(): void;
+		getStatus(): {
+			enabled: boolean;
+			skipUntilAcknowledged: boolean;
+			lastSaveTime: string | null;
+			nextSaveTime: string | null;
+		};
+		acknowledgeSkip(): void;
+	};
 }
 
 declare global {

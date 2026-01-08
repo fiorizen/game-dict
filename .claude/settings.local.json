@@ -24,7 +24,6 @@
 			"Bash(ls:*)",
 			"Bash(pkill:*)",
 			"Bash(NODE_ENV=test npx playwright test --project=electron-headless --grep \"単語追加機能\")",
-			"Bash(NODE_ENV=test npx playwright test --project=electron-headless --grep \"単語追加機能.*単語追加ボタンクリックでモーダルが開く\")",
 			"Bash(NODE_ENV=test npx playwright test --project=electron-headless --grep \"単語追加機能\" --workers=1)",
 			"Bash(grep:*)",
 			"Bash(NODE_ENV=test npx playwright test --project=electron --grep \"ゲーム追加が完全に動作する\")",
@@ -67,11 +66,7 @@
 			"Bash(./node_modules/.bin/biome:*)",
 			"WebFetch(domain:docs.anthropic.com)",
 			"Bash(git rm:*)",
-			"Bash(NODE_ENV=production node -e \"\nconst path = require('path');\nconst fs = require('fs');\nconst os = require('os');\n\n// Simulate what Electron would do\nconst userDataPath = path.join(os.homedir(), 'Library', 'Application Support', 'game-dict');\nconst prodDbPath = path.join(userDataPath, 'game-dict.db');\n\nconsole.log('Production database path would be:', prodDbPath);\nconsole.log('Production database exists:', fs.existsSync(prodDbPath));\n\nif (fs.existsSync(prodDbPath)) {\n  const stats = fs.statSync(prodDbPath);\n  console.log('Production database size:', stats.size, 'bytes');\n  console.log('Production database modified:', stats.mtime);\n}\n\n// Check if there are other databases in the user data directory\nif (fs.existsSync(userDataPath)) {\n  console.log('Files in user data directory:');\n  const files = fs.readdirSync(userDataPath);\n  files.forEach(file => {\n    const filePath = path.join(userDataPath, file);\n    const stats = fs.statSync(filePath);\n    console.log('  -', file, '(', stats.size, 'bytes,', stats.mtime, ')');\n  });\n}\n\")",
-			"Bash(NODE_ENV=production node -e \"console.log('NODE_ENV:', process.env.NODE_ENV)\")",
-			"Bash(timeout 8s npm start)",
 			"Bash(gtimeout:*)",
-			"Bash(NODE_ENV=production node -e \"\nconst path = require('path');\nconst fs = require('fs');\nconst os = require('os');\n\n// Simulate what Electron would do\nconst userDataPath = path.join(os.homedir(), 'Library', 'Application Support', 'game-dict');\nconst prodDbPath = path.join(userDataPath, 'game-dict.db');\n\nconsole.log('Production database path would be:', prodDbPath);\nconsole.log('Production database exists:', fs.existsSync(prodDbPath));\n\nif (fs.existsSync(prodDbPath)) {\n  const stats = fs.statSync(prodDbPath);\n  console.log('Production database size:', stats.size, 'bytes');\n  console.log('Production database modified:', stats.mtime);\n}\n\n// Check if there are other databases in the user data directory\nif (fs.existsSync(userDataPath)) {\n  console.log('Files in user data directory:');\n  const files = fs.readdirSync(userDataPath);\n  files.forEach(file => {\n    const filePath = path.join(userDataPath, file);\n    const stats = fs.statSync(filePath);\n    console.log('  -', file, '(', stats.size, 'bytes,', stats.mtime, ')');\n  });\n}\n\")",
 			"Bash(NODE_ENV=test npm test src/__tests__/ime-export.test.ts)",
 			"Bash(NODE_ENV=production npm start)",
 			"Bash(git reset:*)",
@@ -93,7 +88,9 @@
 			"Bash(git checkout:*)",
 			"WebFetch(domain:docs.claude.com)",
 			"Bash(claude --version)",
-			"Bash(npm show:*)"
+			"Bash(npm show:*)",
+			"Bash(npm run test:e2e:headless:*)",
+			"Bash(npm run lint:fix:*)"
 		],
 		"deny": [],
 		"defaultMode": "acceptEdits"

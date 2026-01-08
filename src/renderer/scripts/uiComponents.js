@@ -118,11 +118,18 @@ export function createNewEntryRow() {
 	const row = document.createElement("tr");
 	row.className = "new-entry-row";
 
+	// 最後に選択されたカテゴリID、なければ「名詞」をデフォルトに
+	const lastCategoryId = gameState.getLastSelectedCategoryId();
+	console.log("[DEBUG] 最後に選択されたカテゴリID:", lastCategoryId);
+	const defaultCategoryId =
+		lastCategoryId || categories.find((c) => c.name === "名詞")?.id;
+	console.log("[DEBUG] デフォルトカテゴリID:", defaultCategoryId);
+
 	// カテゴリオプション作成
 	const categoryOptions = categories
 		.map(
 			(category) =>
-				`<option value="${category.id}"${category.name === "名詞" ? " selected" : ""}>${escapeHtml(category.name)}</option>`,
+				`<option value="${category.id}"${category.id === defaultCategoryId ? " selected" : ""}>${escapeHtml(category.name)}</option>`,
 		)
 		.join("");
 
