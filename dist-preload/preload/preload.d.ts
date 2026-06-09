@@ -62,6 +62,11 @@ declare const api: {
         onShowDialog: (callback: (status: ExitSyncStatus) => void) => void;
         removeAllListeners: () => void;
     };
+    pending: {
+        getAll: () => Promise<any>;
+        confirm: (gameCode: string, word: string, description: string, yomi: string, categoryId: number) => Promise<any>;
+        discard: (gameCode: string, word: string) => Promise<any>;
+    };
     app: {
         forceClose: () => Promise<any>;
     };

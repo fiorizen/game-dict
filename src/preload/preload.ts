@@ -134,6 +134,28 @@ const api = {
 		},
 	},
 
+	// Pending (inbox) operations
+	pending: {
+		getAll: () => ipcRenderer.invoke("pending:getAll"),
+		confirm: (
+			gameCode: string,
+			word: string,
+			description: string,
+			yomi: string,
+			categoryId: number,
+		) =>
+			ipcRenderer.invoke(
+				"pending:confirm",
+				gameCode,
+				word,
+				description,
+				yomi,
+				categoryId,
+			),
+		discard: (gameCode: string, word: string) =>
+			ipcRenderer.invoke("pending:discard", gameCode, word),
+	},
+
 	// App control operations
 	app: {
 		forceClose: () => ipcRenderer.invoke("app:forceClose"),

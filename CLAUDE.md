@@ -28,6 +28,49 @@ IME辞書登録用CSVも出力可能。
 - **SQLite** = 一時的な作業用データベース（Git無視、高速アクセス）
 - **データフロー**: CSV → SQLite（起動時読込） → CSV（確定時出力）
 
+### 📥 保留ワード Inbox ワークフロー
+
+スクレイパーが自動収集したワードを人間がよみを入力してレビューし辞書登録するパイプライン。
+
+**保留CSV**: `csv/pending/game-{code}.csv`
+```
+word,description
+リンカン,キャラクター名
+```
+- `reading`（よみ）と `category` は空。スクレイパーは `word,description` だけ書けばよい
+- 既存の出力（`csv/game-{code}.csv` / `export/all-games.txt`）には含まれない（構造的に出力汚染ゼロ）
+
+**フロー**: スクレイパーが保留CSVに追記 → Inboxボタンで全ゲーム横断レビュー → よみ入力+カテゴリ選択 → 「確定」でDB登録 → auto-saveで本体CSVに反映。「却下」は保留CSVから削除のみ。
+
+**実装箇所**:
+- `src/main/pending-handlers.ts` — `PendingHandlers` クラス（getAll / confirm / discard）
+- `src/main/ipc-handlers.ts` — `pending:getAll / confirm / discard` IPCハンドラー
+- `src/renderer/scripts/inbox.js` — Inbox UI
+
+### ⏰ auto-save IME自動登録
+
+auto-save（5分ごと）のCSVエクスポート成功後、ベストエフォートでIME辞書登録を自動実行。
+
+**フロー**:
+1. `CSVHandlers.exportAllGamesToMicrosoftIme()` で `export/all-games.txt` を生成
+2. `uv run dict-tool update コンテンツ <path>` を実行（cwd: `~/Dev/ime/dict-tool/`）
+3. exit 0（追加あり）→ `uv run dict-tool reload` も実行
+4. exit 1（追加なし）→ reloadスキップ（正常）
+5. exit 2+（エラー）→ ログ記録のみ。auto-save自体は `success: true` を返す
+
+**実装箇所**: `src/main/auto-save-manager.ts` の `runDictToolUpdate()` メソッド
+
+### 🧪 テスト環境パス規則
+
+main processの新クラスでファイルパスを切り替える標準パターン:
+```typescript
+const isTestEnvironment = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
+const csvDir = isTestEnvironment
+  ? path.join(process.cwd(), "test-data", "csv")
+  : path.join(process.cwd(), "csv");
+```
+`CSVHandlers` / `AutoSaveManager` / `PendingHandlers` すべてこのパターンを踏襲。**新しいファイルI/Oクラスを追加する場合も必ず同様に実装すること。**
+
 ---
 
 ## 開発・実行ガイド

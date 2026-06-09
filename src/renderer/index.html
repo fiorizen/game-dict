@@ -11,6 +11,7 @@
         <header class="app-header">
             <h1>IME辞書管理ツール</h1>
             <div class="header-actions">
+                <button id="inbox-btn" class="btn btn-secondary">Inbox <span id="inbox-badge" class="inbox-badge" style="display: none;"></span></button>
                 <button id="export-git-csv-btn" class="btn btn-primary">Git管理用CSV出力</button>
                 <button id="import-csv-btn" class="btn btn-secondary">CSV取込</button>
             </div>
@@ -51,42 +52,70 @@
             </div>
             
             <div class="content-area">
-                <div class="content-header">
-                    <h2 id="current-game-title">ゲームを選択してください</h2>
-                    <div class="header-buttons">
-                        <button id="import-ime-btn" class="btn btn-secondary" disabled>IME辞書インポート</button>
-                        <button id="export-ime-btn" class="btn btn-secondary" disabled>IME辞書出力</button>
-                        <button id="export-all-games-btn" class="btn btn-secondary">全ゲーム一括出力</button>
-                        <button id="add-entry-btn" class="btn btn-primary" disabled>+単語追加</button>
+                <!-- Main view (通常の単語リスト) -->
+                <div id="main-view">
+                    <div class="content-header">
+                        <h2 id="current-game-title">ゲームを選択してください</h2>
+                        <div class="header-buttons">
+                            <button id="import-ime-btn" class="btn btn-secondary" disabled>IME辞書インポート</button>
+                            <button id="export-ime-btn" class="btn btn-secondary" disabled>IME辞書出力</button>
+                            <button id="export-all-games-btn" class="btn btn-secondary">全ゲーム一括出力</button>
+                            <button id="add-entry-btn" class="btn btn-primary" disabled>+単語追加</button>
+                        </div>
+                    </div>
+
+                    <!-- 仮実装：テストを通すためだけの最小限フィルター -->
+                    <div class="filter-section">
+                        <input type="text" id="filter-input" placeholder="絞り込み...">
+                    </div>
+
+                    <div class="entries-container">
+                        <!-- Always show inline editing table -->
+                        <div id="entries-table-container" class="entries-table-container">
+                            <table id="entries-table" class="entries-table">
+                                <thead>
+                                    <tr>
+                                        <th>読み</th>
+                                        <th>単語</th>
+                                        <th>カテゴリ</th>
+                                        <th>説明</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="entries-table-body">
+                                    <!-- Entries will be populated here -->
+                                </tbody>
+                            </table>
+
+                            <!-- No entries message -->
+                            <div id="no-entries-message" class="no-entries" style="display: none;">
+                                <p>ゲームを選択して単語を管理してください</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- 仮実装：テストを通すためだけの最小限フィルター -->
-                <div class="filter-section">
-                    <input type="text" id="filter-input" placeholder="絞り込み...">
-                </div>
-                
-                <div class="entries-container">
-                    <!-- Always show inline editing table -->
-                    <div id="entries-table-container" class="entries-table-container">
-                        <table id="entries-table" class="entries-table">
+
+                <!-- Inbox view (保留ワードのレビュー) -->
+                <div id="inbox-view" style="display: none;">
+                    <div class="content-header">
+                        <h2>Inbox <span id="inbox-count-header" class="inbox-count-text">（0件）</span></h2>
+                    </div>
+                    <div class="entries-container">
+                        <table id="inbox-table" class="entries-table">
                             <thead>
                                 <tr>
-                                    <th>読み</th>
+                                    <th>ゲーム</th>
                                     <th>単語</th>
-                                    <th>カテゴリ</th>
                                     <th>説明</th>
+                                    <th>よみ</th>
+                                    <th>カテゴリ</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
-                            <tbody id="entries-table-body">
-                                <!-- Entries will be populated here -->
-                            </tbody>
+                            <tbody id="inbox-table-body"></tbody>
                         </table>
-                        
-                        <!-- No entries message -->
-                        <div id="no-entries-message" class="no-entries" style="display: none;">
-                            <p>ゲームを選択して単語を管理してください</p>
+                        <div id="inbox-empty" class="no-entries" style="display: none;">
+                            <p>保留中のワードはありません</p>
                         </div>
                     </div>
                 </div>
@@ -195,5 +224,6 @@
 
     <script src="./scripts/main.js"></script>
     <script src="./scripts/autoSave.js" type="module"></script>
+    <script src="./scripts/inbox.js"></script>
 </body>
 </html>

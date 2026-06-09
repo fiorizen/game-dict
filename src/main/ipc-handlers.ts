@@ -14,16 +14,19 @@ import {
 	DataSyncManager,
 	type ExitSyncChoice,
 } from "./data-sync-manager.js";
+import { PendingHandlers } from "./pending-handlers.js";
 
 export class IPCHandlers {
 	private db: Database;
 	private csvHandlers: CSVHandlers;
 	private dataSyncManager: DataSyncManager;
+	private pendingHandlers: PendingHandlers;
 
 	constructor() {
 		this.db = Database.getInstance();
 		this.csvHandlers = new CSVHandlers();
 		this.dataSyncManager = new DataSyncManager();
+		this.pendingHandlers = new PendingHandlers();
 		this.setupHandlers();
 	}
 
@@ -310,6 +313,55 @@ export class IPCHandlers {
 			} catch (error) {
 				throw new Error(
 					`Force close failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
+
+		// Pending (inbox) handlers
+		ipcMain.handle("pending:getAll", () => {
+			try {
+				return this.pendingHandlers.getAll();
+			} catch (error) {
+				throw new Error(
+					`Get pending entries failed: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
+
+		ipcMain.handle(
+			"pending:confirm",
+			(
+				_,
+				gameCode: string,
+				word: string,
+				description: string,
+				yomi: string,
+				categoryId: number,
+			) => {
+				try {
+					this.pendingHandlers.confirm(
+						gameCode,
+						word,
+						description,
+						yomi,
+						categoryId,
+					);
+					return { success: true };
+				} catch (error) {
+					throw new Error(
+						`Confirm pending entry failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
+			},
+		);
+
+		ipcMain.handle("pending:discard", (_, gameCode: string, word: string) => {
+			try {
+				this.pendingHandlers.discard(gameCode, word);
+				return { success: true };
+			} catch (error) {
+				throw new Error(
+					`Discard pending entry failed: ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
 		});

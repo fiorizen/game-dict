@@ -82,6 +82,12 @@ const api = {
             electron_1.ipcRenderer.removeAllListeners("show-exit-sync-dialog");
         },
     },
+    // Pending (inbox) operations
+    pending: {
+        getAll: () => electron_1.ipcRenderer.invoke("pending:getAll"),
+        confirm: (gameCode, word, description, yomi, categoryId) => electron_1.ipcRenderer.invoke("pending:confirm", gameCode, word, description, yomi, categoryId),
+        discard: (gameCode, word) => electron_1.ipcRenderer.invoke("pending:discard", gameCode, word),
+    },
     // App control operations
     app: {
         forceClose: () => electron_1.ipcRenderer.invoke("app:forceClose"),
