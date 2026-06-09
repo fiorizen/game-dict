@@ -11,6 +11,7 @@ export interface PendingEntry {
 	word: string;
 	description: string;
 	reading: string;
+	categoryName: string;
 }
 
 export class PendingHandlers {
@@ -53,7 +54,12 @@ export class PendingHandlers {
 					columns: true,
 					skip_empty_lines: true,
 					comment: "#",
-				}) as Array<{ word: string; reading?: string; description?: string }>;
+				}) as Array<{
+					word: string;
+					reading?: string;
+					description?: string;
+					category_name?: string;
+				}>;
 
 				for (const row of rows) {
 					entries.push({
@@ -62,6 +68,7 @@ export class PendingHandlers {
 						word: row.word,
 						reading: row.reading ?? "",
 						description: row.description ?? "",
+						categoryName: row.category_name ?? "",
 					});
 				}
 			} catch (error) {
@@ -110,7 +117,12 @@ export class PendingHandlers {
 			columns: true,
 			skip_empty_lines: true,
 			comment: "#",
-		}) as Array<{ word: string; reading?: string; description?: string }>;
+		}) as Array<{
+			word: string;
+			reading?: string;
+			description?: string;
+			category_name?: string;
+		}>;
 
 		const filtered = rows.filter((r) => r.word !== word);
 
@@ -119,7 +131,7 @@ export class PendingHandlers {
 		} else {
 			const newContent = stringify(filtered, {
 				header: true,
-				columns: ["word", "reading", "description"],
+				columns: ["word", "reading", "description", "category_name"],
 			});
 			fs.writeFileSync(filePath, newContent, "utf-8");
 		}

@@ -81,6 +81,32 @@ describe("PendingHandlers", () => {
 			expect(entries[0].reading).toBe("ぶきA");
 		});
 
+		it("category_name列がある場合、categoryNameを返す", () => {
+			const game = testHelper.createUniqueGame("Category Name Game");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,reading,description,category_name\nリンカン,りんかん,キャラクター名,人名\n",
+			);
+
+			const entries = pendingHandlers.getAll();
+
+			expect(entries[0].categoryName).toBe("人名");
+		});
+
+		it("category_name列がない場合、categoryNameは空文字を返す", () => {
+			const game = testHelper.createUniqueGame("No Category Game");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,description\n武器A,武器の説明\n",
+			);
+
+			const entries = pendingHandlers.getAll();
+
+			expect(entries[0].categoryName).toBe("");
+		});
+
 		it("reading列がない場合、readingは空文字を返す", () => {
 			const game = testHelper.createUniqueGame("No Reading Game");
 			fs.mkdirSync(pendingDir, { recursive: true });

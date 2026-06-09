@@ -44,10 +44,11 @@ function createInboxRow(entry) {
 	const tr = document.createElement("tr");
 	tr.className = "pending-entry";
 
+	const defaultCategory = entry.categoryName || "固有名詞";
 	const categoryOptions = inboxCategories
 		.map(
 			(c) =>
-				`<option value="${c.id}"${c.name === "固有名詞" ? " selected" : ""}>${c.name}</option>`,
+				`<option value="${c.id}"${c.name === defaultCategory ? " selected" : ""}>${c.name}</option>`,
 		)
 		.join("");
 
