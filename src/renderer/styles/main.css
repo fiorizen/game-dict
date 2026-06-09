@@ -602,6 +602,16 @@ textarea:focus {
 	}
 }
 
+/* ===== View containers ===== */
+
+#main-view,
+#inbox-view {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
 /* ===== Inbox styles ===== */
 
 .inbox-badge {
