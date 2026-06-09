@@ -114,6 +114,9 @@ window.electronAPI.autoSave.onResult((result) => {
 
 	// ステータスを更新
 	updateAutoSaveStatus();
+
+	// スクレイパーが保留CSVを追加している可能性があるためバッジを更新
+	window.refreshInboxBadge?.();
 });
 
 /**
