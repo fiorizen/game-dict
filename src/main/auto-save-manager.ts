@@ -1,8 +1,13 @@
+import { exec } from "node:child_process";
 import * as fs from "node:fs";
+import { homedir } from "node:os";
 import * as path from "node:path";
+import { promisify } from "node:util";
 import { app } from "electron";
 import { log } from "../shared/logger.js";
 import { CSVHandlers } from "./csv-handlers.js";
+
+const execAsync = promisify(exec);
 
 /**
  * 自動保存の設定
@@ -23,6 +28,15 @@ interface FileSizeChange {
 }
 
 /**
+ * IME辞書登録の結果
+ */
+export interface ImeRegistrationResult {
+	success: boolean;
+	skipped: boolean;
+	reason?: string;
+}
+
+/**
  * 自動保存の実行結果
  */
 export interface AutoSaveResult {
@@ -31,6 +45,7 @@ export interface AutoSaveResult {
 	skipped: boolean;
 	reason?: string;
 	sizeChanges?: FileSizeChange[];
+	imeRegistration?: ImeRegistrationResult;
 }
 
 /**
@@ -241,11 +256,15 @@ export class AutoSaveManager {
 				changedFiles: sizeChanges.length,
 			});
 
+			// IME辞書登録（ベストエフォート）
+			const imeRegistration = await this.runDictToolUpdate();
+
 			return {
 				success: true,
 				timestamp: now,
 				skipped: false,
 				sizeChanges,
+				imeRegistration,
 			};
 		} catch (error) {
 			log.error("自動保存に失敗:", error);
@@ -253,6 +272,49 @@ export class AutoSaveManager {
 			return {
 				success: false,
 				timestamp: now,
+				skipped: false,
+				reason: error instanceof Error ? error.message : String(error),
+			};
+		}
+	}
+
+	/**
+	 * all-games.txt を生成して dict-tool でIME辞書に登録する
+	 */
+	private async runDictToolUpdate(): Promise<ImeRegistrationResult> {
+		const cwd = path.join(homedir(), "Dev", "ime", "dict-tool");
+
+		let allGamesTxtPath: string;
+		try {
+			const imeExport = await this.csvHandlers.exportAllGamesToMicrosoftIme();
+			allGamesTxtPath = imeExport.filePath;
+		} catch (error) {
+			log.warn("all-games.txt の生成に失敗（IME登録スキップ）:", error);
+			return {
+				success: false,
+				skipped: false,
+				reason: error instanceof Error ? error.message : String(error),
+			};
+		}
+
+		try {
+			await execAsync(
+				`uv run dict-tool update コンテンツ "${allGamesTxtPath}"`,
+				{ cwd },
+			);
+			// exit 0 = 追加あり → reload 実行
+			await execAsync("uv run dict-tool reload", { cwd });
+			log.info("dict-tool: 登録・リロード完了");
+			return { success: true, skipped: false };
+		} catch (error) {
+			if ((error as { code?: number }).code === 1) {
+				// exit 1 = 追加なし → 正常（reloadスキップ）
+				log.info("dict-tool: 追加なし（reloadスキップ）");
+				return { success: true, skipped: true };
+			}
+			log.warn("dict-tool: 実行失敗（自動保存は完了）:", error);
+			return {
+				success: false,
 				skipped: false,
 				reason: error instanceof Error ? error.message : String(error),
 			};
