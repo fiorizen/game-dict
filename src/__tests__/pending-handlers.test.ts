@@ -68,6 +68,32 @@ describe("PendingHandlers", () => {
 			expect(words).toContain("単語B");
 		});
 
+		it("reading列がある場合、readingを返す", () => {
+			const game = testHelper.createUniqueGame("Reading Test Game");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,reading,description\n武器A,ぶきA,武器の説明\n",
+			);
+
+			const entries = pendingHandlers.getAll();
+
+			expect(entries[0].reading).toBe("ぶきA");
+		});
+
+		it("reading列がない場合、readingは空文字を返す", () => {
+			const game = testHelper.createUniqueGame("No Reading Game");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,description\n武器A,武器の説明\n",
+			);
+
+			const entries = pendingHandlers.getAll();
+
+			expect(entries[0].reading).toBe("");
+		});
+
 		it("ゲームが存在しないコードの場合、gameCodeをgameNameとして使う", () => {
 			fs.mkdirSync(pendingDir, { recursive: true });
 			fs.writeFileSync(

@@ -55,7 +55,7 @@ function createInboxRow(entry) {
 		<td><span class="game-badge">${escapeHtml(entry.gameName)}</span></td>
 		<td>${escapeHtml(entry.word)}</td>
 		<td>${escapeHtml(entry.description)}</td>
-		<td><input type="text" class="entry-input yomi-input" placeholder="よみを入力..." required></td>
+		<td><input type="text" class="entry-input yomi-input" placeholder="よみを入力..." value="${escapeHtml(entry.reading)}" required></td>
 		<td><select class="entry-select category-select">${categoryOptions}</select></td>
 		<td class="entry-actions-inline">
 			<button class="btn btn-primary btn-small confirm-btn">確定</button>

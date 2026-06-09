@@ -10,6 +10,7 @@ export interface PendingEntry {
 	gameName: string;
 	word: string;
 	description: string;
+	reading: string;
 }
 
 export class PendingHandlers {
@@ -52,13 +53,14 @@ export class PendingHandlers {
 					columns: true,
 					skip_empty_lines: true,
 					comment: "#",
-				}) as Array<{ word: string; description?: string }>;
+				}) as Array<{ word: string; reading?: string; description?: string }>;
 
 				for (const row of rows) {
 					entries.push({
 						gameCode: code,
 						gameName: game?.name ?? code,
 						word: row.word,
+						reading: row.reading ?? "",
 						description: row.description ?? "",
 					});
 				}
@@ -108,7 +110,7 @@ export class PendingHandlers {
 			columns: true,
 			skip_empty_lines: true,
 			comment: "#",
-		}) as Array<{ word: string; description?: string }>;
+		}) as Array<{ word: string; reading?: string; description?: string }>;
 
 		const filtered = rows.filter((r) => r.word !== word);
 
@@ -117,7 +119,7 @@ export class PendingHandlers {
 		} else {
 			const newContent = stringify(filtered, {
 				header: true,
-				columns: ["word", "description"],
+				columns: ["word", "reading", "description"],
 			});
 			fs.writeFileSync(filePath, newContent, "utf-8");
 		}

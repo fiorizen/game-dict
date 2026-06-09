@@ -32,15 +32,31 @@ IME辞書登録用CSVも出力可能。
 
 スクレイパーが自動収集したワードを人間がよみを入力してレビューし辞書登録するパイプライン。
 
-**保留CSV**: `csv/pending/game-{code}.csv`
-```
-word,description
-リンカン,キャラクター名
-```
-- `reading`（よみ）と `category` は空。スクレイパーは `word,description` だけ書けばよい
-- 既存の出力（`csv/game-{code}.csv` / `export/all-games.txt`）には含まれない（構造的に出力汚染ゼロ）
+#### CSV の役割と場所
 
-**フロー**: スクレイパーが保留CSVに追記 → Inboxボタンで全ゲーム横断レビュー → よみ入力+カテゴリ選択 → 「確定」でDB登録 → auto-saveで本体CSVに反映。「却下」は保留CSVから削除のみ。
+| ファイル | 役割 | 誰が書く |
+|---|---|---|
+| `csv/game-{code}.csv` | 確定済みエントリ（権威あるデータ） | アプリの auto-save |
+| `csv/pending/game-{code}.csv` | よみ未確定の候補（レビュー待ち） | スクレイパー |
+
+#### スクレイパーが保留CSVに書く際の制約
+
+**形式**（`reading` は省略可。設定した場合はInboxのよみ入力の初期値として表示され、人間が確定前に編集できる）:
+```
+word,reading,description
+リンカン,りんかん,キャラクター名
+武器A,,武器の説明
+```
+
+**重複排除（必須）**: 追記前に以下の両方を読み、`word` 列に存在しないものだけ追記すること。
+- `csv/game-{code}.csv` — 確定済みに含まれていないか
+- `csv/pending/game-{code}.csv` — 既に保留中でないか
+
+SQLite DB は起動時の一時データなので参照しない。CSVだけ読めばアプリ未起動でも動作する。
+
+#### アプリ側のフロー
+
+スクレイパーが保留CSVに追記 → Inboxボタンで全ゲーム横断レビュー → よみ入力+カテゴリ選択 → 「確定」でDB登録 → auto-saveで本体CSVに反映。「却下」は保留CSVから削除のみ。
 
 **実装箇所**:
 - `src/main/pending-handlers.ts` — `PendingHandlers` クラス（getAll / confirm / discard）
