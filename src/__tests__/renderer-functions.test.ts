@@ -195,4 +195,29 @@ describe("Renderer JavaScript Functions Tests", () => {
 			}
 		});
 	});
+
+	describe("IME変換中のEnter誤発火ガード", () => {
+		let inboxJsContent: string;
+
+		beforeAll(() => {
+			const inboxJsPath = path.join(
+				process.cwd(),
+				"src/renderer/scripts/inbox.js",
+			);
+			inboxJsContent = fs.readFileSync(inboxJsPath, "utf8");
+		});
+
+		it("inbox.jsのよみ入力EnterハンドラがisComposingガードを持つ", () => {
+			// IME変換確定のEnter(isComposing=true)で確定/行削除が誤発火しないこと
+			const guarded =
+				/yomiInput\.addEventListener\(\s*["']keydown["'],[\s\S]*?if\s*\(\s*e\.isComposing\s*\)\s*return;[\s\S]*?e\.key === "Enter"/;
+			expect(inboxJsContent).toMatch(guarded);
+		});
+
+		it("main.jsのdescription EnterハンドラがisComposingガードを持つ", () => {
+			const guarded =
+				/name === "description"[\s\S]*?addEventListener\(\s*["']keydown["'],[\s\S]*?if\s*\(\s*e\.isComposing\s*\)\s*return;[\s\S]*?e\.key === "Enter"/;
+			expect(mainJsContent).toMatch(guarded);
+		});
+	});
 });

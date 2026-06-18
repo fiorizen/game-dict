@@ -74,6 +74,8 @@ function createInboxRow(entry) {
 		discardEntry(tr, entry),
 	);
 	yomiInput.addEventListener("keydown", (e) => {
+		// IME変換確定のEnterで誤って確定/行削除しない
+		if (e.isComposing) return;
 		if (e.key === "Enter") {
 			e.preventDefault();
 			confirmEntry(tr, entry, yomiInput, categorySelect);

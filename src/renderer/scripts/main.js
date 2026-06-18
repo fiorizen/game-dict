@@ -699,6 +699,8 @@ function addAutoSaveListeners(row) {
 		// Special handling for description field - trigger save on Enter key
 		if (input.name === "description") {
 			input.addEventListener("keydown", (e) => {
+				// IME変換確定のEnterで誤って保存しない
+				if (e.isComposing) return;
 				if (e.key === "Enter") {
 					e.preventDefault();
 					// Clear timeout and immediately save
