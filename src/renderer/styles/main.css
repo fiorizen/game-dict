@@ -636,6 +636,41 @@ textarea:focus {
 	color: white;
 }
 
+/* Inbox テーブルは固定列幅（よみ列を単語列の約1.5倍に） */
+#inbox-table {
+	table-layout: fixed;
+}
+
+#inbox-table th:nth-child(1) {
+	width: 10%;
+} /* ゲーム */
+#inbox-table th:nth-child(2) {
+	width: 14%;
+} /* 単語 */
+#inbox-table th:nth-child(3) {
+	width: auto;
+} /* 説明（可変） */
+#inbox-table th:nth-child(4) {
+	width: 21%;
+} /* よみ（単語の約1.5倍） */
+#inbox-table th:nth-child(5) {
+	width: 120px;
+} /* カテゴリ */
+#inbox-table th:nth-child(6) {
+	width: 130px;
+} /* 操作 */
+
+#inbox-table td {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+#inbox-table .entry-input,
+#inbox-table .entry-select {
+	width: 100%;
+	box-sizing: border-box;
+}
+
 .game-badge {
 	background: #3498db;
 	color: white;
