@@ -1,4 +1,5 @@
 let inboxCategories = [];
+const inboxEntries = new WeakMap();
 
 async function loadInbox() {
 	try {
@@ -43,6 +44,7 @@ function renderInbox(entries) {
 function createInboxRow(entry) {
 	const tr = document.createElement("tr");
 	tr.className = "pending-entry";
+	inboxEntries.set(tr, entry);
 
 	const defaultCategory = entry.categoryName || "固有名詞";
 	const categoryOptions = inboxCategories
@@ -54,7 +56,7 @@ function createInboxRow(entry) {
 
 	tr.innerHTML = `
 		<td><span class="game-badge">${escapeHtml(entry.gameName)}</span></td>
-		<td>${escapeHtml(entry.word)}</td>
+		<td><input type="text" class="entry-input word-input" value="${escapeHtml(entry.word)}"></td>
 		<td>${escapeHtml(entry.description)}</td>
 		<td><input type="text" class="entry-input yomi-input" placeholder="よみを入力..." value="${escapeHtml(entry.reading)}" required></td>
 		<td><select class="entry-select category-select">${categoryOptions}</select></td>
@@ -64,9 +66,11 @@ function createInboxRow(entry) {
 		</td>
 	`;
 
+	const wordInput = tr.querySelector(".word-input");
 	const yomiInput = tr.querySelector(".yomi-input");
 	const categorySelect = tr.querySelector(".category-select");
 
+	wordInput.addEventListener("blur", () => updateWord(entry, wordInput));
 	tr.querySelector(".confirm-btn").addEventListener("click", () =>
 		confirmEntry(tr, entry, yomiInput, categorySelect),
 	);
@@ -119,8 +123,104 @@ async function discardEntry(tr, entry) {
 	}
 }
 
-function removeRow(tr) {
-	tr.remove();
+async function updateWord(entry, wordInput) {
+	const newWord = wordInput.value.trim();
+	if (newWord === entry.word) return;
+
+	try {
+		await window.electronAPI.pending.updateWord(
+			entry.gameCode,
+			entry.word,
+			newWord,
+		);
+		entry.word = newWord;
+		wordInput.value = newWord;
+	} catch (error) {
+		showError(`単語の更新に失敗しました: ${error.message}`);
+		wordInput.value = entry.word;
+	}
+}
+
+async function confirmAll() {
+	const rows = Array.from(
+		document.querySelectorAll("#inbox-table-body .pending-entry"),
+	);
+	const ready = rows.filter((tr) =>
+		tr.querySelector(".yomi-input").value.trim(),
+	);
+	if (ready.length === 0) {
+		showError("よみが入力された行がありません");
+		return;
+	}
+	if (
+		!window.confirm(
+			`よみが入力された ${ready.length} 件を確定します。よろしいですか？`,
+		)
+	) {
+		return;
+	}
+
+	let confirmed = 0;
+	for (const tr of ready) {
+		const entry = inboxEntries.get(tr);
+		const yomiInput = tr.querySelector(".yomi-input");
+		const categorySelect = tr.querySelector(".category-select");
+		try {
+			await window.electronAPI.pending.confirm(
+				entry.gameCode,
+				entry.word,
+				entry.description,
+				yomiInput.value.trim(),
+				Number.parseInt(categorySelect.value, 10),
+			);
+			tr.remove();
+			inboxEntries.delete(tr);
+			confirmed++;
+		} catch (error) {
+			showError(`「${entry.word}」の確定に失敗しました: ${error.message}`);
+		}
+	}
+
+	const skipped = rows.length - ready.length;
+	showSuccess(
+		skipped > 0
+			? `${confirmed} 件を確定しました（${skipped} 件スキップ）`
+			: `${confirmed} 件を確定しました`,
+	);
+	finalizeBatch();
+}
+
+async function discardAll() {
+	const rows = Array.from(
+		document.querySelectorAll("#inbox-table-body .pending-entry"),
+	);
+	if (rows.length === 0) return;
+	if (
+		!window.confirm(
+			`保留中の ${rows.length} 件をすべて却下します。よろしいですか？`,
+		)
+	) {
+		return;
+	}
+
+	let discarded = 0;
+	for (const tr of rows) {
+		const entry = inboxEntries.get(tr);
+		try {
+			await window.electronAPI.pending.discard(entry.gameCode, entry.word);
+			tr.remove();
+			inboxEntries.delete(tr);
+			discarded++;
+		} catch (error) {
+			showError(`「${entry.word}」の却下に失敗しました: ${error.message}`);
+		}
+	}
+
+	showSuccess(`${discarded} 件を却下しました`);
+	finalizeBatch();
+}
+
+function finalizeBatch() {
 	const remaining = document.querySelectorAll(
 		"#inbox-table-body .pending-entry",
 	).length;
@@ -128,8 +228,31 @@ function removeRow(tr) {
 	document.getElementById("inbox-count-header").textContent =
 		`（${remaining}件）`;
 	if (remaining === 0) {
-		document.getElementById("inbox-table").style.display = "none";
-		document.getElementById("inbox-empty").style.display = "block";
+		showEmptyAndExit();
+	}
+}
+
+function removeRow(tr) {
+	tr.remove();
+	inboxEntries.delete(tr);
+	const remaining = document.querySelectorAll(
+		"#inbox-table-body .pending-entry",
+	).length;
+	updateInboxBadge(remaining);
+	document.getElementById("inbox-count-header").textContent =
+		`（${remaining}件）`;
+	if (remaining === 0) {
+		showEmptyAndExit();
+	}
+}
+
+// 0件になったら空メッセージを表示し、Inboxを解除してメインビューへ戻す
+function showEmptyAndExit() {
+	document.getElementById("inbox-table").style.display = "none";
+	document.getElementById("inbox-empty").style.display = "block";
+	const inboxView = document.getElementById("inbox-view");
+	if (inboxView && inboxView.style.display !== "none") {
+		toggleInboxView();
 	}
 }
 
@@ -184,6 +307,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	const inboxBtn = document.getElementById("inbox-btn");
 	if (inboxBtn) {
 		inboxBtn.addEventListener("click", toggleInboxView);
+	}
+	const confirmAllBtn = document.getElementById("inbox-confirm-all");
+	if (confirmAllBtn) {
+		confirmAllBtn.addEventListener("click", confirmAll);
+	}
+	const discardAllBtn = document.getElementById("inbox-discard-all");
+	if (discardAllBtn) {
+		discardAllBtn.addEventListener("click", discardAll);
 	}
 	refreshInboxBadge();
 });
