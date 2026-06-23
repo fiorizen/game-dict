@@ -366,6 +366,20 @@ export class IPCHandlers {
 			}
 		});
 
+		ipcMain.handle(
+			"pending:updateWord",
+			(_, gameCode: string, oldWord: string, newWord: string) => {
+				try {
+					this.pendingHandlers.updateWord(gameCode, oldWord, newWord);
+					return { success: true };
+				} catch (error) {
+					throw new Error(
+						`Update pending word failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
+			},
+		);
+
 		// Auto-save handlers
 		ipcMain.handle("autoSave:start", () => {
 			try {

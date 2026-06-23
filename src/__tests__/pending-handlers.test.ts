@@ -268,4 +268,84 @@ describe("PendingHandlers", () => {
 			expect(entriesAfter).toHaveLength(entriesBefore.length);
 		});
 	});
+
+	describe("updateWord", () => {
+		it("対象行のword列を新しい値に書き換える", () => {
+			const game = testHelper.createUniqueGame("UpdateWord Test");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,description\n誤字,説明A\n武器B,説明B\n",
+			);
+
+			pendingHandlers.updateWord(game.code, "誤字", "正字");
+
+			const entries = pendingHandlers.getAll();
+			const words = entries.map((e) => e.word);
+			expect(words).toContain("正字");
+			expect(words).not.toContain("誤字");
+			expect(words).toContain("武器B");
+		});
+
+		it("reading/description/category_nameを保持する", () => {
+			const game = testHelper.createUniqueGame("UpdateWord Keep Fields");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,reading,description,category_name\n誤字,ごじ,説明,人名\n",
+			);
+
+			pendingHandlers.updateWord(game.code, "誤字", "正字");
+
+			const entry = pendingHandlers.getAll()[0];
+			expect(entry.word).toBe("正字");
+			expect(entry.reading).toBe("ごじ");
+			expect(entry.description).toBe("説明");
+			expect(entry.categoryName).toBe("人名");
+		});
+
+		it("newWordが空文字の場合エラーをスローする", () => {
+			const game = testHelper.createUniqueGame("UpdateWord Empty");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,description\n誤字,説明\n",
+			);
+
+			expect(() => pendingHandlers.updateWord(game.code, "誤字", "")).toThrow();
+		});
+
+		it("同一pendingファイル内にnewWordが既存の場合エラーをスローする", () => {
+			const game = testHelper.createUniqueGame("UpdateWord Dup Pending");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,description\n誤字,説明A\n既存語,説明B\n",
+			);
+
+			expect(() =>
+				pendingHandlers.updateWord(game.code, "誤字", "既存語"),
+			).toThrow();
+		});
+
+		it("確定済みCSVにnewWordが既存の場合エラーをスローする", () => {
+			const game = testHelper.createUniqueGame("UpdateWord Dup Confirmed");
+			fs.mkdirSync(pendingDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(pendingDir, `game-${game.code}.csv`),
+				"word,description\n誤字,説明\n",
+			);
+			const csvDir = path.join(process.cwd(), "test-data", "csv");
+			fs.writeFileSync(
+				path.join(csvDir, `game-${game.code}.csv`),
+				"category_name,reading,word,description\n人名,かくてい,確定語,\n",
+			);
+
+			expect(() =>
+				pendingHandlers.updateWord(game.code, "誤字", "確定語"),
+			).toThrow();
+
+			fs.rmSync(path.join(csvDir, `game-${game.code}.csv`));
+		});
+	});
 });

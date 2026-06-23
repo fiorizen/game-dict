@@ -154,6 +154,8 @@ const api = {
 			),
 		discard: (gameCode: string, word: string) =>
 			ipcRenderer.invoke("pending:discard", gameCode, word),
+		updateWord: (gameCode: string, oldWord: string, newWord: string) =>
+			ipcRenderer.invoke("pending:updateWord", gameCode, oldWord, newWord),
 	},
 
 	// App control operations

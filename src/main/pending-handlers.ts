@@ -107,6 +107,65 @@ export class PendingHandlers {
 		log.info("保留ワードを却下しました", { gameCode, word });
 	}
 
+	updateWord(gameCode: string, oldWord: string, newWord: string): void {
+		if (!newWord.trim()) {
+			throw new Error("単語が空です");
+		}
+
+		const pendingDir = this.getPendingDir();
+		const filePath = path.join(pendingDir, `game-${gameCode}.csv`);
+		if (!fs.existsSync(filePath)) {
+			throw new Error(`保留CSVが見つかりません: ${gameCode}`);
+		}
+
+		const content = fs.readFileSync(filePath, "utf-8");
+		const rows = parse(content, {
+			columns: true,
+			skip_empty_lines: true,
+			comment: "#",
+		}) as Array<{
+			word: string;
+			reading?: string;
+			description?: string;
+			category_name?: string;
+		}>;
+
+		if (rows.some((r) => r.word === newWord)) {
+			throw new Error(`既に保留中の単語です: ${newWord}`);
+		}
+		if (this.existsInConfirmed(gameCode, newWord)) {
+			throw new Error(`既に登録済みの単語です: ${newWord}`);
+		}
+
+		const target = rows.find((r) => r.word === oldWord);
+		if (!target) {
+			throw new Error(`対象の単語が見つかりません: ${oldWord}`);
+		}
+		target.word = newWord;
+
+		const newContent = stringify(rows, {
+			header: true,
+			columns: ["word", "reading", "description", "category_name"],
+		});
+		fs.writeFileSync(filePath, newContent, "utf-8");
+		log.info("保留ワードの単語を更新しました", { gameCode, oldWord, newWord });
+	}
+
+	private existsInConfirmed(gameCode: string, word: string): boolean {
+		const pendingDir = this.getPendingDir();
+		const filePath = path.join(pendingDir, "..", `game-${gameCode}.csv`);
+		if (!fs.existsSync(filePath)) return false;
+
+		const content = fs.readFileSync(filePath, "utf-8");
+		const rows = parse(content, {
+			columns: true,
+			skip_empty_lines: true,
+			comment: "#",
+		}) as Array<{ word?: string }>;
+
+		return rows.some((r) => r.word === word);
+	}
+
 	private removeFromPending(gameCode: string, word: string): void {
 		const pendingDir = this.getPendingDir();
 		const filePath = path.join(pendingDir, `game-${gameCode}.csv`);
