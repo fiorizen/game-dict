@@ -287,6 +287,11 @@ function toggleInboxView() {
 		mainView.style.display = "";
 		inboxView.style.display = "none";
 		inboxBtn.classList.remove("active");
+		// Inboxで確定した単語をメインビューへ反映するため再読込
+		// （loadEntries / currentGame は main.js のグローバル）
+		if (typeof loadEntries === "function" && currentGame) {
+			loadEntries(currentGame);
+		}
 	} else {
 		mainView.style.display = "none";
 		inboxView.style.display = "";
