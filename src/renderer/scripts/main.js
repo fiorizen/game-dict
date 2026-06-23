@@ -412,6 +412,16 @@ function populateCategorySelects() {
 
 // Event handlers
 async function onGameChange() {
+	// Inbox表示中ならメインビューへ戻す（inbox.js のグローバル関数）
+	const inboxView = document.getElementById("inbox-view");
+	if (
+		inboxView &&
+		inboxView.style.display !== "none" &&
+		typeof toggleInboxView === "function"
+	) {
+		toggleInboxView();
+	}
+
 	// リファクタリング：ゲーム切り替えでフィルターリセット
 	clearFilter();
 
