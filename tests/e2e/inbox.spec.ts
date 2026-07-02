@@ -72,7 +72,7 @@ test.describe("Inbox", () => {
 		await expect(wordInputs.first()).toHaveValue("E2Eテスト単語A");
 	});
 
-	test("よみ列は単語列より広い（固定比率）", async () => {
+	test("よみ列は単語列より広い（自動調整・単語優先）", async () => {
 		const wordWidth = await page
 			.locator("#inbox-table th:nth-child(2)")
 			.evaluate((el) => el.getBoundingClientRect().width);
