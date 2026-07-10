@@ -66,6 +66,7 @@ declare const api: {
         getAll: () => Promise<any>;
         confirm: (gameCode: string, word: string, description: string, yomi: string, categoryId: number) => Promise<any>;
         discard: (gameCode: string, word: string) => Promise<any>;
+        updateWord: (gameCode: string, oldWord: string, newWord: string) => Promise<any>;
     };
     app: {
         forceClose: () => Promise<any>;

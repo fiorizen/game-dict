@@ -87,6 +87,7 @@ const api = {
         getAll: () => electron_1.ipcRenderer.invoke("pending:getAll"),
         confirm: (gameCode, word, description, yomi, categoryId) => electron_1.ipcRenderer.invoke("pending:confirm", gameCode, word, description, yomi, categoryId),
         discard: (gameCode, word) => electron_1.ipcRenderer.invoke("pending:discard", gameCode, word),
+        updateWord: (gameCode, oldWord, newWord) => electron_1.ipcRenderer.invoke("pending:updateWord", gameCode, oldWord, newWord),
     },
     // App control operations
     app: {
